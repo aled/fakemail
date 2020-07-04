@@ -5,6 +5,18 @@ VisualStudioVersion = 16.0.30128.74
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HtmlGenerator", "HtmlGenerator\HtmlGenerator.csproj", "{A5973EE6-BF34-40F8-981C-57545E2395FF}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{D8877F8F-F43C-4CCE-96B7-4426D2BBE573}"
+	ProjectSection(SolutionItems) = preProject
+		README.md = README.md
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "wiki", "wiki", "{408ADE05-0007-4896-803D-C1712AE2523B}"
+	ProjectSection(SolutionItems) = preProject
+		ssl.md = ssl.md
+		systemd.md = systemd.md
+		TODO.md = TODO.md
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU

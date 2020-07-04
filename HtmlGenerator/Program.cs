@@ -1,13 +1,18 @@
-﻿using MimeKit;
+﻿using HtmlGenerator;
 
+using MimeKit;
+
+using Org.BouncyCastle.Asn1.Cms;
 using Org.BouncyCastle.Cms;
 using Org.BouncyCastle.Security;
 
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace Fakemail.HtmlGenerator
@@ -34,8 +39,11 @@ namespace Fakemail.HtmlGenerator
 
         static async Task Main(string[] args)
         {
+            Console.WriteLine("HtmlGenerator starting...");
+
 #if DEBUG
-            var incomingDir = "c:\\temp\\fakemail\\incoming";
+            var incomingDir = "c:\\temp\\fakemail\\new";
+            var curDir = "c:\\temp\\fakemail\\cur";
             var htmlRoot = "c:\\temp\\fakemail\\html";
             var fullMailDir = "mail";
             var summaryMailDir = "summary";
@@ -44,6 +52,7 @@ namespace Fakemail.HtmlGenerator
             var tempIndexFile = "index.html.tmp";
 #else
             var incomingDir = "/var/mail/vhosts/fakemail.stream/new";
+            var curDir = "/var/mail/vhosts/fakemail.stream/cur";
             var htmlRoot = "/var/www/html";
             var fullMailDir = "mail";
             var summaryMailDir = "summary";
@@ -52,7 +61,36 @@ namespace Fakemail.HtmlGenerator
             var tempIndexFile = "index.html.tmp";
 #endif           
 
-            await new Program().Run(incomingDir, htmlRoot, summaryMailDir, fullMailDir, summaryFile, tempDir, tempIndexFile);
+            await new Program().Run(incomingDir, curDir, htmlRoot, summaryMailDir, fullMailDir, summaryFile, tempDir, tempIndexFile);
+        }
+
+        private async Task Run(string incomingDir, string curDir, string htmlRoot, string summaryMailDir, string fullMailDir, string indexFile, string tempDir, string tempIndexFile)
+        {
+            // Run in a loop. On each iteration:
+            // - Delete all processed mail older than 15 mins
+            // - Process all new mails
+            // - Regenerate the html index
+            while (true)
+            {
+                // Delete all processed mail older than 24 hours. Use file 'last-modified' timestamp for this for simplicity
+                var now = DateTime.UtcNow;
+                DeleteFilesOlderThan(now.Subtract(TimeSpan.FromHours(24)), Path.Combine(htmlRoot, summaryMailDir));
+                DeleteFilesOlderThan(now.Subtract(TimeSpan.FromMinutes(24)), Path.Combine(htmlRoot, fullMailDir)); // keep the full mails around a bit longer, as the user may be seeing an older summary
+
+                // Delete all processed mail execpt for the most recent 100 messages.
+                KeepNewestFilesOnly(500, Path.Combine(htmlRoot, summaryMailDir));
+                KeepNewestFilesOnly(500, Path.Combine(htmlRoot, fullMailDir));
+
+                // process all new mails
+                await ProcessNewMailAsync(incomingDir, curDir, Path.Combine(htmlRoot, summaryMailDir), htmlRoot, fullMailDir);
+
+                // regenerate the html index
+                var tempIndexPath = Path.Combine(tempDir, tempIndexFile);
+                var indexPath = Path.Combine(htmlRoot, indexFile);
+                await RegenerateHtmlIndexAsync(tempIndexPath, indexPath, htmlRoot, summaryMailDir, fullMailDir);
+
+                await Task.Delay(TimeSpan.FromSeconds(10));
+            }
         }
 
         private void DeleteFilesOlderThan(DateTime timestamp, string directory)
@@ -80,10 +118,33 @@ namespace Fakemail.HtmlGenerator
             }
         }
 
-        private async Task ProcessNewMailAsync(string incomingPath, string summaryPath, string htmlRoot, string fullMailDir)
+        private void KeepNewestFilesOnly(int count, string directory)
+        {
+            try
+            {
+                var files = new DirectoryInfo(directory).GetFiles();
+
+                foreach (var f in files.OrderBy(f => f.Name).Reverse().Skip(count))
+                {
+                    try
+                    {
+                        f.Delete();
+                    }
+                    catch (Exception e)
+                    {
+                        Console.Error.WriteLine($"Failed to delete '{Path.Combine(directory, f.Name)}': {e.Message}");
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                Console.Error.WriteLine($"Failed to list files in directory '{directory}': {e.Message}");
+            }
+        }
+
+        private async Task ProcessNewMailAsync(string incomingPath, string curDir, string summaryPath, string htmlRoot, string fullMailDir)
         {
             var di = new DirectoryInfo(incomingPath);
-            var evenRow = true;
             foreach (var file in di.GetFiles().OrderBy(f => f.Name))
             {
                 try
@@ -116,14 +177,18 @@ namespace Fakemail.HtmlGenerator
                     var htmlTo = WebUtility.HtmlEncode(to.Replace("@fakemail.stream", "", StringComparison.OrdinalIgnoreCase));
                     var htmlSubject = WebUtility.HtmlEncode(subject);
 
-                    var summaryHtml = $"<tr class='fm-summary {(evenRow ? "row-even" : "row-odd")}'>\n"
-                                    + $"  <td><div class='fm-ts tc'><div class='tc-content'>{htmlTimestamp}</div><div class='tc-spacer'>{htmlTimestamp}</div><span>&nbsp;</span></div></td>\n"
-                                    + $"  <td><div class='fm-fr tc'><div class='tc-content'>{htmlFrom}</div><div class='tc-spacer'>{htmlFrom}</div><span>&nbsp;</span></div></td>\n"
-                                    + $"  <td><div class='fm-to tc'><div class='tc-content'>{htmlTo}</div><div class='tc-spacer'>{htmlTo}</div>&nbsp;</span></div></td>\n"
-                                    + $"  <td><div class='fm-su tc'><div class='tc-content'><a href='{Path.Combine(fullMailDir, mailId)}.html'>{htmlSubject}</a></div><div class='tc-spacer'>{htmlSubject}</div><span>&nbsp;</span></div></td>\n"
-                                   + "</tr>\n";
+                    var fullMailRelativePath = WebUtility.HtmlEncode(Path.Combine(fullMailDir, mailId) + ".html");
 
-                    await File.WriteAllTextAsync(Path.Combine(summaryPath, mailId) + ".html", summaryHtml, Encoding.UTF8);
+                    var summaryEmail = new SummaryEmail
+                    {
+                        Id = mailId,
+                        From = fromName,
+                        To = to,
+                        Subject = subject,
+                        Timestamp = receivedTimestamp,
+                    };
+
+                    await File.WriteAllTextAsync(Path.Combine(summaryPath, mailId) + ".json", JsonSerializer.Serialize(summaryEmail), Encoding.UTF8);
 
                     var fullHtml = "<html><body>\n"
                                     + "<div class='fm-summary'>\n"
@@ -137,8 +202,7 @@ namespace Fakemail.HtmlGenerator
 
                     await File.WriteAllTextAsync(Path.Combine(htmlRoot, fullMailDir, mailId) + ".html", fullHtml, Encoding.UTF8);
 
-                    file.Delete();
-                    evenRow = !evenRow;
+                    file.MoveTo(Path.Combine(curDir, file.Name), true);
                 }
                 catch (Exception e)
                 {
@@ -147,7 +211,7 @@ namespace Fakemail.HtmlGenerator
             }
         }
 
-        private async Task RegenerateHtmlIndexAsync(string tempIndexPath, string indexPath, string htmlRoot, string summaryMailDir)
+        private async Task RegenerateHtmlIndexAsync(string tempIndexPath, string indexPath, string htmlRoot, string summaryMailDir, string fullMailDir)
         {
             try
             {
@@ -172,18 +236,35 @@ namespace Fakemail.HtmlGenerator
                         + "</style>"
                         + "<meta http-equiv=\"refresh\" content=\"10\"/>"
                         + "</head><body><h1>fakemail.stream</h1>"
-                        + "<div>Plain text emails sent to anyone@fakemail.stream will be shown here, for 15 minutes. Attachments will be dropped. Detailed logs may be kept.</div>"
+                        + "<div>Plain text emails sent to public@fakemail.stream will be shown here, for 15 minutes. Attachments will be dropped. Detailed logs may be kept.</div>"
                         + "<hr><table><tr><th>Time</th><th>From</th><th>To</th><th>Subject</th></tr>");
 
+                    var evenRow = true;
                     foreach (var summaryFile in new DirectoryInfo(Path.Combine(htmlRoot, summaryMailDir)).GetFiles().OrderBy(f => f.Name))
                     {
-                        if (!summaryFile.Name.EndsWith(".html"))
+                        if (!summaryFile.Name.EndsWith(".json"))
                             continue;
 
                         try
                         {
-                            var summary = File.ReadAllText(summaryFile.FullName);
-                            await summaryWriter.WriteLineAsync(summary);
+                            var summary = JsonSerializer.Deserialize<SummaryEmail>(File.ReadAllText(summaryFile.FullName));
+
+                            var htmlTimestamp = WebUtility.HtmlEncode(summary.Timestamp.ToString("MMM dd HH:mm"));
+                            var htmlFrom = WebUtility.HtmlEncode(summary.From);
+                            var htmlTo = WebUtility.HtmlEncode(summary.To.Replace("@fakemail.stream", "", StringComparison.OrdinalIgnoreCase));
+                            var htmlSubject = WebUtility.HtmlEncode(summary.Subject);
+
+                            var fullMailRelativePath = WebUtility.HtmlEncode(Path.Combine(fullMailDir, summary.Id) + ".html");
+
+                            var summaryHtml = $"<tr class='fm-summary {(evenRow ? "row-even" : "row-odd")}'>\n"
+                                            + $"  <td><div class='fm-ts tc'><div class='tc-content'>{htmlTimestamp}</div><div class='tc-spacer'>{htmlTimestamp}</div><span>&nbsp;</span></div></td>\n"
+                                            + $"  <td><div class='fm-fr tc'><div class='tc-content'>{htmlFrom}</div><div class='tc-spacer'>{htmlFrom}</div><span>&nbsp;</span></div></td>\n"
+                                            + $"  <td><div class='fm-to tc'><div class='tc-content'>{htmlTo}</div><div class='tc-spacer'>{htmlTo}</div>&nbsp;</span></div></td>\n"
+                                            + $"  <td><div class='fm-su tc'><div class='tc-content'><a href='{fullMailRelativePath}'>{htmlSubject}</a></div><div class='tc-spacer'>{htmlSubject}</div><span>&nbsp;</span></div></td>\n"
+                                           + "</tr>\n";
+
+                            await summaryWriter.WriteLineAsync(summaryHtml);
+                            evenRow = !evenRow;
                         }
                         catch (Exception e)
                         {
@@ -192,7 +273,7 @@ namespace Fakemail.HtmlGenerator
                     }
 
                     summaryWriter.Write("</table>"
-                        + $"<hr><div class='small'>Page generated on {DateTime.UtcNow.ToString("MMM dd yyyy HH:mm:ss UTC")}</div>"
+                        + $"<hr><div class='small'>Page generated on {DateTime.UtcNow:MMM dd yyyy HH:mm:ss UTC}</div>"
                         + "<div class='small'>Auto-refresh: on</div><hr>"
                         + "</html></body>");
                 }
@@ -203,31 +284,6 @@ namespace Fakemail.HtmlGenerator
             catch (Exception e)
             {
                 await Console.Error.WriteLineAsync(e.Message);
-            }
-        }
-
-        private async Task Run(string incomingDir, string htmlRoot, string summaryMailDir, string fullMailDir, string indexFile, string tempDir, string tempIndexFile)
-        {
-            // Run in a loop. On each iteration:
-            // - Delete all processed mail older than 15 mins
-            // - Process all new mails
-            // - Regenerate the html index
-            while (true)
-            {
-                // Delete all processed mail older than 15 mins. Use file 'last-modified' timestamp for this for simplicity
-                var now = DateTime.UtcNow;
-                DeleteFilesOlderThan(now.Subtract(TimeSpan.FromMinutes(15)), Path.Combine(htmlRoot, summaryMailDir));
-                DeleteFilesOlderThan(now.Subtract(TimeSpan.FromMinutes(16)), Path.Combine(htmlRoot, fullMailDir)); // keep the full mails around a bit longer, as the user may be seeing an older summary
-
-                // process all new mails
-                await ProcessNewMailAsync(incomingDir, Path.Combine(htmlRoot, summaryMailDir), htmlRoot, fullMailDir);
-
-                // regenerate the html index
-                var tempIndexPath = Path.Combine(tempDir, tempIndexFile);
-                var indexPath = Path.Combine(htmlRoot, indexFile);
-                await RegenerateHtmlIndexAsync(tempIndexPath, indexPath, htmlRoot, summaryMailDir);
-
-                await Task.Delay(TimeSpan.FromSeconds(10));
             }
         }
     }
