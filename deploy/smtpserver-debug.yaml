@@ -1,0 +1,16 @@
+---
+- hosts: smtpservers
+  become: true 
+  tasks:
+
+  - name: Upload dll
+    copy:
+      src: ../FakemailSmtpServer/bin/Release/netcoreapp3.1/publish/FakemailSmtpServer.dll
+      dest: /home/ansible/FakemailSmtpServer/FakemailSmtpServer.dll
+      force: yes
+
+  - name: Upload exe
+    copy:
+      src: ../FakemailSmtpServer/bin/Release/netcoreapp3.1/publish/FakemailSmtpServer.exe
+      dest: /home/ansible/FakemailSmtpServer/FakemailSmtpServer.exe
+      force: yes

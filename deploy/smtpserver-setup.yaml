@@ -1,0 +1,113 @@
+---
+- hosts: smtpservers
+  become: true 
+  tasks:
+  - name: Test if .net core runtime 3.1 is installed
+    shell: /usr/bin/dotnet --list-runtimes | grep Microsoft\.NETCore\.App 3\.1\.
+    register: DOTNET_3_1
+    ignore_errors: true
+        
+  - name: Download MS repository
+    get_url:
+      url: https://packages.microsoft.com/config/ubuntu/20.04/packages-microsoft-prod.deb
+      dest: /tmp/packages-microsoft-prod.deb
+    when: not DOTNET_3_1
+
+  - name: Install MS repository
+    apt: deb=/tmp/packages-microsoft-prod.deb
+    when: not DOTNET_3_1
+
+  - name: Update apt cache
+    apt:
+      update_cache: yes
+    when: not DOTNET_3_1
+
+  - name: Ensure dependencies installed
+    apt: 
+      name: ['iptables-persistent', 'apt-transport-https', 'rsync', 'dotnet-runtime-3.1', 'libpq-dev', 'python3-psycopg2', 'postgresql'] 
+      state: present
+
+  - name: Setup remote port forwarding 25 to 12025
+    iptables:
+      table: nat
+      chain: PREROUTING
+      protocol: tcp
+      jump: REDIRECT
+      destination_port: "25"
+      to_ports: "12025"
+      state: present
+
+  - name: Setup local port forwarding 25 to 12025
+    iptables:
+      table: nat
+      chain: OUTPUT
+      out_interface: lo
+      protocol: tcp
+      jump: REDIRECT
+      destination_port: "25"
+      to_ports: "12025"
+      state: present
+
+  - name: Setup remote port forwarding 465 to 12465
+    iptables:
+      table: nat
+      chain: PREROUTING
+      protocol: tcp
+      jump: REDIRECT
+      destination_port: "465"
+      to_ports: "12465"
+      state: present
+
+  - name: Setup local port forwarding 465 to 12465
+    iptables:
+      table: nat
+      chain: OUTPUT
+      out_interface: lo
+      protocol: tcp
+      jump: REDIRECT
+      destination_port: "465"
+      to_ports: "12465"
+      state: present
+
+  - name: Setup remote port forwarding 587 to 12587
+    iptables:
+      table: nat
+      chain: PREROUTING
+      protocol: tcp
+      jump: REDIRECT
+      destination_port: "587"
+      to_ports: "12587"
+      state: present
+
+  - name: Setup local port forwarding 587 to 12587  
+    iptables:
+      table: nat
+      chain: OUTPUT
+      out_interface: lo
+      protocol: tcp
+      jump: REDIRECT
+      destination_port: "587"
+      to_ports: "12587"
+      state: present
+
+  - name: Persist iptables rules
+    shell: 'iptables-save > /etc/iptables/rules.v4'
+
+  - name: Ensure database exists
+    become_user: postgres
+    postgresql_db:
+      db: fakemail
+      encoding: UTF-8
+      conn_limit: "100"
+
+  - name: Ensure database user exists
+    become_user: postgres
+    postgresql_user:
+      db: fakemail
+      user: fakemail-smtp
+      password: Password1!
+
+
+
+
+

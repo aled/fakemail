@@ -1,0 +1,5 @@
+[smtpservers]
+s1.fakemail.stream ansible_python_interpreter=/usr/bin/python3 remote_user=ansible ansible_ssh_private_key_file=ssh-keys/s1.fakemail.stream_rsa
+
+[redis]
+s1.fakemail.stream ansible_python_interpreter=/usr/bin/python3 remote_user=ansible ansible_ssh_private_key_file=ssh-keys/s1.fakemail.stream_rsa

@@ -1,0 +1,9 @@
+[Unit]
+Description=fakemailsmtpserver
+
+[Service]
+ExecStart=/usr/bin/dotnet /home/ansible/FakemailSmtpServer/FakemailSmtpServer.dll
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
