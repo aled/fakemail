@@ -4,7 +4,7 @@
   tasks:
   - name: Create dir
     file:
-      path: /home/ansible/FakemailSmtpServer
+      path: /home/ansible/Fakemail.Smtp
       state: directory
       owner: ansible
       group: root
@@ -18,8 +18,8 @@
 
   - name: Upload binary
     copy:
-      src: ../FakemailSmtpServer/bin/Release/netcoreapp3.1/publish/
-      dest: /home/ansible/FakemailSmtpServer
+      src: ../Fakemail.Smtp/bin/Release/netcoreapp3.1/publish/
+      dest: /home/ansible/Fakemail.Smtp
       force: yes
 
   - name: restart smtp server

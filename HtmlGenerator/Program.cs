@@ -1,6 +1,7 @@
 ﻿using HtmlGenerator;
 
 using MimeKit;
+using MimeKit.Cryptography;
 
 using Org.BouncyCastle.Asn1.Cms;
 using Org.BouncyCastle.Cms;
@@ -11,6 +12,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
@@ -41,25 +43,28 @@ namespace Fakemail.HtmlGenerator
         {
             Console.WriteLine("HtmlGenerator starting...");
 
-#if DEBUG
-            var incomingDir = "c:\\temp\\fakemail\\new";
-            var curDir = "c:\\temp\\fakemail\\cur";
-            var htmlRoot = "c:\\temp\\fakemail\\html";
+            // temporary storage is at c:\temp\fakemail (windows) or /tmp/fakemail (linux)
+            var tempDir = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "c:\\temp\\fakemail" : "/tmp/fakemail";
+
+            Directory.CreateDirectory(tempDir);
+
+            var incomingDir = Path.Combine(tempDir, "new");
+            var curDir = Path.Combine(tempDir, "cur");
+            var htmlRoot = Path.Combine(tempDir, "html");
             var fullMailDir = "mail";
             var summaryMailDir = "summary";
             var summaryFile = "index.html";
-            var tempDir = "c:\\temp";
             var tempIndexFile = "index.html.tmp";
-#else
-            var incomingDir = "/var/mail/vhosts/fakemail.stream/new";
-            var curDir = "/var/mail/vhosts/fakemail.stream/cur";
-            var htmlRoot = "/var/www/html";
-            var fullMailDir = "mail";
-            var summaryMailDir = "summary";
-            var summaryFile = "index.html";
-            var tempDir = "/tmp";
-            var tempIndexFile = "index.html.tmp";
-#endif           
+//#else
+//            var incomingDir = "/var/mail/vhosts/fakemail.stream/new";
+//            var curDir = "/var/mail/vhosts/fakemail.stream/cur";
+//            var htmlRoot = "/var/www/html";
+//            var fullMailDir = "mail";
+//            var summaryMailDir = "summary";
+//            var summaryFile = "index.html";
+//            var tempDir = "/tmp";
+//            var tempIndexFile = "index.html.tmp";
+//#endif           
 
             await new Program().Run(incomingDir, curDir, htmlRoot, summaryMailDir, fullMailDir, summaryFile, tempDir, tempIndexFile);
         }

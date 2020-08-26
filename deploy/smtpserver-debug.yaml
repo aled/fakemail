@@ -3,14 +3,27 @@
   become: true 
   tasks:
 
-  - name: Upload dll
+  - name: Upload Fakemail.Smtp dll
     copy:
-      src: ../FakemailSmtpServer/bin/Release/netcoreapp3.1/publish/FakemailSmtpServer.dll
-      dest: /home/ansible/FakemailSmtpServer/FakemailSmtpServer.dll
+      src: ../Fakemail.Smtp/bin/Release/netcoreapp3.1/publish/Fakemail.Smtp.dll
+      dest: /home/ansible/Fakemail.Smtp/Fakemail.Smtp.dll
       force: yes
+
+  - name: Upload Fakemail.Data dll
+    copy:
+      src: ../Fakemail.Smtp/bin/Release/netcoreapp3.1/publish/Fakemail.Data.dll
+      dest: /home/ansible/Fakemail.Smtp/Fakemail.Data.dll
+      force: yes
+
+  - name: Upload Fakemail.Core dll
+    copy:
+      src: ../Fakemail.Smtp/bin/Release/netcoreapp3.1/publish/Fakemail.Core.dll
+      dest: /home/ansible/Fakemail.Smtp/Fakemail.Core.dll
+      force: yes
+
 
   - name: Upload exe
     copy:
-      src: ../FakemailSmtpServer/bin/Release/netcoreapp3.1/publish/FakemailSmtpServer.exe
-      dest: /home/ansible/FakemailSmtpServer/FakemailSmtpServer.exe
+      src: ../Fakemail.Smtp/bin/Release/netcoreapp3.1/publish/Fakemail.Smtp.exe
+      dest: /home/ansible/Fakemail.Smtp/Fakemail.Smtp.exe
       force: yes

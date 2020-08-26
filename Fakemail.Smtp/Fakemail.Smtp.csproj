@@ -13,4 +13,9 @@
     <PackageReference Include="SmtpServer" Version="7.2.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\Fakemail.Core\Fakemail.Core.csproj" />
+    <ProjectReference Include="..\Fakemail.Data\Fakemail.Data.csproj" />
+  </ItemGroup>
+
 </Project>

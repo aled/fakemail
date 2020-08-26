@@ -2,7 +2,7 @@
 Description=fakemailsmtpserver
 
 [Service]
-ExecStart=/usr/bin/dotnet /home/ansible/FakemailSmtpServer/FakemailSmtpServer.dll
+ExecStart=/usr/bin/dotnet /home/ansible/Fakemail.Smtp/Fakemail.Smtp.dll
 Restart=on-failure
 
 [Install]
