@@ -1,22 +1,24 @@
-﻿using Fakemail.Models;
-using System;
+﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
+
+using Fakemail.DataModels;
+using Fakemail.Models;
 
 namespace Fakemail.Data
 {
     public interface IDataStorage
     {
-        public string CreateSession(string username);
+        public Task CreateMessage(Message message, MessageSummary messageSummary, IEnumerable<EmailAddress> toEmailAddresses);
+        
+        public Task DeleteMessage(string messageId);
 
-        public void DeleteSession(string username, string sessionId);
+        public Task<bool> MailboxExists(EmailAddress emailAddress);
 
-        public Task CreateMessage(Message message, MessageSummary messageSummary, IEnumerable<string> toMailboxes);
+        public Task CreateMailbox(string mailboxName);
 
-        public void DeleteMessage();
-
-        public IObservable<MessageSummary> ObserveMessageSummaries(DateTime from);
+        public Task DeleteMailbox(string mailboxName);
+              
+        public IObservable<MessageSummary> ObserveMessageSummaries(string mailboxName, DateTime from);
     }
 }

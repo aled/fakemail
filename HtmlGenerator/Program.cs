@@ -1,14 +1,8 @@
 ﻿using HtmlGenerator;
 
 using MimeKit;
-using MimeKit.Cryptography;
-
-using Org.BouncyCastle.Asn1.Cms;
-using Org.BouncyCastle.Cms;
-using Org.BouncyCastle.Security;
 
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net;

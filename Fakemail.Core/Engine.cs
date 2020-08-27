@@ -1,11 +1,14 @@
-﻿using Fakemail.Data;
-using Fakemail.Models;
-using MimeKit;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Threading.Tasks;
+
+using MimeKit;
+
+using Fakemail.Data;
+using Fakemail.DataModels;
+using Fakemail.Models;
+using Serilog;
 
 namespace Fakemail.Core
 {
@@ -21,17 +24,18 @@ namespace Fakemail.Core
 
             return s.Substring(0, len);
         }
-    }
-        
+    }        
 
     public class Engine : IEngine
     {
         private static readonly long TICKS_PER_SECOND = 10000000;
 
+        private ILogger _log;
         private IDataStorage _dataStorage;
 
-        public Engine(IDataStorage dataStorage)
+        public Engine(ILogger logger, IDataStorage dataStorage)
         {
+            _log = logger.ForContext<Engine>();
             _dataStorage = dataStorage;
         }
 
@@ -43,14 +47,22 @@ namespace Fakemail.Core
             return $"{seconds:0000000000}-{uniquifier}";
         }
 
-        public async Task OnEmailReceivedAsync(string fromMailbox, IEnumerable<string> toMailboxes, IReadOnlyDictionary<string, string> parameters, MimeMessage mimeMessage)
+        public async Task<bool> MailboxExistsAsync(string emailAddress)
+        {
+            _log.Information("Parsing email address {emailAddress}", emailAddress);
+
+            if (EmailAddress.TryParse(emailAddress, out var validatedEmailAddress))
+                return await _dataStorage.MailboxExists(validatedEmailAddress);
+
+            return false;
+        }
+
+        public async Task OnEmailReceivedAsync(string fromMailbox, IEnumerable<string> toEmailAddresses, IReadOnlyDictionary<string, string> parameters, MimeMessage mimeMessage)
         {
             var messageTimestamp = DateTime.UtcNow;
             string messageId = GenerateMessageId(messageTimestamp);
 
-            Console.WriteLine($"message received: timestamp='{messageTimestamp}', from.length={mimeMessage.From?.Count.ToString() ?? "NULL"}");
-            
-            Console.WriteLine(mimeMessage.TextBody);
+            Console.WriteLine($"message received: timestamp='{messageTimestamp}'");
 
             Directory.CreateDirectory("/tmp/fakemail");
             await File.WriteAllTextAsync($"/tmp/fakemail/{messageId}.body.txt", mimeMessage.TextBody);
@@ -74,12 +86,12 @@ namespace Fakemail.Core
                 mimeMessage.Subject.Truncate(80),
                 mimeMessage.TextBody.Truncate(80));
 
-            var to = toMailboxes.Select(x => x.Split("@"))
-                .Where(split => split.Length == 2)
-                .Select(split => new string(split[0].TakeWhile(x => x != '+').ToArray()) + "@" + split[1])
-                .ToArray();
+            var validatedAddresses = new List<EmailAddress>();
+            foreach (var a in toEmailAddresses)
+                if (EmailAddress.TryParse(a, out EmailAddress validatedAdress))
+                    validatedAddresses.Add(validatedAdress);
 
-            await _dataStorage.CreateMessage(messageModel, messageSummaryModel, toMailboxes);
+            await _dataStorage.CreateMessage(messageModel, messageSummaryModel, validatedAddresses);
         }
     }
 }
