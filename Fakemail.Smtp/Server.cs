@@ -1,11 +1,8 @@
-﻿using System;
-using System.Threading;
+﻿using System.Threading;
 using System.Threading.Tasks;
 
-using Fakemail.Core;
-using Fakemail.Data;
-
-using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 
 using Serilog;
 
@@ -14,41 +11,66 @@ using SmtpServer.Storage;
 
 namespace Fakemail.Smtp
 {
-    public class Server
+    public class Server : IHostedService
     {
-        public Task RunAsync(RedisConfiguration redisConfiguration, CancellationToken cancellationToken)
+        Task _serverTask;
+
+        private ILogger<Server> _log;
+        private IHostApplicationLifetime _lifetime; 
+        private IMessageStoreFactory _messageStoreFactory;
+        private IMailboxFilterFactory _mailboxFilterFactory;
+        private CancellationTokenSource _cancellationTokenSource = new CancellationTokenSource();
+        private TaskCompletionSource<bool> _taskCompletionSource = new TaskCompletionSource<bool>();
+        
+        public Server(ILogger<Server> log, IHostApplicationLifetime lifetime, IMessageStoreFactory messageStoreFactory, IMailboxFilterFactory mailboxFilterFactory)
         {
-            IServiceCollection services = new ServiceCollection();
+            _log = log;
+            _lifetime = lifetime;
+            _messageStoreFactory = messageStoreFactory;
+            _mailboxFilterFactory = mailboxFilterFactory;
+        }
 
-            Log.Logger = new LoggerConfiguration()
-                .WriteTo.Console()
-                .CreateLogger();
+        private void OnStarted()
+        {
+            _log.LogInformation("OnStarted");
+        }
 
-            AppDomain.CurrentDomain.ProcessExit += (s, e) => Log.CloseAndFlush();
+        private void OnStopping()
+        {
+            _log.LogInformation("OnStopping");
+        }
 
-            services.AddSingleton(Log.Logger);
-            services.AddSingleton<IEngine, Engine>();
-            services.AddSingleton<IRedisConfiguration>(x => redisConfiguration);
-            services.AddSingleton<IDataStorage, RedisDataStorage>();
-            services.AddSingleton<IMessageStoreFactory, MessageStoreFactory>();
-            services.AddSingleton<IMessageStore, MessageStore>();
-            services.AddSingleton<IMailboxFilterFactory, MailboxFilterFactory>();
-            services.AddSingleton<IMailboxFilter, MailboxFilter>();
+        private void OnStopped()
+        {
+            _log.LogInformation("OnStopped");
+        }
+        public Task StartAsync(CancellationToken cancellationToken)
+        {
+            _log.LogInformation("Starting hosted service");
 
-            var provider = services.BuildServiceProvider();
+            _lifetime.ApplicationStarted.Register(OnStarted);
+            _lifetime.ApplicationStopping.Register(OnStopping);
+            _lifetime.ApplicationStopped.Register(OnStopped);
 
             var options = new SmtpServerOptionsBuilder()
-                .ServerName("fakemail.stream")
-                .Port(12025, 12465, 12587)
-                .MessageStore(provider.GetRequiredService<IMessageStoreFactory>())
-                .MailboxFilter(provider.GetRequiredService<IMailboxFilterFactory>())
-                .Build();
+               .ServerName("fakemail.stream")
+               .Port(12025, 12465, 12587)
+               .MessageStore(_messageStoreFactory)
+               .MailboxFilter(_mailboxFilterFactory)
+               .Build();
 
             Log.Information("Starting SMTP server");
 
-            var smtpServer = new SmtpServer.SmtpServer(options);
+            _serverTask = new SmtpServer.SmtpServer(options).StartAsync(_cancellationTokenSource.Token);
 
-            return smtpServer.StartAsync(cancellationToken);
+            return Task.CompletedTask;
+        }
+
+        public async Task StopAsync(CancellationToken cancellationToken)
+        {
+            _log.LogInformation("Stopping hosted service");
+            _cancellationTokenSource.Cancel();
+            await _serverTask;
         }
     }
 }

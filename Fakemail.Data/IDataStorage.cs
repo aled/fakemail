@@ -19,6 +19,8 @@ namespace Fakemail.Data
 
         public Task DeleteMailbox(string mailboxName);
               
-        public IObservable<MessageSummary> ObserveMessageSummaries(string mailboxName, DateTime from);
+        public IObservable<MessageSummary> ObserveMessageSummaries(string mailboxName);
+
+        public Task<List<MessageSummary>> GetMessageSummaries(EmailAddress mailbox, int skip, int take);
     }
 }

@@ -24,7 +24,7 @@ namespace Fakemail.Core
 
             return s.Substring(0, len);
         }
-    }        
+    }
 
     public class Engine : IEngine
     {
@@ -45,6 +45,11 @@ namespace Fakemail.Core
             string uniquifier = Guid.NewGuid().ToString().Replace("-", "");
 
             return $"{seconds:0000000000}-{uniquifier}";
+        }
+
+        public Task CreateMailboxAsync(string emailAddress)
+        {
+            throw new NotImplementedException();
         }
 
         public async Task<bool> MailboxExistsAsync(string emailAddress)
@@ -79,12 +84,14 @@ namespace Fakemail.Core
                 messageTimestamp,
                 messageContent);
 
-            var messageSummaryModel = new MessageSummary(
-                messageId,
-                messageTimestamp,
-                mimeMessage.From[0].ToString(),
-                mimeMessage.Subject.Truncate(80),
-                mimeMessage.TextBody.Truncate(80));
+            var messageSummaryModel = new MessageSummary
+            {
+                Id = messageId,
+                ReceivedTimestamp = messageTimestamp,
+                From = mimeMessage.From[0].ToString(),
+                Subject = mimeMessage.Subject.Truncate(80),
+                Body = mimeMessage.TextBody.Truncate(80)
+            };
 
             var validatedAddresses = new List<EmailAddress>();
             foreach (var a in toEmailAddresses)
@@ -92,6 +99,16 @@ namespace Fakemail.Core
                     validatedAddresses.Add(validatedAdress);
 
             await _dataStorage.CreateMessage(messageModel, messageSummaryModel, validatedAddresses);
+        }
+
+        public async Task<IList<MessageSummary>> GetMessageSummaries(string emailAddress, int skip, int take)
+        {
+            if (!EmailAddress.TryParse(emailAddress, out var validatedAddress))
+            {
+                throw new Exception("Invalid email address");
+            }
+
+            return await _dataStorage.GetMessageSummaries(validatedAddress, skip, take);
         }
     }
 }

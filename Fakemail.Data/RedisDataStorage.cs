@@ -9,6 +9,8 @@ using StackExchange.Redis;
 using Fakemail.DataModels;
 using Fakemail.Models;
 using Serilog;
+using System.IO;
+using System.Text;
 
 namespace Fakemail.Data
 {
@@ -17,6 +19,22 @@ namespace Fakemail.Data
         public static string ReversedMailbox(this EmailAddress emailAddress)
         {
             return string.Join('@', emailAddress.Mailbox.Split('@').Reverse());
+        }
+    }
+
+    class RedisLogger : TextWriter
+    {
+        private ILogger _logger;
+
+        public override Encoding Encoding => throw new NotImplementedException();
+
+        public RedisLogger(ILogger logger)
+        {
+            _logger = logger;
+        }
+        public override void WriteLine(string s)
+        {
+            _logger.Debug(s);
         }
     }
 
@@ -37,9 +55,9 @@ namespace Fakemail.Data
             };
             redisOptions.EndPoints.Add(configuration.Host, configuration.Port);
 
-            _redis = ConnectionMultiplexer.Connect(redisOptions);
+            _redis = ConnectionMultiplexer.Connect(redisOptions, new RedisLogger(_log));
         }
-        
+
         private IDatabase Database =>_redis.GetDatabase(_configuration.DatabaseNumber);
    
         public async Task CreateMessage(Message message, MessageSummary messageSummary, IEnumerable<EmailAddress> toEmailAddresses)
@@ -87,13 +105,11 @@ namespace Fakemail.Data
             throw new NotImplementedException();
         }
 
-        public async Task<bool> MailboxExists(EmailAddress emailAddress)
+        public async Task<bool> MailboxExists(EmailAddress address)
         {
-            _log.Information("Checking if mailbox exists for {address}", emailAddress.Mailbox);
+            _log.Information("Checking if mailbox exists for {address}", address.Mailbox);
 
-            _log.Information("Quering redis for value {value} in sorted set 'mailbox-addresses'", emailAddress.ReversedMailbox());
-
-            return (await Database.SortedSetScoreAsync("mailbox-addresses", emailAddress.ReversedMailbox())) != null;
+            return (await Database.SortedSetScoreAsync("mailbox-addresses", address.ReversedMailbox())) != null;
         }
 
         public Task CreateMailbox(string mailboxName)
@@ -106,9 +122,34 @@ namespace Fakemail.Data
             throw new NotImplementedException();
         }
 
-        public IObservable<MessageSummary> ObserveMessageSummaries(string mailboxName, DateTime from)
+        public IObservable<MessageSummary> ObserveMessageSummaries(string mailboxName)
         {
             throw new NotImplementedException();
+        }
+
+        public async Task<List<MessageSummary>> GetMessageSummaries(EmailAddress address, int skip, int take)
+        {
+            if (!await MailboxExists(address))
+                throw new Exception("Mailbox not found");
+
+            var mailboxIndexKey = $"mailbox-index:{address.ReversedMailbox()}";
+            var messageIds = await Database.SortedSetRangeByValueAsync(mailboxIndexKey, "0000000000-0", "9999999999-0", order: Order.Descending, skip: skip, take: take);
+
+            var summaries = new List<MessageSummary>();
+            foreach (var id in messageIds)
+            {
+                var messageSummaryKey = $"message-summary:{id}";
+                string summary = await Database.StringGetAsync(messageSummaryKey);
+                try
+                {
+                    summaries.Add(JsonSerializer.Deserialize<MessageSummary>(summary));
+                }
+                catch (Exception) 
+                {
+                    _log.Warning($"Error deserializing message summary {id}", id);
+                }
+            }
+            return summaries;
         }
     }
 }
