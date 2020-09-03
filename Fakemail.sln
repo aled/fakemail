@@ -39,6 +39,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Fakemail.Smtp", "Fakemail.S
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fakemail.DataModels", "Fakemail.Models\Fakemail.DataModels.csproj", "{7F27DFEE-5A54-4972-BF80-8D18E5AC391E}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fakemail.Telnet", "Fakemail.Telnet\Fakemail.Telnet.csproj", "{B45899E1-790B-4BC1-942F-A57300AC4EB0}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -69,6 +71,10 @@ Global
 		{7F27DFEE-5A54-4972-BF80-8D18E5AC391E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7F27DFEE-5A54-4972-BF80-8D18E5AC391E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7F27DFEE-5A54-4972-BF80-8D18E5AC391E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B45899E1-790B-4BC1-942F-A57300AC4EB0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B45899E1-790B-4BC1-942F-A57300AC4EB0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B45899E1-790B-4BC1-942F-A57300AC4EB0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B45899E1-790B-4BC1-942F-A57300AC4EB0}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

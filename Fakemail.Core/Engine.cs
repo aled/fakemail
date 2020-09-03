@@ -47,9 +47,30 @@ namespace Fakemail.Core
             return $"{seconds:0000000000}-{uniquifier}";
         }
 
-        public Task CreateMailboxAsync(string emailAddress)
+        public async Task<CreateMailboxResult> CreateMailboxAsync(string mailbox = null)
         {
-            throw new NotImplementedException();
+            var result = new CreateMailboxResult();
+
+            if (mailbox == null)
+                mailbox = Guid.NewGuid().ToString() + "@fakemail.stream";
+
+            if (EmailAddress.TryParse(mailbox, out var validatedAddress))
+            {
+                result.Mailbox = validatedAddress.Mailbox;
+                if (await _dataStorage.CreateMailboxAsync(validatedAddress))
+                    result.Success = true;
+                else
+                {
+                    result.Success = true;
+                    result.ErrorMessage = "Mailbox already exists";
+                }   
+            }
+            else
+            {
+                result.ErrorMessage = $"Invalid email address";
+            }
+
+            return result;
         }
 
         public async Task<bool> MailboxExistsAsync(string emailAddress)
@@ -109,6 +130,11 @@ namespace Fakemail.Core
             }
 
             return await _dataStorage.GetMessageSummaries(validatedAddress, skip, take);
+        }
+
+        public void AddSubscription(Action<string, MessageSummary> action)
+        {
+            _dataStorage.AddSubscription(action);
         }
     }
 }

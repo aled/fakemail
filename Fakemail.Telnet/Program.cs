@@ -1,18 +1,17 @@
-﻿using System.Threading;
+﻿using System;
+using System.IO;
 using System.Threading.Tasks;
+
+using Fakemail.Core;
+using Fakemail.Data;
+
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
-using Fakemail.Data;
 using Serilog;
-using System;
-using Microsoft.Extensions.DependencyInjection;
-using Fakemail.Core;
-using SmtpServer.Storage;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Hosting.Systemd;
-using System.IO;
 
-namespace Fakemail.Smtp
+namespace Fakemail.Telnet
 {
     class Program
     {
@@ -44,15 +43,11 @@ namespace Fakemail.Smtp
                 .UseSerilog()
                 .ConfigureServices((hostContext, services) =>
                 {
-                    services.AddHostedService<SmtpService>();                    
+                    services.AddHostedService<TelnetService>();
                     services.AddSingleton(Log.Logger);
                     services.AddSingleton<IEngine, Engine>();
                     services.AddSingleton<IRedisConfiguration>(x => redisConfiguration);
                     services.AddSingleton<IDataStorage, RedisDataStorage>();
-                    services.AddSingleton<IMessageStoreFactory, MessageStoreFactory>();
-                    services.AddSingleton<IMessageStore, MessageStore>();
-                    services.AddSingleton<IMailboxFilterFactory, MailboxFilterFactory>();
-                    services.AddSingleton<IMailboxFilter, MailboxFilter>();
                 })
                 .ConfigureHostConfiguration(configHost =>
                 {
@@ -60,6 +55,6 @@ namespace Fakemail.Smtp
                     configHost.AddJsonFile("fakemail.config", optional: true);
                     configHost.AddCommandLine(args);
                 });
-        } 
+        }
     }
 }

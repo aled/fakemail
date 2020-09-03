@@ -74,7 +74,8 @@ namespace Fakemail.Data
             // Put an exipry on this, so that these are the second things to be deleted
             var messageSummaryKey = $"message-summary:{message.Id}";
             Console.WriteLine($"Queuing command: Set key '{messageSummaryKey}'");
-            transactionTasks.Add(transaction.StringSetAsync(messageSummaryKey, JsonSerializer.Serialize(messageSummary), TimeSpan.FromDays(30)));
+            var messageSummaryJson = JsonSerializer.Serialize(messageSummary);
+            transactionTasks.Add(transaction.StringSetAsync(messageSummaryKey, messageSummaryJson, TimeSpan.FromDays(30)));
 
             foreach (var toEmailAddress in toEmailAddresses)
             {
@@ -90,6 +91,8 @@ namespace Fakemail.Data
                 var mailboxIndexKey = $"mailbox-index:{reversedAddress}";
                 Console.WriteLine($"Queuing command: Add '{message.Id}' to key '{mailboxIndexKey}'");
                 transactionTasks.Add(transaction.SortedSetAddAsync(mailboxIndexKey, message.Id, 0, CommandFlags.None));
+
+                transactionTasks.Add(transaction.PublishAsync("message-received", $"{toEmailAddress.Mailbox}:{messageSummaryJson}"));
             }
 
             if (!await transaction.ExecuteAsync())
@@ -112,9 +115,11 @@ namespace Fakemail.Data
             return (await Database.SortedSetScoreAsync("mailbox-addresses", address.ReversedMailbox())) != null;
         }
 
-        public Task CreateMailbox(string mailboxName)
+        public async Task<bool> CreateMailboxAsync(EmailAddress address)
         {
-            throw new NotImplementedException();
+            _log.Information("Creating mailbox {address}", address);
+
+            return await Database.SortedSetAddAsync("mailbox-addresses", address.ReversedMailbox(), 0, When.NotExists, CommandFlags.None);
         }
 
         public Task DeleteMailbox(string mailboxName)
@@ -122,9 +127,23 @@ namespace Fakemail.Data
             throw new NotImplementedException();
         }
 
-        public IObservable<MessageSummary> ObserveMessageSummaries(string mailboxName)
+        public void AddSubscription(Action<string, MessageSummary> action)
         {
-            throw new NotImplementedException();
+            // message is mailbox:messageSummary
+            _redis.GetSubscriber().Subscribe("message-received", (channel, message) =>
+            {
+                try
+                {
+                    var parts = message.ToString().Split(":", 2);
+                    var mailbox = parts[0];
+                    var messageSummary = JsonSerializer.Deserialize<MessageSummary>(parts[1]);
+                    action(mailbox, messageSummary);
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine(e.Message);
+                }
+            });
         }
 
         public async Task<List<MessageSummary>> GetMessageSummaries(EmailAddress address, int skip, int take)

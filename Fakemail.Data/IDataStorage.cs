@@ -9,18 +9,18 @@ namespace Fakemail.Data
 {
     public interface IDataStorage
     {
-        public Task CreateMessage(Message message, MessageSummary messageSummary, IEnumerable<EmailAddress> toEmailAddresses);
-        
-        public Task DeleteMessage(string messageId);
+        Task CreateMessage(Message message, MessageSummary messageSummary, IEnumerable<EmailAddress> toEmailAddresses);
 
-        public Task<bool> MailboxExists(EmailAddress emailAddress);
+        Task DeleteMessage(string messageId);
 
-        public Task CreateMailbox(string mailboxName);
+        Task<bool> MailboxExists(EmailAddress emailAddress);
 
-        public Task DeleteMailbox(string mailboxName);
-              
-        public IObservable<MessageSummary> ObserveMessageSummaries(string mailboxName);
+        Task<bool> CreateMailboxAsync(EmailAddress emailAddress);
 
-        public Task<List<MessageSummary>> GetMessageSummaries(EmailAddress mailbox, int skip, int take);
+        Task DeleteMailbox(string mailboxName);
+
+        Task<List<MessageSummary>> GetMessageSummaries(EmailAddress mailbox, int skip, int take);
+
+        void AddSubscription(Action<string, MessageSummary> action);
     }
 }

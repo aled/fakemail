@@ -11,18 +11,17 @@ using SmtpServer.Storage;
 
 namespace Fakemail.Smtp
 {
-    public class Server : IHostedService
+    public class SmtpService : IHostedService
     {
         Task _serverTask;
 
-        private ILogger<Server> _log;
+        private ILogger<SmtpService> _log;
         private IHostApplicationLifetime _lifetime; 
         private IMessageStoreFactory _messageStoreFactory;
         private IMailboxFilterFactory _mailboxFilterFactory;
         private CancellationTokenSource _cancellationTokenSource = new CancellationTokenSource();
-        private TaskCompletionSource<bool> _taskCompletionSource = new TaskCompletionSource<bool>();
         
-        public Server(ILogger<Server> log, IHostApplicationLifetime lifetime, IMessageStoreFactory messageStoreFactory, IMailboxFilterFactory mailboxFilterFactory)
+        public SmtpService(ILogger<SmtpService> log, IHostApplicationLifetime lifetime, IMessageStoreFactory messageStoreFactory, IMailboxFilterFactory mailboxFilterFactory)
         {
             _log = log;
             _lifetime = lifetime;
@@ -32,17 +31,17 @@ namespace Fakemail.Smtp
 
         private void OnStarted()
         {
-            _log.LogInformation("OnStarted");
+            _log.LogInformation("SmtpService: OnStarted");
         }
 
         private void OnStopping()
         {
-            _log.LogInformation("OnStopping");
+            _log.LogInformation("SmtpService: OnStopping");
         }
 
         private void OnStopped()
         {
-            _log.LogInformation("OnStopped");
+            _log.LogInformation("SmtpService: OnStopped");
         }
         public Task StartAsync(CancellationToken cancellationToken)
         {
@@ -68,7 +67,7 @@ namespace Fakemail.Smtp
 
         public async Task StopAsync(CancellationToken cancellationToken)
         {
-            _log.LogInformation("Stopping hosted service");
+            _log.LogInformation("Stopping SMTP hosted service");
             _cancellationTokenSource.Cancel();
             await _serverTask;
         }

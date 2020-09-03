@@ -16,7 +16,18 @@ using SmtpServer.Storage;
 using Serilog;
 using System;
 using System.Linq;
+using System.Collections.Generic;
+using Org.BouncyCastle.Math.EC.Rfc7748;
 
+/// <summary>
+/// To start a local redis server for these tests to work:
+/// redis-server --requirepass Password1! --appendonly no
+/// 
+/// To connect to this instance in another window:
+/// redis-cli
+/// auth Password1!
+/// select 15
+/// </summary>
 namespace Fakemail.IntegrationTests
 {
     [TestFixture]
@@ -29,7 +40,7 @@ namespace Fakemail.IntegrationTests
                 Host = "localhost",
                 Port = 6379,
                 Password = "Password1!",
-                DatabaseNumber = 15
+                DatabaseNumber = 1
             };
 
             Log.Logger = new LoggerConfiguration()
@@ -40,7 +51,7 @@ namespace Fakemail.IntegrationTests
                 .UseSerilog()
                 .ConfigureServices((hostContext, services) =>
                 {
-                    services.AddHostedService<Server>();
+                    services.AddHostedService<SmtpService>();
                     services.AddSingleton(Log.Logger);
                     services.AddSingleton<IEngine, Engine>();
                     services.AddSingleton<IRedisConfiguration>(x => redisConfiguration);
@@ -59,19 +70,29 @@ namespace Fakemail.IntegrationTests
 
             await host.StartAsync();
 
-            var smtpClient = new SmtpClient("localhost", 12025);
+            
 
-            var guid = Guid.NewGuid();
-            var mailMessage = new MailMessage("from@test.com", "fred@fakemail.stream", $"subject-{guid}", "body");
+            var engine = host.Services.GetRequiredService<IEngine>();
+            var result = await engine.CreateMailboxAsync("e67f0c7f-4947-4be3-abe4-a1f1b3f3aef7@fakemail.stream");
 
-            smtpClient.Send(mailMessage);
+            Assert.IsTrue(result.Success);
+            var mailbox = result.Mailbox;
+            var subjects = new string[10];
+            var tasks = new List<Task>();
+            for (int i = 0; i < 10; i++)
+            {
+                subjects[i] = $"subject-{Guid.NewGuid()}";
+                var mailMessage = new MailMessage("from@test.com", mailbox, subjects[i], "body");
+                
+                var smtpClient = new SmtpClient("localhost", 12025);
+                tasks.Add(Task.Run(() => smtpClient.Send(mailMessage)));
+            }
+            await Task.WhenAll(tasks);
 
             // Query the engine to show the email was stored
-            var engine = host.Services.GetRequiredService<IEngine>();
+            var messageSummaries = await engine.GetMessageSummaries(mailbox, 0, 10);
 
-            var latestMessageSummary = (await engine.GetMessageSummaries("fred@fakemail.stream", 0, 10)).First();
-
-            Assert.AreEqual($"subject-{guid}", latestMessageSummary.Subject);
+            Assert.AreEqual(1, messageSummaries.Where(x => x.Subject == subjects[0]).Count());
 
             await host.StopAsync();
         }
