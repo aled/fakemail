@@ -1,16 +1,16 @@
-﻿using System.Threading;
+﻿using System;
+using System.IO;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
-using Fakemail.Data;
 using Serilog;
-using System;
-using Microsoft.Extensions.DependencyInjection;
-using Fakemail.Core;
 using SmtpServer.Storage;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Hosting.Systemd;
-using System.IO;
+
+using Fakemail.Core;
+using Fakemail.Data;
+using Fakemail.Telnet;
 
 namespace Fakemail.Smtp
 {
@@ -44,7 +44,8 @@ namespace Fakemail.Smtp
                 .UseSerilog()
                 .ConfigureServices((hostContext, services) =>
                 {
-                    services.AddHostedService<SmtpService>();                    
+                    services.AddHostedService<SmtpService>();
+                    services.AddHostedService<TelnetService>();
                     services.AddSingleton(Log.Logger);
                     services.AddSingleton<IEngine, Engine>();
                     services.AddSingleton<IRedisConfiguration>(x => redisConfiguration);

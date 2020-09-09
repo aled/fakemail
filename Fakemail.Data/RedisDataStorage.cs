@@ -112,12 +112,14 @@ namespace Fakemail.Data
         {
             _log.Information("Checking if mailbox exists for {address}", address.Mailbox);
 
-            return (await Database.SortedSetScoreAsync("mailbox-addresses", address.ReversedMailbox())) != null;
+            var score = await Database.SortedSetScoreAsync("mailbox-addresses", address.ReversedMailbox());
+           
+            return score != null;
         }
 
         public async Task<bool> CreateMailboxAsync(EmailAddress address)
         {
-            _log.Information("Creating mailbox {address}", address);
+            _log.Information("Creating mailbox {mailbox}", address.Mailbox);
 
             return await Database.SortedSetAddAsync("mailbox-addresses", address.ReversedMailbox(), 0, When.NotExists, CommandFlags.None);
         }

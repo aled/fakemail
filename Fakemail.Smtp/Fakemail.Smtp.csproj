@@ -23,6 +23,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Fakemail.Core\Fakemail.Core.csproj" />
     <ProjectReference Include="..\Fakemail.Data\Fakemail.Data.csproj" />
+    <ProjectReference Include="..\Fakemail.Telnet\Fakemail.Telnet.csproj" />
   </ItemGroup>
 
 </Project>
