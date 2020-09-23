@@ -1,23 +1,19 @@
-﻿using System.Net.Mail;
-using System.Threading;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Net.Mail;
 using System.Threading.Tasks;
-
-using Fakemail.Core;
-using Fakemail.Data;
-using Fakemail.Smtp;
 
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
 using NUnit.Framework;
-
+using Serilog;
 using SmtpServer.Storage;
 
-using Serilog;
-using System;
-using System.Linq;
-using System.Collections.Generic;
-using Org.BouncyCastle.Math.EC.Rfc7748;
+using Fakemail.Core;
+using Fakemail.Data;
+using Fakemail.Smtp;
 
 /// <summary>
 /// To start a local redis server for these tests to work:
