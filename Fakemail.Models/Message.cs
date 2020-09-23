@@ -2,17 +2,10 @@
 
 namespace Fakemail.Models
 {
-    public class Message
+    public record Message
     {
-        public string Id { get; }
-        public DateTime ReceivedTimestamp { get; }
-        public byte[] Content { get; }
-        
-        public Message(string id, DateTime receivedTimestamp, byte[] content)
-        {
-            Id = id;
-            ReceivedTimestamp = receivedTimestamp;
-            Content = content;
-        }
+        public string Id { get; init; }
+        public DateTime ReceivedTimestamp { get; init; }
+        public ReadOnlyMemory<byte> Content { get; init; }
     }
 }

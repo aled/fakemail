@@ -43,7 +43,6 @@ namespace Fakemail.Telnet
                 KeepAliveTimer.Change(0, Timeout.Infinite);
             }
 
-
             private static void OnTick(object timerState)
             {
                 KeepAliveTimer.Change(Timeout.Infinite, Timeout.Infinite);
@@ -109,10 +108,7 @@ namespace Fakemail.Telnet
                 {
                     if (state.handlerSocket.Connected)
                     {
-                        var summaryLine = $"{summary.From} | {summary.ReceivedTimestamp:yyyy-MM-dd HH:mm:ss} | {summary.Subject} | {summary.Body}";
-
-                        if (!summaryLine.EndsWith("\n"))
-                            summaryLine += "\n";
+                        var summaryLine = $"{summary.From} | {summary.ReceivedTimestamp:yyyy-MM-dd HH:mm:ss} | {summary.Subject} | {summary.Body.Replace("\r", "").Replace("\n", " ")}\n";                   
                         
                         Listener.Send(state, summaryLine);
                     }

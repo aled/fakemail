@@ -2,12 +2,12 @@
 
 namespace HtmlGenerator
 {
-    public class SummaryEmail
+    public record SummaryEmail
     {
-        public string Id { get; set; }
-        public DateTime Timestamp { get; set; }
-        public string Subject { get; set; }
-        public string From { get; set; }
-        public string To { get; set; }
+        public string Id;
+        public DateTime Timestamp;
+        public string Subject;
+        public string From;
+        public string To;
     }
 }

@@ -154,7 +154,7 @@ namespace Fakemail.HtmlGenerator
                         {
                             file.Delete();
                         }
-                        catch (Exception e)
+                        catch (Exception)
                         {
                             Console.Error.WriteLine($"Deleting new mail file - failed to parse timestamp: '{file.Name}'");
                         }

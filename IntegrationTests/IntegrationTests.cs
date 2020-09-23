@@ -65,30 +65,35 @@ namespace Fakemail.IntegrationTests
             var host = CreateHostBuilder().Build();
 
             await host.StartAsync();
-
-            
-
             var engine = host.Services.GetRequiredService<IEngine>();
             var result = await engine.CreateMailboxAsync("e67f0c7f-4947-4be3-abe4-a1f1b3f3aef7@fakemail.stream");
 
             Assert.IsTrue(result.Success);
             var mailbox = result.Mailbox;
-            var subjects = new string[10];
+
+            int mailCount = 10;
+            var subjects = new string[mailCount];
+            var bodies = new string[mailCount];
             var tasks = new List<Task>();
-            for (int i = 0; i < 10; i++)
+            for (int i = 0; i < mailCount; i++)
             {
                 subjects[i] = $"subject-{Guid.NewGuid()}";
-                var mailMessage = new MailMessage("from@test.com", mailbox, subjects[i], "body");
+                bodies[i] = $"body-{Guid.NewGuid()}";
+                var mailMessage = new MailMessage("from@test.com", mailbox, subjects[i], bodies[i]);
                 
                 var smtpClient = new SmtpClient("localhost", 12025);
                 tasks.Add(Task.Run(() => smtpClient.Send(mailMessage)));
             }
             await Task.WhenAll(tasks);
 
-            // Query the engine to show the email was stored
-            var messageSummaries = await engine.GetMessageSummaries(mailbox, 0, 10);
+            // Query the engine to show the emails were stored
+            var messageSummaries = await engine.GetMessageSummaries(mailbox, 0, mailCount);
 
-            Assert.AreEqual(1, messageSummaries.Where(x => x.Subject == subjects[0]).Count());
+            for (int i = 0; i < mailCount; i++)
+            {
+                Assert.AreEqual(1, messageSummaries.Where(x => x.Subject == subjects[i]).Count(), subjects[i]);
+                Assert.AreEqual(1, messageSummaries.Where(x => x.Body.Trim() == bodies[i]).Count(), bodies[i]);
+            }
 
             await host.StopAsync();
         }

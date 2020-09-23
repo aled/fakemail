@@ -1,15 +1,13 @@
 ﻿using System;
 
-using Newtonsoft.Json;
-
 namespace Fakemail.Models
 {
-    public class MessageSummary
+    public record MessageSummary
     {
-        public string Id { get; set; }
-        public DateTime ReceivedTimestamp { get; set; }
-        public string From { get; set; }
-        public string Subject { get; set; }
-        public string Body { get; set; }
+        public string Id { get; init; }
+        public DateTime ReceivedTimestamp { get; init; }
+        public string From { get; init; }
+        public string Subject { get; init; }
+        public string Body { get; init; }
     }
 }
