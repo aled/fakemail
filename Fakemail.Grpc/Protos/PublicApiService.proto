@@ -1,0 +1,44 @@
+syntax = "proto3";
+
+option csharp_namespace = "Fakemail.Grpc";
+
+package Fakemail;
+
+service PublicApi {
+  rpc GetMailboxStatus (GetMailboxStatusRequest) returns (GetMailboxStatusReply);
+  rpc CreateMailbox (CreateMailboxRequest) returns (CreateMailboxReply);
+}
+
+message RequestMetadata {
+  string correlationId = 1;
+}
+
+message ReplyMetadata {
+  string correlationId = 1;
+  int32 processingTimeMillis = 2;
+  bool success = 3;
+  int32 statusCode = 4;
+  string statusMessage = 5;
+}
+
+message GetMailboxStatusRequest {
+  RequestMetadata requestMetadata = 1;
+  string mailbox = 2;  
+}
+
+message GetMailboxStatusReply {
+  ReplyMetadata replyMetadata = 1;
+  string mailbox = 2;
+  bool exists = 3;
+  int32 messageCount = 4;
+}
+
+message CreateMailboxRequest {
+  RequestMetadata requestMetadata = 1;
+  string mailbox = 2;
+}
+
+message CreateMailboxReply {
+  ReplyMetadata replyMetadata = 1;
+  string mailbox = 2;
+}
