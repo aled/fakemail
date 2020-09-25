@@ -13,14 +13,14 @@ namespace Fakemail.Smtp
 {
     public class SmtpService : IHostedService
     {
-        Task _serverTask;
+        private Task _serverTask;
 
         private ILogger<SmtpService> _log;
-        private IHostApplicationLifetime _lifetime; 
+        private IHostApplicationLifetime _lifetime;
         private IMessageStoreFactory _messageStoreFactory;
         private IMailboxFilterFactory _mailboxFilterFactory;
         private CancellationTokenSource _cancellationTokenSource = new CancellationTokenSource();
-        
+
         public SmtpService(ILogger<SmtpService> log, IHostApplicationLifetime lifetime, IMessageStoreFactory messageStoreFactory, IMailboxFilterFactory mailboxFilterFactory)
         {
             _log = log;
@@ -43,6 +43,7 @@ namespace Fakemail.Smtp
         {
             _log.LogInformation("SmtpService: OnStopped");
         }
+
         public Task StartAsync(CancellationToken cancellationToken)
         {
             _log.LogInformation("Starting hosted service");

@@ -1,11 +1,11 @@
 ﻿using System.Threading;
 using System.Threading.Tasks;
 
+using Fakemail.Core;
+
 using SmtpServer;
 using SmtpServer.Mail;
 using SmtpServer.Storage;
-
-using Fakemail.Core;
 
 namespace Fakemail.Smtp
 {

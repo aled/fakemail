@@ -2,13 +2,15 @@
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+
+using Fakemail.Core;
+
 using MimeKit;
+
 using SmtpServer;
 using SmtpServer.Mail;
 using SmtpServer.Protocol;
 using SmtpServer.Storage;
-
-using Fakemail.Core;
 
 namespace Fakemail.Smtp
 {

@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace Fakemail.Data
+﻿namespace Fakemail.Data
 {
     public class RedisConfiguration : IRedisConfiguration
     {

@@ -1,20 +1,21 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 
-using StackExchange.Redis;
-
 using Fakemail.DataModels;
 using Fakemail.Models;
+
 using Serilog;
-using System.IO;
-using System.Text;
+
+using StackExchange.Redis;
 
 namespace Fakemail.Data
 {
-    static class Extensions
+    internal static class Extensions
     {
         public static string ReversedMailbox(this EmailAddress emailAddress)
         {
@@ -22,7 +23,7 @@ namespace Fakemail.Data
         }
     }
 
-    class RedisLogger : TextWriter
+    internal class RedisLogger : TextWriter
     {
         private ILogger _logger;
 
@@ -32,6 +33,7 @@ namespace Fakemail.Data
         {
             _logger = logger;
         }
+
         public override void WriteLine(string s)
         {
             _logger.Debug(s);
@@ -48,7 +50,7 @@ namespace Fakemail.Data
         {
             _log = logger.ForContext<RedisDataStorage>();
             _configuration = configuration;
-            
+
             var redisOptions = new ConfigurationOptions
             {
                 Password = configuration.Password
@@ -58,8 +60,8 @@ namespace Fakemail.Data
             _redis = ConnectionMultiplexer.Connect(redisOptions, new RedisLogger(_log));
         }
 
-        private IDatabase Database =>_redis.GetDatabase(_configuration.DatabaseNumber);
-   
+        private IDatabase Database => _redis.GetDatabase(_configuration.DatabaseNumber);
+
         public async Task CreateMessage(Message message, MessageSummary messageSummary, IEnumerable<EmailAddress> toEmailAddresses)
         {
             var transaction = Database.CreateTransaction();
@@ -113,7 +115,7 @@ namespace Fakemail.Data
             _log.Information("Checking if mailbox exists for {address}", address.Mailbox);
 
             var score = await Database.SortedSetScoreAsync("mailbox-addresses", address.ReversedMailbox());
-           
+
             return score != null;
         }
 
@@ -165,7 +167,7 @@ namespace Fakemail.Data
                 {
                     summaries.Add(JsonSerializer.Deserialize<MessageSummary>(summary));
                 }
-                catch (Exception) 
+                catch (Exception)
                 {
                     _log.Warning($"Error deserializing message summary {id}", id);
                 }

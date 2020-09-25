@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace Fakemail.Core
+﻿namespace Fakemail.Core
 {
     public class CreateMailboxResult
     {

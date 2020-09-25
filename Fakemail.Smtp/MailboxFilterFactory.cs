@@ -3,7 +3,7 @@ using SmtpServer.Storage;
 
 namespace Fakemail.Smtp
 {
-    public class MailboxFilterFactory: IMailboxFilterFactory
+    public class MailboxFilterFactory : IMailboxFilterFactory
     {
         private IMailboxFilter _mailboxFilter;
 

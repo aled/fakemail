@@ -2,23 +2,24 @@
 using System.IO;
 using System.Threading.Tasks;
 
+using Fakemail.Core;
+using Fakemail.Data;
+using Fakemail.Telnet;
+
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
 using Serilog;
 using Serilog.Exceptions;
-using SmtpServer.Storage;
 
-using Fakemail.Core;
-using Fakemail.Data;
-using Fakemail.Telnet;
+using SmtpServer.Storage;
 
 namespace Fakemail.Smtp
 {
-    class Program
+    internal class Program
     {
-        static async Task Main(string[] args)
+        private static async Task Main(string[] args)
         {
             await CreateHostBuilder(args)
                 .UseSystemd()
@@ -64,6 +65,6 @@ namespace Fakemail.Smtp
                     configHost.AddJsonFile("fakemail.config", optional: true);
                     configHost.AddCommandLine(args);
                 });
-        } 
+        }
     }
 }
