@@ -14,7 +14,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Fakemail.Models\Fakemail.DataModels.csproj" />
+    <ProjectReference Include="..\Fakemail.DataModels\Fakemail.DataModels.csproj" />
   </ItemGroup>
 
 </Project>

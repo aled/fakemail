@@ -2,7 +2,7 @@ syntax = "proto3";
 
 option csharp_namespace = "Fakemail.Grpc";
 
-package Fakemail;
+package fakemail;
 
 service PublicApi {
   rpc GetMailboxStatus (GetMailboxStatusRequest) returns (GetMailboxStatusReply);
@@ -10,35 +10,35 @@ service PublicApi {
 }
 
 message RequestMetadata {
-  string correlationId = 1;
+  string correlation_id = 1;
 }
 
 message ReplyMetadata {
-  string correlationId = 1;
-  int32 processingTimeMillis = 2;
+  string correlation_id = 1;
+  int32 processing_time_millis = 2;
   bool success = 3;
-  int32 statusCode = 4;
-  string statusMessage = 5;
+  int32 status_code = 4;
+  string status_message = 5;
 }
 
 message GetMailboxStatusRequest {
-  RequestMetadata requestMetadata = 1;
-  string mailbox = 2;  
+  RequestMetadata request_metadata = 1;
+  string mailbox = 2;
 }
 
 message GetMailboxStatusReply {
-  ReplyMetadata replyMetadata = 1;
+  ReplyMetadata reply_metadata = 1;
   string mailbox = 2;
   bool exists = 3;
-  int32 messageCount = 4;
+  int32 message_count = 4;
 }
 
 message CreateMailboxRequest {
-  RequestMetadata requestMetadata = 1;
+  RequestMetadata request_metadata = 1;
   string mailbox = 2;
 }
 
 message CreateMailboxReply {
-  ReplyMetadata replyMetadata = 1;
+  ReplyMetadata reply_metadata = 1;
   string mailbox = 2;
 }

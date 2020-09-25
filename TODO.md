@@ -1,3 +1,5 @@
+# to-do list
+
 Done
 - Set up systemd to run HtmlGenerator as a service
 - Keep mail longer than 15 mins? Keep last 100 mails instead?

@@ -1,3 +1,5 @@
+# certbot on nginx
+
 apt install certbot python3-certbot-nginx
 certbot --nginx
 
