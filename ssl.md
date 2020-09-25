@@ -18,4 +18,3 @@ need to edit nginx site config:
 
         ssl_certificate  /etc/letsencrypt/live/www.fakemail.stream/fullchain.pem;
         ssl_certificate_key  /etc/letsencrypt/live/www.fakemail.stream/privkey.pem;
-        

@@ -16,7 +16,7 @@
 
   <ItemGroup>
     <Protobuf Include="..\Fakemail.Grpc\Protos\public-api-service.proto" GrpcServices="Client">
-      <Link>Protos\public-api-service.proto</Link>
+      <Link>Protos\public_api_service.proto</Link>
     </Protobuf>
   </ItemGroup>
 
