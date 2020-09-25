@@ -4,21 +4,23 @@ using System.Linq;
 using System.Net.Mail;
 using System.Threading.Tasks;
 
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
-
-using NUnit.Framework;
-using Serilog;
-using SmtpServer.Storage;
-
 using Fakemail.Core;
 using Fakemail.Data;
 using Fakemail.Smtp;
 
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+
+using NUnit.Framework;
+
+using Serilog;
+
+using SmtpServer.Storage;
+
 /// <summary>
 /// To start a local redis server for these tests to work:
 /// redis-server --requirepass Password1! --appendonly no
-/// 
+///
 /// To connect to this instance in another window:
 /// redis-cli
 /// auth Password1!
@@ -80,7 +82,7 @@ namespace Fakemail.IntegrationTests
                 subjects[i] = $"subject-{Guid.NewGuid()}";
                 bodies[i] = $"body-{Guid.NewGuid()}";
                 var mailMessage = new MailMessage("from@test.com", mailbox, subjects[i], bodies[i]);
-                
+
                 var smtpClient = new SmtpClient("localhost", 12025);
                 tasks.Add(Task.Run(() => smtpClient.Send(mailMessage)));
             }

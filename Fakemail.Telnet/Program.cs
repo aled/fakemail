@@ -2,20 +2,20 @@
 using System.IO;
 using System.Threading.Tasks;
 
+using Fakemail.Core;
+using Fakemail.Data;
+
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
 using Serilog;
 
-using Fakemail.Core;
-using Fakemail.Data;
-
 namespace Fakemail.Telnet
 {
-    class Program
+    internal class Program
     {
-        static async Task Main(string[] args)
+        private static async Task Main(string[] args)
         {
             await CreateHostBuilder(args)
                 .UseSystemd()

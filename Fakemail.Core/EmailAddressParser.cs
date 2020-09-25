@@ -1,10 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Globalization;
+﻿using System.Globalization;
 using System.Linq;
-using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 
 using Fakemail.DataModels;
 
@@ -24,7 +20,7 @@ namespace Fakemail.Core
             var domain = split[1];
 
             // The rules for valid email addresses are complex. Fortunately we only need to support our own subset of addresses.
-            // Use these rules: 
+            // Use these rules:
             //  o The prefix and domain start with a letter or number
             //  o Subsequent characters can include symbols (currently - + _)
             //  o Dots are ignored in the prefix

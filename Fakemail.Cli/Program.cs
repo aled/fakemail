@@ -1,14 +1,15 @@
 ﻿using System;
 using System.Threading.Tasks;
 
-using Grpc.Net.Client;
 using Fakemail.Grpc;
+
+using Grpc.Net.Client;
 
 namespace Fakemail.Cli
 {
-    class Program
+    internal class Program
     {
-        static async Task Main(string[] args)
+        private static async Task Main(string[] args)
         {
             var channel = GrpcChannel.ForAddress("https://localhost:5001");
             var client = new PublicApi.PublicApiClient(channel);

@@ -10,7 +10,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Fakemail.Data\Fakemail.Data.csproj" />
-    <ProjectReference Include="..\Fakemail.Models\Fakemail.DataModels.csproj" />
   </ItemGroup>
 
 </Project>

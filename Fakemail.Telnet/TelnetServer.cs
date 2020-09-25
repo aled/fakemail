@@ -1,9 +1,7 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
-using System.Linq.Expressions;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
@@ -32,7 +30,7 @@ namespace Fakemail.Telnet
         }
 
         // store a Dictionary of mailbox => List<StateObject>
-        class CallbackManager
+        private class CallbackManager
         {
             private static ConcurrentDictionary<string, List<SocketState>> callbacks = new ConcurrentDictionary<string, List<SocketState>>();
             private static Timer KeepAliveTimer = new Timer(OnTick);
@@ -56,7 +54,7 @@ namespace Fakemail.Telnet
                         try
                         {
                             var sequence = new List<byte>();
-                            
+
                             sequence.Add(0x1b); // esc
                             sequence.Add(0x5b); // [
                             sequence.Add(0x39); // 9
@@ -88,7 +86,7 @@ namespace Fakemail.Telnet
                     var summaries = await _engine.GetMessageSummaries(state.mailbox, 0, 10);
                     foreach (var summary in summaries.OrderBy(x => x.ReceivedTimestamp))
                         SendSummary(state, summary);
-                });       
+                });
             }
 
             public static void RemoveSubscription(SocketState o)
@@ -108,8 +106,8 @@ namespace Fakemail.Telnet
                 {
                     if (state.handlerSocket.Connected)
                     {
-                        var summaryLine = $"{summary.From} | {summary.ReceivedTimestamp:yyyy-MM-dd HH:mm:ss} | {summary.Subject} | {summary.Body.Replace("\r", "").Replace("\n", " ")}\n";                   
-                        
+                        var summaryLine = $"{summary.From} | {summary.ReceivedTimestamp:yyyy-MM-dd HH:mm:ss} | {summary.Subject} | {summary.Body.Replace("\r", "").Replace("\n", " ")}\n";
+
                         Listener.Send(state, summaryLine);
                     }
                     else
@@ -122,7 +120,6 @@ namespace Fakemail.Telnet
                     RemoveSubscription(state);
                     Console.WriteLine(e.Message);
                 }
-
             }
 
             public static void OnMessageReceived(string mailbox, MessageSummary summary)
@@ -152,9 +149,10 @@ namespace Fakemail.Telnet
                 {
                     CallbackManager.RemoveSubscription(this);
 
-                    try { 
-                        handlerSocket.Shutdown(SocketShutdown.Both); 
-                    } 
+                    try
+                    {
+                        handlerSocket.Shutdown(SocketShutdown.Both);
+                    }
                     catch (Exception) { }
 
                     try
@@ -169,7 +167,7 @@ namespace Fakemail.Telnet
         public class Listener
         {
             public static ManualResetEvent connectEvent = new ManualResetEvent(false);
-            static Socket listenSocket;
+            private static Socket listenSocket;
 
             public Listener()
             {
@@ -182,7 +180,7 @@ namespace Fakemail.Telnet
                     if (listenSocket != null)
                         listenSocket.Close();
                 }
-                catch  (Exception e)
+                catch (Exception e)
                 {
                     Console.WriteLine(e.ToString());
                 }
@@ -194,7 +192,7 @@ namespace Fakemail.Telnet
                 var localEndPoint = new IPEndPoint(ipAddress, 12041);
 
                 listenSocket = new Socket(ipAddress.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
- 
+
                 try
                 {
                     listenSocket.Bind(localEndPoint);
@@ -220,7 +218,7 @@ namespace Fakemail.Telnet
             public static void AcceptCallback(IAsyncResult ar)
             {
                 connectEvent.Set();
-                
+
                 var state = new SocketState();
                 try
                 {
@@ -362,7 +360,7 @@ namespace Fakemail.Telnet
             public static void Send(SocketState state, string s)
             {
                 var buf = Encoding.ASCII.GetBytes(s);
-                state.handlerSocket.BeginSend(buf, 0, buf.Length, SocketFlags.None, new AsyncCallback(SendCallback), state);                
+                state.handlerSocket.BeginSend(buf, 0, buf.Length, SocketFlags.None, new AsyncCallback(SendCallback), state);
             }
 
             public static void SendCallback(IAsyncResult ar)

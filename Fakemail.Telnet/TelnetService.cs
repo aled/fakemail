@@ -1,19 +1,18 @@
-﻿using System;
-using System.Threading;
+﻿using System.Threading;
 using System.Threading.Tasks;
+
+using Fakemail.Core;
 
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
 using Serilog;
 
-using Fakemail.Core;
-
 namespace Fakemail.Telnet
 {
     public class TelnetService : IHostedService
     {
-        Task _serverTask;
+        private Task _serverTask;
 
         private ILogger<TelnetService> _log;
         private IHostApplicationLifetime _lifetime;

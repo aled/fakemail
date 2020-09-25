@@ -1,8 +1,4 @@
-﻿using System.Globalization;
-using System.Linq;
-using System.Text.RegularExpressions;
-
-namespace Fakemail.DataModels
+﻿namespace Fakemail.DataModels
 {
     public record EmailAddress
     {
@@ -15,7 +11,7 @@ namespace Fakemail.DataModels
         public string Normalized { get; init; }
 
         // The mailbox that emails to this address should go to.
-        // This is the normalized address, with the prefix limited to the part 
+        // This is the normalized address, with the prefix limited to the part
         // before the first '+' character.
         //
         // For example, messages to the address Fred.Bloggs+Test@EVILCORP.COM should

@@ -1,13 +1,11 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 
-using Microsoft.Extensions.Logging;
+using Fakemail.Core;
 
 using Grpc.Core;
 
-using Fakemail.Core;
+using Microsoft.Extensions.Logging;
 
 namespace Fakemail.Grpc
 {

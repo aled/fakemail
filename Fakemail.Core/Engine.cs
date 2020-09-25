@@ -3,16 +3,17 @@ using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
 
-using MimeKit;
-
 using Fakemail.Data;
 using Fakemail.DataModels;
 using Fakemail.Models;
+
+using MimeKit;
+
 using Serilog;
 
 namespace Fakemail.Core
 {
-    static class Extensions
+    internal static class Extensions
     {
         public static string Truncate(this string s, int len)
         {
@@ -63,7 +64,7 @@ namespace Fakemail.Core
                 {
                     result.Success = true;
                     result.ErrorMessage = "Mailbox already exists";
-                }   
+                }
             }
             else
             {

@@ -1,8 +1,4 @@
-﻿using HtmlGenerator;
-
-using MimeKit;
-
-using System;
+﻿using System;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -11,9 +7,13 @@ using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 
+using HtmlGenerator;
+
+using MimeKit;
+
 namespace Fakemail.HtmlGenerator
 {
-    static class StringExtensions
+    internal static class StringExtensions
     {
         public static string Truncate(this string s, int maxLen)
         {
@@ -29,11 +29,11 @@ namespace Fakemail.HtmlGenerator
         }
     }
 
-    class Program
+    internal class Program
     {
-        string UNKNOWN = "[UNKNOWN]";
+        private string UNKNOWN = "[UNKNOWN]";
 
-        static async Task Main(string[] args)
+        private static async Task Main(string[] args)
         {
             Console.WriteLine("HtmlGenerator starting...");
 
@@ -49,16 +49,16 @@ namespace Fakemail.HtmlGenerator
             var summaryMailDir = "summary";
             var summaryFile = "index.html";
             var tempIndexFile = "index.html.tmp";
-//#else
-//            var incomingDir = "/var/mail/vhosts/fakemail.stream/new";
-//            var curDir = "/var/mail/vhosts/fakemail.stream/cur";
-//            var htmlRoot = "/var/www/html";
-//            var fullMailDir = "mail";
-//            var summaryMailDir = "summary";
-//            var summaryFile = "index.html";
-//            var tempDir = "/tmp";
-//            var tempIndexFile = "index.html.tmp";
-//#endif           
+            //#else
+            //            var incomingDir = "/var/mail/vhosts/fakemail.stream/new";
+            //            var curDir = "/var/mail/vhosts/fakemail.stream/cur";
+            //            var htmlRoot = "/var/www/html";
+            //            var fullMailDir = "mail";
+            //            var summaryMailDir = "summary";
+            //            var summaryFile = "index.html";
+            //            var tempDir = "/tmp";
+            //            var tempIndexFile = "index.html.tmp";
+            //#endif
 
             await new Program().Run(incomingDir, curDir, htmlRoot, summaryMailDir, fullMailDir, summaryFile, tempDir, tempIndexFile);
         }
