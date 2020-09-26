@@ -17,16 +17,26 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-18.04]
+        redis-version: [6]
 
     steps:
     - uses: actions/checkout@v2
+
     - name: Setup .NET Core
       uses: actions/setup-dotnet@v1
       with:
         dotnet-version: 5.0.100-rc.1.20452.10
+
     - name: Install dependencies
       run: dotnet restore
+
     - name: Build
       run: dotnet build --configuration Release --no-restore
+      
+    - name: Start Redis
+      uses: supercharge/redis-github-action@1.1.0
+      with:
+        redis-version: ${{ matrix.redis-version }}
+
     - name: Test
       run: dotnet test --no-restore --verbosity normal

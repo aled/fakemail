@@ -19,11 +19,10 @@ using SmtpServer.Storage;
 
 /// <summary>
 /// To start a local redis server for these tests to work:
-/// redis-server --requirepass Password1! --appendonly no
+/// redis-server --appendonly no
 ///
 /// To connect to this instance in another window:
 /// redis-cli
-/// auth Password1!
 /// select 15
 /// </summary>
 namespace Fakemail.IntegrationTests
@@ -37,7 +36,6 @@ namespace Fakemail.IntegrationTests
             {
                 Host = "localhost",
                 Port = 6379,
-                Password = "Password1!",
                 DatabaseNumber = 1
             };
 
