@@ -47,6 +47,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".github", ".github", "{BE16
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "workflows", "workflows", "{218073D3-A07B-44A0-A503-94B517A9F4BA}"
 	ProjectSection(SolutionItems) = preProject
+		.github\workflows\dotnet-core.yml = .github\workflows\dotnet-core.yml
 		.github\workflows\superlinter.yml = .github\workflows\superlinter.yml
 	EndProjectSection
 EndProject
