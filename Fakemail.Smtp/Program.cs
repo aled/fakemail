@@ -11,7 +11,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
 using Serilog;
-using Serilog.Exceptions;
 
 using SmtpServer.Storage;
 
@@ -30,7 +29,6 @@ namespace Fakemail.Smtp
         private static IHostBuilder CreateHostBuilder(string[] args)
         {
             Log.Logger = new LoggerConfiguration()
-               .Enrich.WithExceptionDetails()
                .WriteTo.Console()
                .CreateLogger();
 

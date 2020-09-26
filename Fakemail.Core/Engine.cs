@@ -7,9 +7,9 @@ using Fakemail.Data;
 using Fakemail.DataModels;
 using Fakemail.Models;
 
-using MimeKit;
+using Microsoft.Extensions.Logging;
 
-using Serilog;
+using MimeKit;
 
 namespace Fakemail.Core
 {
@@ -31,12 +31,12 @@ namespace Fakemail.Core
     {
         private static readonly long TICKS_PER_SECOND = 10000000;
 
-        private ILogger _log;
+        private ILogger<Engine> _log;
         private IDataStorage _dataStorage;
 
-        public Engine(ILogger logger, IDataStorage dataStorage)
+        public Engine(ILogger<Engine> log, IDataStorage dataStorage)
         {
-            _log = logger.ForContext<Engine>();
+            _log = log;
             _dataStorage = dataStorage;
         }
 
@@ -76,7 +76,7 @@ namespace Fakemail.Core
 
         public async Task<bool> MailboxExistsAsync(string emailAddress)
         {
-            _log.Information("Parsing email address {emailAddress}", emailAddress);
+            _log.LogDebug("Parsing email address {emailAddress}", emailAddress);
 
             if (EmailAddressParser.TryParse(emailAddress, out var validatedEmailAddress))
                 return await _dataStorage.MailboxExists(validatedEmailAddress);
@@ -89,7 +89,7 @@ namespace Fakemail.Core
             var receivedTimestamp = DateTime.UtcNow;
             string messageId = GenerateMessageId(receivedTimestamp);
 
-            Console.WriteLine($"message received: timestamp='{receivedTimestamp}'");
+            _log.LogDebug($"message received: timestamp='{receivedTimestamp}'");
 
             Directory.CreateDirectory("/tmp/fakemail");
             await File.WriteAllTextAsync($"/tmp/fakemail/{messageId}.body.txt", mimeMessage.TextBody);
