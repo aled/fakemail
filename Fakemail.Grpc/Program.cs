@@ -8,7 +8,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
 using Serilog;
-using Serilog.Exceptions;
 
 namespace Fakemail.Grpc
 {
@@ -22,7 +21,6 @@ namespace Fakemail.Grpc
         public static IHostBuilder CreateHostBuilder(string[] args)
         {
             Log.Logger = new LoggerConfiguration()
-              .Enrich.WithExceptionDetails()
               .WriteTo.Console()
               .CreateLogger();
 

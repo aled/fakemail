@@ -4,8 +4,6 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
-using Serilog;
-
 using SmtpServer;
 using SmtpServer.Storage;
 
@@ -59,7 +57,7 @@ namespace Fakemail.Smtp
                .MailboxFilter(_mailboxFilterFactory)
                .Build();
 
-            Log.Information("Starting SMTP server");
+            _log.LogInformation("Starting SMTP server");
 
             _serverTask = new SmtpServer.SmtpServer(options).StartAsync(_cancellationTokenSource.Token);
 

@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 using Fakemail.DataModels;
 using Fakemail.Models;
 
-using Serilog;
+using Microsoft.Extensions.Logging;
 
 using StackExchange.Redis;
 
@@ -25,30 +25,30 @@ namespace Fakemail.Data
 
     internal class RedisLogger : TextWriter
     {
-        private ILogger _logger;
+        private ILogger<RedisDataStorage> _log;
 
         public override Encoding Encoding => throw new NotImplementedException();
 
-        public RedisLogger(ILogger logger)
+        public RedisLogger(ILogger<RedisDataStorage> log)
         {
-            _logger = logger;
+            _log = log;
         }
 
         public override void WriteLine(string s)
         {
-            _logger.Debug(s);
+            _log.LogDebug(s);
         }
     }
 
     public class RedisDataStorage : IDataStorage
     {
-        private ILogger _log;
+        private ILogger<RedisDataStorage> _log;
         private IConnectionMultiplexer _redis;
         private IRedisConfiguration _configuration;
 
-        public RedisDataStorage(ILogger logger, IRedisConfiguration configuration)
+        public RedisDataStorage(ILogger<RedisDataStorage> log, IRedisConfiguration configuration)
         {
-            _log = logger.ForContext<RedisDataStorage>();
+            _log = log;
             _configuration = configuration;
 
             var redisOptions = new ConfigurationOptions
@@ -69,13 +69,13 @@ namespace Fakemail.Data
 
             // Store the full message
             var messageKey = $"message:{message.Id}";
-            Console.WriteLine($"Queuing command: Set key '{messageKey}'");
+            _log.LogDebug($"Queuing command: Set key '{messageKey}'");
             transactionTasks.Add(transaction.StringSetAsync(messageKey, message.Content, TimeSpan.FromDays(7)));
 
             // Store the message summary: timestamp, from, to, first 80 chars of subject, first 80 chars of text body
             // Put an exipry on this, so that these are the second things to be deleted
             var messageSummaryKey = $"message-summary:{message.Id}";
-            Console.WriteLine($"Queuing command: Set key '{messageSummaryKey}'");
+            _log.LogDebug($"Queuing command: Set key '{messageSummaryKey}'");
             var messageSummaryJson = JsonSerializer.Serialize(messageSummary);
             transactionTasks.Add(transaction.StringSetAsync(messageSummaryKey, messageSummaryJson, TimeSpan.FromDays(30)));
 
@@ -86,12 +86,12 @@ namespace Fakemail.Data
 
                 // ensure the mailbox address is created
                 var mailboxAddressesKey = "mailbox-addresses";
-                Console.WriteLine($"Queuing command: Add '{reversedAddress}' to key '{mailboxAddressesKey}'");
+                _log.LogDebug($"Queuing command: Add '{reversedAddress}' to key '{mailboxAddressesKey}'");
                 transactionTasks.Add(transaction.SortedSetAddAsync(mailboxAddressesKey, reversedAddress, 0, CommandFlags.None));
 
                 // add the message ID to each mailbox
                 var mailboxIndexKey = $"mailbox-index:{reversedAddress}";
-                Console.WriteLine($"Queuing command: Add '{message.Id}' to key '{mailboxIndexKey}'");
+                _log.LogDebug($"Queuing command: Add '{message.Id}' to key '{mailboxIndexKey}'");
                 transactionTasks.Add(transaction.SortedSetAddAsync(mailboxIndexKey, message.Id, 0, CommandFlags.None));
 
                 transactionTasks.Add(transaction.PublishAsync("message-received", $"{toEmailAddress.Mailbox}:{messageSummaryJson}"));
@@ -112,7 +112,7 @@ namespace Fakemail.Data
 
         public async Task<bool> MailboxExists(EmailAddress address)
         {
-            _log.Information("Checking if mailbox exists for {address}", address.Mailbox);
+            _log.LogDebug("Checking if mailbox exists for {address}", address.Mailbox);
 
             var score = await Database.SortedSetScoreAsync("mailbox-addresses", address.ReversedMailbox());
 
@@ -121,7 +121,7 @@ namespace Fakemail.Data
 
         public async Task<bool> CreateMailboxAsync(EmailAddress address)
         {
-            _log.Information("Creating mailbox {mailbox}", address.Mailbox);
+            _log.LogDebug("Creating mailbox {mailbox}", address.Mailbox);
 
             return await Database.SortedSetAddAsync("mailbox-addresses", address.ReversedMailbox(), 0, When.NotExists, CommandFlags.None);
         }
@@ -145,7 +145,7 @@ namespace Fakemail.Data
                 }
                 catch (Exception e)
                 {
-                    Console.WriteLine(e.Message);
+                    _log.LogError(e, "Failed to add subscription");
                 }
             });
         }
@@ -169,7 +169,7 @@ namespace Fakemail.Data
                 }
                 catch (Exception)
                 {
-                    _log.Warning($"Error deserializing message summary {id}", id);
+                    _log.LogError($"Error deserializing message summary {id}", id);
                 }
             }
             return summaries;

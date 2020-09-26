@@ -5,6 +5,8 @@ using System.Threading.Tasks;
 
 using Fakemail.Core;
 
+using Microsoft.Extensions.Logging;
+
 using MimeKit;
 
 using SmtpServer;
@@ -16,10 +18,12 @@ namespace Fakemail.Smtp
 {
     public class MessageStore : IMessageStore
     {
+        private ILogger<MessageStore> _log;
         private IEngine _engine;
 
-        public MessageStore(IEngine engine)
+        public MessageStore(ILogger<MessageStore> log, IEngine engine)
         {
+            _log = log;
             _engine = engine;
         }
 
@@ -34,10 +38,8 @@ namespace Fakemail.Smtp
             }
             catch (Exception e)
             {
-                Console.WriteLine(e.Message);
-                Console.WriteLine(e.StackTrace);
-
-                throw;
+                _log.LogError(e, "Failed to save smtp message");
+                return SmtpResponse.TransactionFailed;
             }
             return SmtpResponse.Ok;
         }

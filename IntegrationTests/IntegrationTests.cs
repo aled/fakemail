@@ -23,7 +23,7 @@ using SmtpServer.Storage;
 ///
 /// To connect to this instance in another window:
 /// redis-cli
-/// select 15
+/// select 1
 /// </summary>
 namespace Fakemail.IntegrationTests
 {
@@ -53,9 +53,9 @@ namespace Fakemail.IntegrationTests
                     services.AddSingleton<IRedisConfiguration>(x => redisConfiguration);
                     services.AddSingleton<IDataStorage, RedisDataStorage>();
                     services.AddSingleton<IMessageStoreFactory, MessageStoreFactory>();
-                    services.AddSingleton<IMessageStore, Fakemail.Smtp.MessageStore>();
+                    services.AddSingleton<IMessageStore, Smtp.MessageStore>();
                     services.AddSingleton<IMailboxFilterFactory, MailboxFilterFactory>();
-                    services.AddSingleton<IMailboxFilter, Fakemail.Smtp.MailboxFilter>();
+                    services.AddSingleton<IMailboxFilter, Smtp.MailboxFilter>();
                 });
         }
 

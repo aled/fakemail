@@ -6,8 +6,6 @@ using Fakemail.Core;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
-using Serilog;
-
 namespace Fakemail.Telnet
 {
     public class TelnetService : IHostedService
@@ -50,7 +48,7 @@ namespace Fakemail.Telnet
             _lifetime.ApplicationStopping.Register(OnStopping);
             _lifetime.ApplicationStopped.Register(OnStopped);
 
-            Log.Information("Starting Telnet server");
+            _log.LogInformation("Starting Telnet server");
 
             _serverTask = new TelnetServer().StartAsync(_engine, _cancellationTokenSource.Token);
 
