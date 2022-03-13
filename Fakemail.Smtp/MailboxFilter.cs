@@ -28,14 +28,9 @@ namespace Fakemail.Smtp
             return Task.FromResult(MailboxFilterResult.Yes);
         }
 
-        public async Task<MailboxFilterResult> CanDeliverToAsync(ISessionContext context, IMailbox to, IMailbox from, CancellationToken cancellationToken)
+        public Task<MailboxFilterResult> CanDeliverToAsync(ISessionContext context, IMailbox to, IMailbox from, CancellationToken cancellationToken)
         {
-            if (to.Host == "fakemail.stream")
-                if (await _engine.MailboxExistsAsync(to.AsAddress()))
-                    return MailboxFilterResult.Yes;
-
-            _log.LogInformation("No mailbox exists for {address}", to.AsAddress());
-            return MailboxFilterResult.NoPermanently;
+            return Task.FromResult(MailboxFilterResult.Yes);
         }
     }
 }

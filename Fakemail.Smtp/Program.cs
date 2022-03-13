@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 
 using Fakemail.Core;
 using Fakemail.Data;
-using Fakemail.Telnet;
+using Fakemail.Data.EntityFramework;
 
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -34,24 +34,14 @@ namespace Fakemail.Smtp
 
             AppDomain.CurrentDomain.ProcessExit += (s, e) => Log.CloseAndFlush();
 
-            var redisConfiguration = new RedisConfiguration
-            {
-                Host = "localhost",
-                Port = 6379,
-                Password = "Password1!",
-                DatabaseNumber = 1
-            };
-
             return Host.CreateDefaultBuilder()
                 .UseSerilog()
                 .ConfigureServices((hostContext, services) =>
                 {
                     services.AddHostedService<SmtpService>();
-                    services.AddHostedService<TelnetService>();
                     services.AddSingleton(Log.Logger);
                     services.AddSingleton<IEngine, Engine>();
-                    services.AddSingleton<IRedisConfiguration>(x => redisConfiguration);
-                    services.AddSingleton<IDataStorage, RedisDataStorage>();
+                    services.AddSingleton<IDataStorage, EntityFrameworkDataStorage>();
                     services.AddSingleton<IMessageStoreFactory, MessageStoreFactory>();
                     services.AddSingleton<IMessageStore, MessageStore>();
                     services.AddSingleton<IMailboxFilterFactory, MailboxFilterFactory>();

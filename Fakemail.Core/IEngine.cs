@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-using Fakemail.Models;
+using Fakemail.ApiModels;
 
 using MimeKit;
 
@@ -11,18 +11,16 @@ namespace Fakemail.Core
     public interface IEngine
     {
         /// <summary>
-        /// Create a mailbox with a random name.
+        /// Create a user
         /// </summary>
-        /// <param name="emailAddress"></param>
+        /// <param name="user"></param>
         /// <returns></returns>
-        Task<CreateMailboxResult> CreateMailboxAsync(string mailbox = null);
+        Task<CreateUserResult> CreateUserAsync(User user);
+        
+        Task<AuthenticateUserResult> AuthenticateUserAsync(string username, string password);
 
-        Task<bool> MailboxExistsAsync(string emailAddress);
+        Task<ListEmailResult> ReadEmailsAsync(string username, string password, int skip, int take);
 
-        Task OnEmailReceivedAsync(string from, IEnumerable<string> to, IReadOnlyDictionary<string, string> parameters, MimeMessage message);
-
-        Task<IList<MessageSummary>> GetMessageSummaries(string emailAddress, int skip, int take);
-
-        void AddSubscription(Action<string, MessageSummary> action);
+        Task OnEmailReceivedAsync(string username, string from, IEnumerable<string> to, IReadOnlyDictionary<string, string> parameters, MimeMessage message);
     }
 }

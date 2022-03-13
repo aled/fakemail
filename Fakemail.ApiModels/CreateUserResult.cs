@@ -1,9 +1,9 @@
-﻿namespace Fakemail.Core
+﻿namespace Fakemail.ApiModels
 {
-    public class CreateMailboxResult
+    public class CreateUserResult
     {
         public bool Success { get; set; } = false;
         public string ErrorMessage { get; set; } = string.Empty;
-        public string Mailbox { get; set; } = string.Empty;
+        public string UserId { get; set; } = string.Empty;
     }
 }

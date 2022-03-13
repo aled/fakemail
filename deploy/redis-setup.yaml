@@ -7,7 +7,7 @@
       name: 'redis-server'
       state: present
       autoremove: yes
-  
+
   - name: Ensure maxmemory is set to 100 MB
     lineinfile:
       path: /etc/redis/redis.conf
@@ -43,4 +43,3 @@
     systemd:
       state: restarted
       name: redis-server
-

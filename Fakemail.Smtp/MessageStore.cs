@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Buffers;
+using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -27,14 +29,25 @@ namespace Fakemail.Smtp
             _engine = engine;
         }
 
-        public async Task<SmtpResponse> SaveAsync(ISessionContext context, IMessageTransaction transaction, CancellationToken cancellationToken)
+        public async Task<SmtpResponse> SaveAsync(ISessionContext context, IMessageTransaction transaction, ReadOnlySequence<byte> buffer, CancellationToken cancellationToken)
         {
             try
             {
-                var textMessage = (ITextMessage)transaction.Message;
-                var message = MimeMessage.Load(textMessage.Content);
+                await using var stream = new MemoryStream();
 
-                await _engine.OnEmailReceivedAsync(transaction.From.AsAddress(), transaction.To.Select(x => x.AsAddress()), transaction.Parameters, message);
+                var position = buffer.GetPosition(0);
+                while (buffer.TryGet(ref position, out var memory))
+                {
+                    await stream.WriteAsync(memory, cancellationToken);
+                }
+
+                stream.Position = 0;
+
+                var message = await MimeMessage.LoadAsync(stream, cancellationToken);
+
+                
+
+                await _engine.OnEmailReceivedAsync(context.Authentication.User, transaction.From.AsAddress(), transaction.To.Select(x => x.AsAddress()), transaction.Parameters, message);
             }
             catch (Exception e)
             {

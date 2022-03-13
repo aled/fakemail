@@ -1,15 +1,26 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
+using System.Linq;
+using System.Security.Cryptography;
+using System.Text;
 using System.Threading.Tasks;
 
 using Fakemail.Data;
-using Fakemail.DataModels;
-using Fakemail.Models;
+
+using DataUser = Fakemail.DataModels.User;
+using DataEmail = Fakemail.DataModels.Email;
+using DataAttachment = Fakemail.DataModels.Attachment;
+
+using ApiUser = Fakemail.ApiModels.User;
+using ApiEmail = Fakemail.ApiModels.Email;
+using ApiAttachment = Fakemail.ApiModels.Attachment;
 
 using Microsoft.Extensions.Logging;
 
 using MimeKit;
+using Fakemail.ApiModels;
 
 namespace Fakemail.Core
 {
@@ -29,8 +40,6 @@ namespace Fakemail.Core
 
     public class Engine : IEngine
     {
-        private static readonly long TICKS_PER_SECOND = 10000000;
-
         private ILogger<Engine> _log;
         private IDataStorage _dataStorage;
 
@@ -40,104 +49,133 @@ namespace Fakemail.Core
             _dataStorage = dataStorage;
         }
 
-        private static string GenerateMessageId(DateTime timestamp)
-        {
-            long seconds = (timestamp - DateTime.UnixEpoch).Ticks / TICKS_PER_SECOND;
-            string uniquifier = Guid.NewGuid().ToString().Replace("-", "");
+        private static RandomNumberGenerator RandomSource = RandomNumberGenerator.Create();
 
-            return $"{seconds:0000000000}-{uniquifier}";
+        private static byte[] Random(int bytes)
+        {
+            var buf = new byte[bytes];
+
+            lock (RandomSource)
+            {
+                RandomSource.GetBytes(buf);
+            }
+
+            return buf;
         }
 
-        public async Task<CreateMailboxResult> CreateMailboxAsync(string mailbox = null)
+        private string GenerateSalt()
         {
-            var result = new CreateMailboxResult();
+            var iterations = 2000;
+            var salt = Random(16);
 
-            if (mailbox == null)
-                mailbox = Guid.NewGuid().ToString() + "@fakemail.stream";
+            return iterations.ToString("X") + "." + Convert.ToBase64String(salt);
+        }
 
-            if (EmailAddressParser.TryParse(mailbox, out var validatedAddress))
+        private string HashedPassword(string password, string salt)
+        {
+            var i = salt.IndexOf('.');
+            var iterations = int.Parse(salt.Substring(0, i), NumberStyles.HexNumber);
+            salt = salt.Substring(i + 1);
+
+            using (var pbkdf2 = new Rfc2898DeriveBytes(Encoding.UTF8.GetBytes(password), Convert.FromBase64String(salt), iterations))
             {
-                result.Mailbox = validatedAddress.Mailbox;
-                if (await _dataStorage.CreateMailboxAsync(validatedAddress))
-                    result.Success = true;
-                else
-                {
-                    result.Success = true;
-                    result.ErrorMessage = "Mailbox already exists";
-                }
+                return Convert.ToBase64String(pbkdf2.GetBytes(24));
+            }
+        }
+
+        public async Task<CreateUserResult> CreateUserAsync(ApiUser user)
+        {
+            var result = new CreateUserResult();
+
+            var salt = GenerateSalt();
+            var hashedPassword = HashedPassword(user.Password, salt);
+
+            var (dataUser, error) = await _dataStorage.CreateUserAsync(user.Username, salt, hashedPassword);
+
+            if (dataUser != null)
+            {
+                result.Success = true;
             }
             else
             {
-                result.ErrorMessage = $"Invalid email address";
+                result.Success = false;
+                result.ErrorMessage = error;
             }
 
             return result;
         }
 
-        public async Task<bool> MailboxExistsAsync(string emailAddress)
-        {
-            _log.LogDebug("Parsing email address {emailAddress}", emailAddress);
-
-            if (EmailAddressParser.TryParse(emailAddress, out var validatedEmailAddress))
-                return await _dataStorage.MailboxExists(validatedEmailAddress);
-
-            return false;
-        }
-
-        public async Task OnEmailReceivedAsync(string fromMailbox, IEnumerable<string> toEmailAddresses, IReadOnlyDictionary<string, string> parameters, MimeMessage mimeMessage)
+        public async Task OnEmailReceivedAsync(string username, string from, IEnumerable<string> to, IReadOnlyDictionary<string, string> parameters, MimeMessage mimeMessage)
         {
             var receivedTimestamp = DateTime.UtcNow;
-            string messageId = GenerateMessageId(receivedTimestamp);
-
             _log.LogDebug($"message received: timestamp='{receivedTimestamp}'");
 
-            Directory.CreateDirectory("/tmp/fakemail");
-            await File.WriteAllTextAsync($"/tmp/fakemail/{messageId}.body.txt", mimeMessage.TextBody);
+            var attachments = mimeMessage.Attachments.Select(x => new DataAttachment { Filename = "debugme", Content = new byte[0] }).ToArray();
 
-            byte[] messageContent = null;
-            using (var s = new MemoryStream())
-            {
-                mimeMessage.WriteTo(s);
-                messageContent = s.ToArray();
-            }
-
-            var messageModel = new Message
-            {
-                Id = messageId,
-                ReceivedTimestamp = receivedTimestamp,
-                Content = new ReadOnlyMemory<byte>(messageContent)
-            };
-
-            var messageSummaryModel = new MessageSummary
-            {
-                Id = messageId,
-                ReceivedTimestamp = receivedTimestamp,
-                From = mimeMessage.From[0].ToString(),
-                Subject = mimeMessage.Subject.Truncate(80),
-                Body = mimeMessage.TextBody.Truncate(80)
-            };
-
-            var validatedAddresses = new List<EmailAddress>();
-            foreach (var a in toEmailAddresses)
-                if (EmailAddressParser.TryParse(a, out EmailAddress validatedAdress))
-                    validatedAddresses.Add(validatedAdress);
-
-            await _dataStorage.CreateMessage(messageModel, messageSummaryModel, validatedAddresses);
+            await _dataStorage.CreateEmailAsync(username, receivedTimestamp, from, to.ToArray(), mimeMessage.Subject, mimeMessage.TextBody, attachments);
         }
 
-        public async Task<IList<MessageSummary>> GetMessageSummaries(string emailAddress, int skip, int take)
+        public async Task<AuthenticateUserResult> AuthenticateUserAsync(string username, string password)
         {
-            if (!EmailAddressParser.TryParse(emailAddress, out var validatedAddress))
+            var user = await _dataStorage.ReadUserAsync(username);
+
+            if (user == null)
+                return new AuthenticateUserResult
+                {
+                    Success = false,
+                    ErrorMessage = "User not found"
+                };
+
+            var salt = user.Salt;
+            var hashedPassword = HashedPassword(password, salt);
+
+            if (hashedPassword == user.HashedPassword)
             {
-                throw new Exception("Invalid email address");
+                return new AuthenticateUserResult
+                {
+                    Success = true,
+                    ErrorMessage = string.Empty
+                };
             }
 
-            return await _dataStorage.GetMessageSummaries(validatedAddress, skip, take);
+            return new AuthenticateUserResult
+            {
+                Success = false,
+                ErrorMessage = "Incorrect password"
+            };
         }
 
-        public void AddSubscription(Action<string, MessageSummary> action)
+        public async Task<ListEmailResult> ReadEmailsAsync(string username, string password, int skip, int take)
         {
-            _dataStorage.AddSubscription(action);
+            var authResult = await AuthenticateUserAsync(username, password);
+            if (!authResult.Success)
+            {
+                return new ListEmailResult
+                {
+                    Success = false,
+                    ErrorMessage = "Authentication failure"
+                };
+            }
+
+            var emails = await _dataStorage.ReadEmailsAsync(username, skip, take);
+            return new ListEmailResult
+            {
+                Success = true,
+                Emails = emails.Select(e => new ApiEmail
+                {
+                    Subject = e.Subject,
+                    TextBody = e.TextBody,
+                    From = e.From,
+                    To = e.To.Split("; "),
+                    EmailId = e.EmailId,
+                    Attachments = e.Attachments?.Select(a => new ApiAttachment
+                    {
+                        AttachmentId = a.AttachmentId,
+                        Content = a.Content,
+                        Filename = a.Filename
+                    }).ToArray(),
+                }).ToArray()
+            };
         }
     }
 }

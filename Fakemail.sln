@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.30128.74
+# Visual Studio Version 17
+VisualStudioVersion = 17.1.32228.430
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "HtmlGenerator", "HtmlGenerator\HtmlGenerator.csproj", "{A5973EE6-BF34-40F8-981C-57545E2395FF}"
 EndProject
@@ -29,19 +29,11 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "deploy", "deploy", "{5D753F
 		deploy\smtpserver.yaml = deploy\smtpserver.yaml
 	EndProjectSection
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Fakemail.IntegrationTests", "IntegrationTests\Fakemail.IntegrationTests.csproj", "{AB3BD783-B068-43C9-AC7A-9FF0D4C5DB59}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Fakemail.Core", "Fakemail.Core\Fakemail.Core.csproj", "{316906F9-8759-4DCB-A26B-B94EDA7B2022}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Fakemail.Data", "Fakemail.Data\Fakemail.Data.csproj", "{47A37961-A494-476E-8F77-1ECF6EE5BB0B}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Fakemail.Smtp", "Fakemail.Smtp\Fakemail.Smtp.csproj", "{7CEB7BCA-7B7A-4DD5-89E0-4F39A1017423}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Fakemail.Telnet", "Fakemail.Telnet\Fakemail.Telnet.csproj", "{B45899E1-790B-4BC1-942F-A57300AC4EB0}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Fakemail.Grpc", "Fakemail.Grpc\Fakemail.Grpc.csproj", "{1DE89223-BCF8-4360-9D36-9B1675E0997F}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Fakemail.Cli", "Fakemail.Cli\Fakemail.Cli.csproj", "{82FCD02C-7574-4B64-A2BF-CBAD3E972E76}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".github", ".github", "{BE16B2F7-A0E9-465A-BD9B-3EA6D9993FEC}"
 EndProject
@@ -53,6 +45,12 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "workflows", "workflows", "{
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Fakemail.DataModels", "Fakemail.DataModels\Fakemail.DataModels.csproj", "{4A5A5BBB-F4CD-49D4-9BC6-720D1B9EEAE2}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Fakemail.Data.EntityFramework", "Fakemail.Data.EntityFramework\Fakemail.Data.EntityFramework.csproj", "{50F09750-5AA6-4FDA-A53C-E37824CC61A6}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Fakemail.ApiModels", "Fakemail.ApiModels\Fakemail.ApiModels.csproj", "{AEB2143D-9448-4994-921A-58CA57E52E4B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fakemail.IntegrationTests", "Fakemail.IntegrationTests\Fakemail.IntegrationTests.csproj", "{0EEEEBC1-7228-45E3-B4DF-443347C641B2}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -63,10 +61,6 @@ Global
 		{A5973EE6-BF34-40F8-981C-57545E2395FF}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A5973EE6-BF34-40F8-981C-57545E2395FF}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A5973EE6-BF34-40F8-981C-57545E2395FF}.Release|Any CPU.Build.0 = Release|Any CPU
-		{AB3BD783-B068-43C9-AC7A-9FF0D4C5DB59}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{AB3BD783-B068-43C9-AC7A-9FF0D4C5DB59}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{AB3BD783-B068-43C9-AC7A-9FF0D4C5DB59}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{AB3BD783-B068-43C9-AC7A-9FF0D4C5DB59}.Release|Any CPU.Build.0 = Release|Any CPU
 		{316906F9-8759-4DCB-A26B-B94EDA7B2022}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{316906F9-8759-4DCB-A26B-B94EDA7B2022}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{316906F9-8759-4DCB-A26B-B94EDA7B2022}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -79,22 +73,22 @@ Global
 		{7CEB7BCA-7B7A-4DD5-89E0-4F39A1017423}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7CEB7BCA-7B7A-4DD5-89E0-4F39A1017423}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7CEB7BCA-7B7A-4DD5-89E0-4F39A1017423}.Release|Any CPU.Build.0 = Release|Any CPU
-		{B45899E1-790B-4BC1-942F-A57300AC4EB0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{B45899E1-790B-4BC1-942F-A57300AC4EB0}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{B45899E1-790B-4BC1-942F-A57300AC4EB0}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{B45899E1-790B-4BC1-942F-A57300AC4EB0}.Release|Any CPU.Build.0 = Release|Any CPU
-		{1DE89223-BCF8-4360-9D36-9B1675E0997F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{1DE89223-BCF8-4360-9D36-9B1675E0997F}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{1DE89223-BCF8-4360-9D36-9B1675E0997F}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{1DE89223-BCF8-4360-9D36-9B1675E0997F}.Release|Any CPU.Build.0 = Release|Any CPU
-		{82FCD02C-7574-4B64-A2BF-CBAD3E972E76}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{82FCD02C-7574-4B64-A2BF-CBAD3E972E76}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{82FCD02C-7574-4B64-A2BF-CBAD3E972E76}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{82FCD02C-7574-4B64-A2BF-CBAD3E972E76}.Release|Any CPU.Build.0 = Release|Any CPU
 		{4A5A5BBB-F4CD-49D4-9BC6-720D1B9EEAE2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{4A5A5BBB-F4CD-49D4-9BC6-720D1B9EEAE2}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4A5A5BBB-F4CD-49D4-9BC6-720D1B9EEAE2}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{4A5A5BBB-F4CD-49D4-9BC6-720D1B9EEAE2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{50F09750-5AA6-4FDA-A53C-E37824CC61A6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{50F09750-5AA6-4FDA-A53C-E37824CC61A6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{50F09750-5AA6-4FDA-A53C-E37824CC61A6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{50F09750-5AA6-4FDA-A53C-E37824CC61A6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AEB2143D-9448-4994-921A-58CA57E52E4B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AEB2143D-9448-4994-921A-58CA57E52E4B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AEB2143D-9448-4994-921A-58CA57E52E4B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AEB2143D-9448-4994-921A-58CA57E52E4B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0EEEEBC1-7228-45E3-B4DF-443347C641B2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0EEEEBC1-7228-45E3-B4DF-443347C641B2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0EEEEBC1-7228-45E3-B4DF-443347C641B2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0EEEEBC1-7228-45E3-B4DF-443347C641B2}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

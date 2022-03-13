@@ -3,24 +3,21 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 
 using Fakemail.DataModels;
-using Fakemail.Models;
 
 namespace Fakemail.Data
 {
     public interface IDataStorage
     {
-        Task CreateMessage(Message message, MessageSummary messageSummary, IEnumerable<EmailAddress> toEmailAddresses);
+        Task<(User, string)> CreateUserAsync(string username, string salt, string hashedPassword);
 
-        Task DeleteMessage(string messageId);
+        Task<User> ReadUserAsync(string username);
 
-        Task<bool> MailboxExists(EmailAddress emailAddress);
+        Task DeleteUserAsync(string username);
 
-        Task<bool> CreateMailboxAsync(EmailAddress emailAddress);
+        Task CreateEmailAsync(string username, DateTime receivedTimestamp, string from, string[] to, string subject, string textBody, Attachment[] attachments);
 
-        Task DeleteMailbox(string mailboxName);
+        Task DeleteEmailAsync(string username, string messageId);
 
-        Task<List<MessageSummary>> GetMessageSummaries(EmailAddress mailbox, int skip, int take);
-
-        void AddSubscription(Action<string, MessageSummary> action);
+        Task<List<Email>> ReadEmailsAsync(string username, int skip, int take);
     }
 }
