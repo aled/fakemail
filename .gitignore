@@ -1,5 +1,7 @@
 *.swp
 *.*~
+*.cache
+
 project.lock.json
 .DS_Store
 
