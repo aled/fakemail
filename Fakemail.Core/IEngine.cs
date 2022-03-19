@@ -16,10 +16,10 @@ namespace Fakemail.Core
         /// <param name="user"></param>
         /// <returns></returns>
         Task<CreateUserResult> CreateUserAsync(User user);
-        
-        Task<AuthenticateUserResult> AuthenticateUserAsync(string username, string password);
 
-        Task<ListEmailResult> ReadEmailsAsync(string username, string password, int skip, int take);
+        Task<AuthenticateUserResult> AuthenticateUserAsync(User user);
+
+        Task<ListEmailResult> ReadEmailsAsync(User user, int skip, int take);
 
         Task OnEmailReceivedAsync(string username, string from, IEnumerable<string> to, IReadOnlyDictionary<string, string> parameters, MimeMessage message);
     }

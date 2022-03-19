@@ -115,39 +115,56 @@ namespace Fakemail.Core
             await _dataStorage.CreateEmailAsync(username, receivedTimestamp, from, to.ToArray(), mimeMessage.Subject, mimeMessage.TextBody, attachments);
         }
 
-        public async Task<AuthenticateUserResult> AuthenticateUserAsync(string username, string password)
+        public async Task<AuthenticateUserResult> AuthenticateUserAsync(ApiUser apiUser)
         {
-            var user = await _dataStorage.ReadUserAsync(username);
+            var user = await _dataStorage.ReadUserAsync(apiUser.Username);
 
             if (user == null)
-                return new AuthenticateUserResult
-                {
-                    Success = false,
-                    ErrorMessage = "User not found"
-                };
-
-            var salt = user.Salt;
-            var hashedPassword = HashedPassword(password, salt);
-
-            if (hashedPassword == user.HashedPassword)
             {
-                return new AuthenticateUserResult
+                //return new AuthenticateUserResult
+                //    {
+                //        Success = false,
+                //        ErrorMessage = "User not found"
+                //    };
+
+                // Create users on the fly. Password must be at least 8 characters
+                var result = await CreateUserAsync(apiUser);
+
+                if (!result.Success)
                 {
-                    Success = true,
-                    ErrorMessage = string.Empty
-                };
+                    return new AuthenticateUserResult
+                    {
+                        Success = false,
+                        ErrorMessage = "Internal server error"
+                    };
+                }
+            }
+            else
+            {
+
+                var salt = user.Salt;
+                var hashedPasswordAttempt = HashedPassword(apiUser.Password, salt);
+
+                if (hashedPasswordAttempt != user.HashedPassword)
+                {
+                    return new AuthenticateUserResult
+                    {
+                        Success = false,
+                        ErrorMessage = "Incorrect password"
+                    };
+                }
             }
 
             return new AuthenticateUserResult
             {
-                Success = false,
-                ErrorMessage = "Incorrect password"
+                Success = true,
+                ErrorMessage = string.Empty
             };
         }
 
-        public async Task<ListEmailResult> ReadEmailsAsync(string username, string password, int skip, int take)
+        public async Task<ListEmailResult> ReadEmailsAsync(ApiUser user, int skip, int take)
         {
-            var authResult = await AuthenticateUserAsync(username, password);
+            var authResult = await AuthenticateUserAsync(user);
             if (!authResult.Success)
             {
                 return new ListEmailResult
@@ -157,7 +174,7 @@ namespace Fakemail.Core
                 };
             }
 
-            var emails = await _dataStorage.ReadEmailsAsync(username, skip, take);
+            var emails = await _dataStorage.ReadEmailsAsync(user.Username, skip, take);
             return new ListEmailResult
             {
                 Success = true,

@@ -29,6 +29,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Fakemail.Core\Fakemail.Core.csproj" />
     <ProjectReference Include="..\Fakemail.Data.EntityFramework\Fakemail.Data.EntityFramework.csproj" />
+    <ProjectReference Include="..\Fakemail.Smtp\Fakemail.Smtp.csproj" />
   </ItemGroup>
 
 </Project>

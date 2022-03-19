@@ -12,6 +12,7 @@ using Microsoft.Extensions.Hosting;
 
 using Serilog;
 
+using SmtpServer.Authentication;
 using SmtpServer.Storage;
 
 namespace Fakemail.Smtp
@@ -38,19 +39,25 @@ namespace Fakemail.Smtp
                 .UseSerilog()
                 .ConfigureServices((hostContext, services) =>
                 {
+                    var smtpConfiguration = new SmtpConfiguration();
+                    hostContext.Configuration.GetSection("Smtp").Bind(smtpConfiguration);
+
+                    services.AddSingleton(smtpConfiguration);
                     services.AddHostedService<SmtpService>();
                     services.AddSingleton(Log.Logger);
                     services.AddSingleton<IEngine, Engine>();
+                    services.AddSingleton<IUserAuthenticatorFactory, FakemailUserAuthenticatorFactory>();
+                    services.AddSingleton<IUserAuthenticator, FakemailUserAuthenticator>();
                     services.AddSingleton<IDataStorage, EntityFrameworkDataStorage>();
                     services.AddSingleton<IMessageStoreFactory, MessageStoreFactory>();
-                    services.AddSingleton<IMessageStore, MessageStore>();
+                    services.AddSingleton<IMessageStore, FakemailMessageStore>();
                     services.AddSingleton<IMailboxFilterFactory, MailboxFilterFactory>();
-                    services.AddSingleton<IMailboxFilter, MailboxFilter>();
+                    services.AddSingleton<IMailboxFilter, FakemailMailboxFilter>();
                 })
                 .ConfigureHostConfiguration(configHost =>
                 {
                     configHost.SetBasePath(Directory.GetCurrentDirectory());
-                    configHost.AddJsonFile("fakemail.config", optional: true);
+                    configHost.AddJsonFile("fakemail.settings.json", optional: true);
                     configHost.AddCommandLine(args);
                 });
         }

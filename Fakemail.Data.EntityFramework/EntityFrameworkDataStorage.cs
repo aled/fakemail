@@ -137,7 +137,7 @@ namespace Fakemail.Data.EntityFramework
             }
         }
 
-        public Task DeleteEmailAsync(string username, string messageId)
+        public Task DeleteEmailAsync(string username, string emailId)
         {
             throw new NotImplementedException();
         }

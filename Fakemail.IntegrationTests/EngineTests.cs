@@ -107,21 +107,19 @@ namespace Fakemail.IntegrationTests
         {
             var engine = CreateEngine();
 
-            var username = Guid.NewGuid().ToString();
-            var password = Guid.NewGuid().ToString();
+            var user = new ApiModels.User
+            {
+                Username = Guid.NewGuid().ToString(),
+                Password = Guid.NewGuid().ToString()
+            };
 
-            var result = await engine.CreateUserAsync(
-               new ApiModels.User
-               {
-                   Username = username,
-                   Password = password
-               }
-            );
+            var result = await engine.CreateUserAsync(user);
 
             result.Should().NotBeNull();
             result.Success.Should().BeTrue();
 
-            var auth = await engine.AuthenticateUserAsync(username, "wrong password!");
+            user.Password = "WrongPassword!!!";
+            var auth = await engine.AuthenticateUserAsync(user);
 
             auth.Success.Should().Be(false);
         }
@@ -131,21 +129,18 @@ namespace Fakemail.IntegrationTests
         {
             var engine = CreateEngine();
 
-            var username = Guid.NewGuid().ToString();
-            var password = Guid.NewGuid().ToString();
+            var user = new ApiModels.User
+            {
+                Username = Guid.NewGuid().ToString(),
+                Password = Guid.NewGuid().ToString()
+            };
 
-            var result = await engine.CreateUserAsync(
-               new ApiModels.User
-               {
-                   Username = username,
-                   Password = password
-               }
-            );
+            var result = await engine.CreateUserAsync(user);
 
             result.Should().NotBeNull();
             result.Success.Should().BeTrue();
 
-            var auth = await engine.AuthenticateUserAsync(username, password);
+            var auth = await engine.AuthenticateUserAsync(user);
 
             auth.Success.Should().Be(true);
         }
@@ -155,21 +150,19 @@ namespace Fakemail.IntegrationTests
         {
             var engine = CreateEngine();
 
-            var username = Guid.NewGuid().ToString();
-            var password = Guid.NewGuid().ToString();
+            var user = new ApiModels.User
+            {
+                Username = Guid.NewGuid().ToString(),
+                Password = Guid.NewGuid().ToString()
+            };
 
-            var result = await engine.CreateUserAsync(
-               new ApiModels.User
-               {
-                   Username = username,
-                   Password = password
-               }
-            );
+            var result = await engine.CreateUserAsync(user);
 
             result.Should().NotBeNull();
             result.Success.Should().BeTrue();
 
-            var auth = await engine.AuthenticateUserAsync("NoSuchUser", password);
+            user.Username = "NoSuchUser!!!";
+            var auth = await engine.AuthenticateUserAsync(user);
 
             auth.Success.Should().Be(false);
         }
@@ -219,16 +212,13 @@ namespace Fakemail.IntegrationTests
         {
             var engine = CreateEngine();
 
-            var username = Guid.NewGuid().ToString();
-            var password = Guid.NewGuid().ToString();
+            var user = new ApiModels.User
+            {
+                Username = Guid.NewGuid().ToString(),
+                Password = Guid.NewGuid().ToString()
+            };
 
-            var result = await engine.CreateUserAsync(
-               new ApiModels.User
-               {
-                   Username = username,
-                   Password = password
-               }
-            );
+            var result = await engine.CreateUserAsync(user);
 
             result.Should().NotBeNull();
             result.Success.Should().BeTrue();
@@ -236,13 +226,13 @@ namespace Fakemail.IntegrationTests
             var email = GenerateEmail();
 
             await engine.OnEmailReceivedAsync(
-                username,
+                user.Username,
                 "fred@flintstone.com",
                 new[] { "barny@rubble.com", "wilma@flintstone.com" },
                 new Dictionary<string, string>(),
                 email);
 
-            var emailsResult = await engine.ReadEmailsAsync(username, password, 0, 10);
+            var emailsResult = await engine.ReadEmailsAsync(user, 0, 10);
 
             emailsResult.Emails.Length.Should().Be(1);
         }

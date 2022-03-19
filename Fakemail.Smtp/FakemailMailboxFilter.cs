@@ -11,13 +11,13 @@ using SmtpServer.Storage;
 
 namespace Fakemail.Smtp
 {
-    public class MailboxFilter : IMailboxFilter
+    public class FakemailMailboxFilter : IMailboxFilter
     {
-        private readonly ILogger<MailboxFilter> _log;
+        private readonly ILogger<FakemailMailboxFilter> _log;
 
         private readonly IEngine _engine;
 
-        public MailboxFilter(ILogger<MailboxFilter> log, IEngine engine)
+        public FakemailMailboxFilter(ILogger<FakemailMailboxFilter> log, IEngine engine)
         {
             _engine = engine;
             _log = log;

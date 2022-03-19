@@ -18,12 +18,12 @@ using SmtpServer.Storage;
 
 namespace Fakemail.Smtp
 {
-    public class MessageStore : IMessageStore
+    public class FakemailMessageStore : IMessageStore
     {
-        private ILogger<MessageStore> _log;
+        private ILogger<FakemailMessageStore> _log;
         private IEngine _engine;
 
-        public MessageStore(ILogger<MessageStore> log, IEngine engine)
+        public FakemailMessageStore(ILogger<FakemailMessageStore> log, IEngine engine)
         {
             _log = log;
             _engine = engine;
@@ -44,8 +44,6 @@ namespace Fakemail.Smtp
                 stream.Position = 0;
 
                 var message = await MimeMessage.LoadAsync(stream, cancellationToken);
-
-                
 
                 await _engine.OnEmailReceivedAsync(context.Authentication.User, transaction.From.AsAddress(), transaction.To.Select(x => x.AsAddress()), transaction.Parameters, message);
             }

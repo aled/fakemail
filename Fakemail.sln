@@ -7,6 +7,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "HtmlGenerator", "HtmlGenera
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{D8877F8F-F43C-4CCE-96B7-4426D2BBE573}"
 	ProjectSection(SolutionItems) = preProject
+		.gitignore = .gitignore
 		Directory.Build.props = Directory.Build.props
 		README.md = README.md
 	EndProjectSection
@@ -49,7 +50,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Fakemail.Data.EntityFramewo
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Fakemail.ApiModels", "Fakemail.ApiModels\Fakemail.ApiModels.csproj", "{AEB2143D-9448-4994-921A-58CA57E52E4B}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fakemail.IntegrationTests", "Fakemail.IntegrationTests\Fakemail.IntegrationTests.csproj", "{0EEEEBC1-7228-45E3-B4DF-443347C641B2}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Fakemail.IntegrationTests", "Fakemail.IntegrationTests\Fakemail.IntegrationTests.csproj", "{0EEEEBC1-7228-45E3-B4DF-443347C641B2}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SmtpServer", "..\aled\SmtpServer\Src\SmtpServer\SmtpServer.csproj", "{39C2F838-E5C1-48C3-A401-0F9EBB367C6E}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -89,6 +92,10 @@ Global
 		{0EEEEBC1-7228-45E3-B4DF-443347C641B2}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0EEEEBC1-7228-45E3-B4DF-443347C641B2}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{0EEEEBC1-7228-45E3-B4DF-443347C641B2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{39C2F838-E5C1-48C3-A401-0F9EBB367C6E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{39C2F838-E5C1-48C3-A401-0F9EBB367C6E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{39C2F838-E5C1-48C3-A401-0F9EBB367C6E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{39C2F838-E5C1-48C3-A401-0F9EBB367C6E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

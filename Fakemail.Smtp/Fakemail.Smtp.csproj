@@ -15,14 +15,20 @@
     <PackageReference Include="Serilog.Extensions.Hosting" Version="4.2.0" />
     <PackageReference Include="Serilog.Sinks.Console" Version="4.0.1" />
     <PackageReference Include="Serilog.Sinks.RollingFile" Version="3.3.0" />
-    <PackageReference Include="SmtpServer" Version="9.0.1" />
     <PackageReference Include="System.Threading.Tasks" Version="4.3.0" />
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\aled\SmtpServer\Src\SmtpServer\SmtpServer.csproj" />
     <ProjectReference Include="..\Fakemail.Core\Fakemail.Core.csproj" />
     <ProjectReference Include="..\Fakemail.Data.EntityFramework\Fakemail.Data.EntityFramework.csproj" />
     <ProjectReference Include="..\Fakemail.Data\Fakemail.Data.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="fakemail.settings.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
 </Project>

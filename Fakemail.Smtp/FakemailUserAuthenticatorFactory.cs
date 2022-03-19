@@ -3,11 +3,11 @@ using SmtpServer.Authentication;
 
 namespace Fakemail.Smtp
 {
-    public class UserAuthenticatorFactory : IUserAuthenticatorFactory
+    public class FakemailUserAuthenticatorFactory : IUserAuthenticatorFactory
     {
         public IUserAuthenticator _userAuthenticator;
 
-        public UserAuthenticatorFactory(IUserAuthenticator userAuthenticator)
+        public FakemailUserAuthenticatorFactory(IUserAuthenticator userAuthenticator)
         {
             _userAuthenticator = userAuthenticator;
         }
