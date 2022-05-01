@@ -10,7 +10,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace Fakemail.Data.EntityFramework.Migrations
 {
-    [DbContext(typeof(FakemailDataContext))]
+    [DbContext(typeof(FakemailDbContext))]
     [Migration("20220312223243_InitialCreate")]
     partial class InitialCreate
     {

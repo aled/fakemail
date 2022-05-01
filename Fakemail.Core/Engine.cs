@@ -117,7 +117,15 @@ namespace Fakemail.Core
 
         public async Task<AuthenticateUserResult> AuthenticateUserAsync(ApiUser apiUser)
         {
-            var user = await _dataStorage.ReadUserAsync(apiUser.Username);
+            DataUser user = null;
+            try
+            {
+                user = await _dataStorage.ReadUserAsync(apiUser.Username);
+            }
+            catch (Exception)
+            {
+                throw;    
+            }
 
             if (user == null)
             {

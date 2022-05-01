@@ -3,119 +3,50 @@ using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
 using System.Text.Json;
-
-using Fakemail.Core;
-using Fakemail.Data;
-using Fakemail.Data.EntityFramework;
-using Fakemail.Smtp;
-
-using FluentAssertions;
+using System.Text;
+using System.Linq;
+using System.Net.Mail;
+using System.Net;
 
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+
+using Xunit;
 
 using Serilog;
 
 using SmtpServer.Authentication;
 using SmtpServer.Storage;
 
-using Xunit;
-using System.Text;
-using System.Linq;
-using System.Net.Mail;
-using System.Net;
-using System.Diagnostics;
+using Fakemail.Core;
+using Fakemail.Data;
+using Fakemail.Data.EntityFramework;
+
 
 namespace Fakemail.IntegrationTests
 {
-    public class SmtpFixture : IAsyncLifetime
+   
+
+    public class SmtpTests
     {
-        IHost _host;
-        public SmtpService SmtpService { get; set; }
+        private int _port = 465;
 
-        public async Task InitializeAsync()
-        {
-            Log.Logger = new LoggerConfiguration()
-              .WriteTo.Console()
-              .CreateLogger();
-
-            AppDomain.CurrentDomain.ProcessExit += (s, e) => Log.CloseAndFlush();
-
-            _host = Host.CreateDefaultBuilder()
-                .UseSerilog()
-                .ConfigureServices((hostContext, services) =>
-                {
-                    var smtpConfiguration = new SmtpConfiguration();
-                    hostContext.Configuration.GetSection("Smtp").Bind(smtpConfiguration);
-
-                    services.AddSingleton(smtpConfiguration);
-                    services.AddHostedService<SmtpService>();
-                    services.AddSingleton(Log.Logger);
-                    services.AddSingleton<IEngine, Engine>();
-                    services.AddSingleton<IUserAuthenticatorFactory, FakemailUserAuthenticatorFactory>();
-                    services.AddSingleton<IUserAuthenticator, FakemailUserAuthenticator>();
-                    services.AddSingleton<IDataStorage, EntityFrameworkDataStorage>();
-                    services.AddSingleton<IMessageStoreFactory, MessageStoreFactory>();
-                    services.AddSingleton<IMessageStore, FakemailMessageStore>();
-                    services.AddSingleton<IMailboxFilterFactory, MailboxFilterFactory>();
-                    services.AddSingleton<IMailboxFilter, FakemailMailboxFilter>();
-                })
-                .ConfigureHostConfiguration(configHost =>
-                {
-                    configHost.SetBasePath(Directory.GetCurrentDirectory());
-
-                    var json = JsonSerializer.Serialize(new Dictionary<object, object>
-                    {
-                        { "Smtp", new SmtpConfiguration { Ports = new List<int> { -1 } } }
-                    });
-                    var jsonStream = new MemoryStream(Encoding.UTF8.GetBytes(json));
-                    
-                    configHost.AddJsonStream(jsonStream);
-                    
-                })
-                .Build();
-
-            await _host.StartAsync();
-
-            // Check if smtp service started
-            SmtpService = _host.Services.GetService<IEnumerable<IHostedService>>().First(x => x is SmtpService) as SmtpService;
-            if (!SmtpService.IsRunning)
-            {
-                throw new Exception("SmtpService did not start");
-            }
-        }
-        
-        public async Task DisposeAsync()
-        {
-            await _host.StopAsync();
-        }
-    }
-
-    public class SmtpTests : IClassFixture<SmtpFixture>
-    {
-        private int _port;
-
-        public SmtpTests(SmtpFixture smtpFixture)
-        {
-            _port = smtpFixture.SmtpService.Ports.First();
-        }
+        //public SmtpTests(SmtpFixture smtpFixture)
+        //{
+        //    _port = smtpFixture.SmtpService.Ports.First();
+        //}
 
         [Fact]
         public async Task SendEmail()
         {
-            string logFile = "c:\\temp\\NetworkTrace.Log";
-            TextWriterTraceListener listener = new TextWriterTraceListener(logFile);
             
-            Trace.Listeners.Add(listener);
-            Trace.AutoFlush = true;
 
-            var smtpClient = new SmtpClient("192.168.1.165", _port);
-            smtpClient.UseDefaultCredentials = false;
+            var smtpClient = new SmtpClient("fakemail.stream", _port);
             smtpClient.Credentials = new NetworkCredential
             {
-                UserName = "asdf",
-                Password = "qwer"
+                UserName = "user",
+                Password = "password"
             };
             smtpClient.EnableSsl = false;
 
@@ -125,6 +56,33 @@ namespace Fakemail.IntegrationTests
             email.From = new MailAddress("From@From");
             email.To.Add(new MailAddress("To@To"));
 
+            await smtpClient.SendMailAsync(email);
+        }
+
+        [Fact]
+        public async Task SendEmailWithSsl()
+        {
+            // Uncomment following line to accept invalid server certificate
+            //ServicePointManager.ServerCertificateValidationCallback = (sender, certificate, chain, sslPolicyErrors) => true;
+
+            var smtpClient = new SmtpClient("fakemail.stream", _port);
+            smtpClient.Credentials = new NetworkCredential
+            {
+                UserName = "user2",
+                Password = "Hello world!"
+            };
+            smtpClient.EnableSsl = true;
+
+            var email = new MailMessage();
+            email.Subject = "Subject";
+            email.Body = "Body";
+            email.From = new MailAddress("From@From.example.com");
+            email.To.Add(new MailAddress("To@example.stream"));
+            email.To.Add(new MailAddress("To@example2.stream"));
+            var content = new MemoryStream(Encoding.UTF8.GetBytes("hello"));
+            var attachment = new Attachment(content, "a.txt");
+            
+            email.Attachments.Add(attachment);
             await smtpClient.SendMailAsync(email);
         }
     }

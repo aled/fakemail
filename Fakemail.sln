@@ -24,7 +24,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "deploy", "deploy", "{5D753F
 		deploy\fakemailsmtpserver.service = deploy\fakemailsmtpserver.service
 		deploy\hosts = deploy\hosts
 		deploy\nginx.yaml = deploy\nginx.yaml
-		deploy\redis-setup.yaml = deploy\redis-setup.yaml
 		deploy\smtpserver-debug.yaml = deploy\smtpserver-debug.yaml
 		deploy\smtpserver-setup.yaml = deploy\smtpserver-setup.yaml
 		deploy\smtpserver.yaml = deploy\smtpserver.yaml
@@ -33,8 +32,6 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Fakemail.Core", "Fakemail.Core\Fakemail.Core.csproj", "{316906F9-8759-4DCB-A26B-B94EDA7B2022}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Fakemail.Data", "Fakemail.Data\Fakemail.Data.csproj", "{47A37961-A494-476E-8F77-1ECF6EE5BB0B}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Fakemail.Smtp", "Fakemail.Smtp\Fakemail.Smtp.csproj", "{7CEB7BCA-7B7A-4DD5-89E0-4F39A1017423}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".github", ".github", "{BE16B2F7-A0E9-465A-BD9B-3EA6D9993FEC}"
 EndProject
@@ -52,7 +49,17 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Fakemail.ApiModels", "Fakem
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Fakemail.IntegrationTests", "Fakemail.IntegrationTests\Fakemail.IntegrationTests.csproj", "{0EEEEBC1-7228-45E3-B4DF-443347C641B2}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SmtpServer", "..\aled\SmtpServer\Src\SmtpServer\SmtpServer.csproj", "{39C2F838-E5C1-48C3-A401-0F9EBB367C6E}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Fakemail.Api", "Fakemail.Api\Fakemail.Api.csproj", "{FDC7A4A0-5024-41E0-A851-87183F76E8D9}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Fakemail.Web", "Fakemail.Web\Fakemail.Web.csproj", "{3B9BE731-3B9E-46CD-A860-90F5C56F3754}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fakemail.DeliveryAgent", "Fakemail.DeliveryAgent\Fakemail.DeliveryAgent.csproj", "{8BD2C96B-B282-4E46-A297-AF08756FEF9F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fakemail.DeliveryAgent.Tests", "Fakemail.DeliveryAgent.Tests\Fakemail.DeliveryAgent.Tests.csproj", "{D8ECA569-6291-4806-B93B-0C7CBEF45F13}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fakemail.Cryptography", "Fakemail.UnixSha512Crypt\Fakemail.Cryptography.csproj", "{263CE8F3-55FC-4F54-90A1-161B81D5348E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fakemail.Cryptography.Tests", "Fakemail.UnixCrypt.Tests\Fakemail.Cryptography.Tests.csproj", "{B8BF8AE3-3695-4724-9F68-A8E5494E57D1}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -72,10 +79,6 @@ Global
 		{47A37961-A494-476E-8F77-1ECF6EE5BB0B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{47A37961-A494-476E-8F77-1ECF6EE5BB0B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{47A37961-A494-476E-8F77-1ECF6EE5BB0B}.Release|Any CPU.Build.0 = Release|Any CPU
-		{7CEB7BCA-7B7A-4DD5-89E0-4F39A1017423}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{7CEB7BCA-7B7A-4DD5-89E0-4F39A1017423}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{7CEB7BCA-7B7A-4DD5-89E0-4F39A1017423}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{7CEB7BCA-7B7A-4DD5-89E0-4F39A1017423}.Release|Any CPU.Build.0 = Release|Any CPU
 		{4A5A5BBB-F4CD-49D4-9BC6-720D1B9EEAE2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{4A5A5BBB-F4CD-49D4-9BC6-720D1B9EEAE2}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4A5A5BBB-F4CD-49D4-9BC6-720D1B9EEAE2}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -92,10 +95,30 @@ Global
 		{0EEEEBC1-7228-45E3-B4DF-443347C641B2}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0EEEEBC1-7228-45E3-B4DF-443347C641B2}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{0EEEEBC1-7228-45E3-B4DF-443347C641B2}.Release|Any CPU.Build.0 = Release|Any CPU
-		{39C2F838-E5C1-48C3-A401-0F9EBB367C6E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{39C2F838-E5C1-48C3-A401-0F9EBB367C6E}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{39C2F838-E5C1-48C3-A401-0F9EBB367C6E}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{39C2F838-E5C1-48C3-A401-0F9EBB367C6E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FDC7A4A0-5024-41E0-A851-87183F76E8D9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FDC7A4A0-5024-41E0-A851-87183F76E8D9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FDC7A4A0-5024-41E0-A851-87183F76E8D9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FDC7A4A0-5024-41E0-A851-87183F76E8D9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3B9BE731-3B9E-46CD-A860-90F5C56F3754}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3B9BE731-3B9E-46CD-A860-90F5C56F3754}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3B9BE731-3B9E-46CD-A860-90F5C56F3754}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3B9BE731-3B9E-46CD-A860-90F5C56F3754}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8BD2C96B-B282-4E46-A297-AF08756FEF9F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8BD2C96B-B282-4E46-A297-AF08756FEF9F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8BD2C96B-B282-4E46-A297-AF08756FEF9F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8BD2C96B-B282-4E46-A297-AF08756FEF9F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D8ECA569-6291-4806-B93B-0C7CBEF45F13}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D8ECA569-6291-4806-B93B-0C7CBEF45F13}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D8ECA569-6291-4806-B93B-0C7CBEF45F13}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D8ECA569-6291-4806-B93B-0C7CBEF45F13}.Release|Any CPU.Build.0 = Release|Any CPU
+		{263CE8F3-55FC-4F54-90A1-161B81D5348E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{263CE8F3-55FC-4F54-90A1-161B81D5348E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{263CE8F3-55FC-4F54-90A1-161B81D5348E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{263CE8F3-55FC-4F54-90A1-161B81D5348E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B8BF8AE3-3695-4724-9F68-A8E5494E57D1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B8BF8AE3-3695-4724-9F68-A8E5494E57D1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B8BF8AE3-3695-4724-9F68-A8E5494E57D1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B8BF8AE3-3695-4724-9F68-A8E5494E57D1}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -9,7 +9,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace Fakemail.Data.EntityFramework.Migrations
 {
-    [DbContext(typeof(FakemailDataContext))]
+    [DbContext(typeof(FakemailDbContext))]
     partial class FakemailDataContextModelSnapshot : ModelSnapshot
     {
         protected override void BuildModel(ModelBuilder modelBuilder)

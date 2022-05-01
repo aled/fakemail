@@ -1,12 +1,13 @@
 ﻿using Fakemail.DataModels;
 
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 
 using System.Linq;
 
 namespace Fakemail.Data.EntityFramework
 {
-    public class FakemailDataContext : DbContext
+    public class FakemailDbContext : DbContext
     {
         protected override void OnConfiguring(DbContextOptionsBuilder options)
             => options.UseSqlite($"Data Source={"c:\\temp\\fakemail.db"}");

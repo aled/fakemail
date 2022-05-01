@@ -26,7 +26,6 @@ namespace Fakemail.DataModels
         [Required]
         public Attachment[] Attachments { get; set; }
 
-
         [Required]
         public Guid UserId { get; set; }
         

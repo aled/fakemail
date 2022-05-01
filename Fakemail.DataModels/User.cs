@@ -18,4 +18,18 @@ namespace Fakemail.DataModels
         [Required]
         public string HashedPassword { get; set; }
     }
+
+    public class SmtpUser
+    {
+        [Required]
+        public Guid UserId { get; set; }
+
+        [Required]
+        public string SmtpUsername { get; set; }
+
+        [Required]        
+        public string SmtpHashedPassword { get; set; }
+
+        public User User { get; set; }
+    }
 }

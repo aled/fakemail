@@ -26,7 +26,7 @@ namespace Fakemail.Data.EntityFramework
             {
                 var error = string.Empty;
 
-                using (var db = new FakemailDataContext())
+                using (var db = new FakemailDbContext())
                 {
                     var user = new User
                     {
@@ -62,7 +62,7 @@ namespace Fakemail.Data.EntityFramework
 
         public async Task<User> ReadUserAsync(string username)
         {
-            using (var db = new FakemailDataContext())
+            using (var db = new FakemailDbContext())
             {
                 return await db.Users.FirstOrDefaultAsync(x => x.Username == username);
             }
@@ -89,7 +89,7 @@ namespace Fakemail.Data.EntityFramework
                 TextBody = textBody
             };
 
-            using (var db = new FakemailDataContext())
+            using (var db = new FakemailDbContext())
             {
                 await db.Emails.AddAsync(email);
                 await db.SaveChangesAsync();
@@ -100,7 +100,7 @@ namespace Fakemail.Data.EntityFramework
 
         public Task<List<Email>> ReadEmailsAsync(string username, int skip, int take)
         {
-            using (var db = new FakemailDataContext())
+            using (var db = new FakemailDbContext())
             {
                 return (from u in db.Users where u.Username == username
                         join e in db.Emails
@@ -130,7 +130,7 @@ namespace Fakemail.Data.EntityFramework
                 Attachments = attachments
             };
 
-            using (var db = new FakemailDataContext())
+            using (var db = new FakemailDbContext())
             {
                 await db.Emails.AddAsync(email);
                 await db.SaveChangesAsync();
