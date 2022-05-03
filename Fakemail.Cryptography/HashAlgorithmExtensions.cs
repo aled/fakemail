@@ -13,7 +13,7 @@ namespace Fakemail.Cryptography
         public static byte[] Digest(this HashAlgorithm algorithm)
         {
             algorithm.TransformFinalBlock(new byte[0], 0, 0);
-            return algorithm.Hash;
+            return algorithm.Hash ?? throw new Exception("Error calculating hash");
         }
     }
 }

@@ -21,7 +21,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Fakemail.UnixSha512Crypt\Fakemail.Cryptography.csproj" />
+    <ProjectReference Include="..\Fakemail.Cryptography\Fakemail.Cryptography.csproj" />
   </ItemGroup>
 
 </Project>

@@ -1,206 +1,200 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Globalization;
-using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
-using System.Text;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Data.Sqlite;
 
-using Fakemail.Data;
-
-using DataUser = Fakemail.DataModels.User;
-using DataEmail = Fakemail.DataModels.Email;
-using DataAttachment = Fakemail.DataModels.Attachment;
+using DataUser = Fakemail.Data.EntityFramework.User;
+using DataSmtpUser = Fakemail.Data.EntityFramework.SmtpUser;
+using DataEmail = Fakemail.Data.EntityFramework.Email;
+using DataAttachment = Fakemail.Data.EntityFramework.Attachment;
 
 using ApiUser = Fakemail.ApiModels.User;
-using ApiEmail = Fakemail.ApiModels.Email;
-using ApiAttachment = Fakemail.ApiModels.Attachment;
 
-using Microsoft.Extensions.Logging;
 
-using MimeKit;
 using Fakemail.ApiModels;
+using Fakemail.Data.EntityFramework;
+
+using static Fakemail.Cryptography.Sha2Crypt;
+using System.IO;
+using MimeKit;
+using System.Collections.Generic;
 
 namespace Fakemail.Core
 {
-    internal static class Extensions
-    {
-        public static string Truncate(this string s, int len)
-        {
-            if (s == null)
-                return "";
-
-            if (s.Length <= len)
-                return s;
-
-            return s.Substring(0, len);
-        }
-    }
-
     public class Engine : IEngine
     {
         private ILogger<Engine> _log;
-        private IDataStorage _dataStorage;
+        private IDbContextFactory<FakemailDbContext> _dbFactory;
 
-        public Engine(ILogger<Engine> log, IDataStorage dataStorage)
+        public Engine(IDbContextFactory<FakemailDbContext> dbFactory, ILogger<Engine> log)
         {
             _log = log;
-            _dataStorage = dataStorage;
+            _dbFactory = dbFactory;
         }
 
-        private static RandomNumberGenerator RandomSource = RandomNumberGenerator.Create();
-
-        private static byte[] Random(int bytes)
-        {
-            var buf = new byte[bytes];
-
-            lock (RandomSource)
-            {
-                RandomSource.GetBytes(buf);
-            }
-
-            return buf;
-        }
-
-        private string GenerateSalt()
-        {
-            var iterations = 2000;
-            var salt = Random(16);
-
-            return iterations.ToString("X") + "." + Convert.ToBase64String(salt);
-        }
-
-        private string HashedPassword(string password, string salt)
-        {
-            var i = salt.IndexOf('.');
-            var iterations = int.Parse(salt.Substring(0, i), NumberStyles.HexNumber);
-            salt = salt.Substring(i + 1);
-
-            using (var pbkdf2 = new Rfc2898DeriveBytes(Encoding.UTF8.GetBytes(password), Convert.FromBase64String(salt), iterations))
-            {
-                return Convert.ToBase64String(pbkdf2.GetBytes(24));
-            }
-        }
-
+        /// <summary>
+        /// Create a user
+        /// </summary>
+        /// <param name="user"></param>
+        /// <returns></returns>
         public async Task<CreateUserResult> CreateUserAsync(ApiUser user)
         {
-            var result = new CreateUserResult();
-
-            var salt = GenerateSalt();
-            var hashedPassword = HashedPassword(user.Password, salt);
-
-            var (dataUser, error) = await _dataStorage.CreateUserAsync(user.Username, salt, hashedPassword);
-
-            if (dataUser != null)
+            var result = new CreateUserResult
             {
-                result.Success = true;
+                Success = false,
+                ErrorMessage = "Error creating user"
+            };
+
+            try
+            {
+                // TODO: check quality of password
+
+                using (var db = _dbFactory.CreateDbContext())
+                {
+                    var userId = new Guid(RandomNumberGenerator.GetBytes(16));
+                    var smtpUsername = Utils.CreateId();
+                    var smtpPassword = Utils.CreateId();
+
+                    var dataUser = new DataUser
+                    {
+                        UserId = userId,
+                        Username = user.Username,
+                        PasswordCrypt = Sha512Crypt(user.Password)
+                    };
+                   
+                    var dataSmtpUser = new DataSmtpUser
+                    {
+                        UserId = dataUser.UserId,
+                        SmtpUsername = smtpUsername,
+                        SmtpPasswordCrypt = Sha512Crypt(smtpPassword)
+                    };
+
+                    await db.Users.AddAsync(dataUser);
+                    await db.SmtpUsers.AddAsync(dataSmtpUser);
+                    await db.SaveChangesAsync();
+
+                    result.Success = true;
+                    result.Username = user.Username;
+                    result.SmtpUsername = smtpUsername;
+                    result.SmtpPassword = smtpPassword;                  
+                }
             }
-            else
+            catch (DbUpdateException due)
             {
-                result.Success = false;
-                result.ErrorMessage = error;
+                if (due.InnerException is SqliteException se)
+                {
+                    _log.LogError(se.Message);
+                    if (se.SqliteErrorCode == 19)
+                    {
+                        result.ErrorMessage = "User already exists";
+                    }
+                }
+                else
+                {
+                    _log.LogError(due.Message);
+                }
+            }
+            catch (Exception ex)
+            {
+                _log.LogError(ex.Message);
             }
 
             return result;
         }
 
-        public async Task OnEmailReceivedAsync(string username, string from, IEnumerable<string> to, IReadOnlyDictionary<string, string> parameters, MimeMessage mimeMessage)
-        {
-            var receivedTimestamp = DateTime.UtcNow;
-            _log.LogDebug($"message received: timestamp='{receivedTimestamp}'");
-
-            var attachments = mimeMessage.Attachments.Select(x => new DataAttachment { Filename = "debugme", Content = new byte[0] }).ToArray();
-
-            await _dataStorage.CreateEmailAsync(username, receivedTimestamp, from, to.ToArray(), mimeMessage.Subject, mimeMessage.TextBody, attachments);
-        }
-
+        /// <summary>
+        /// Validate a user
+        /// </summary>
+        /// <param name="apiUser"></param>
+        /// <returns></returns>
         public async Task<AuthenticateUserResult> AuthenticateUserAsync(ApiUser apiUser)
         {
-            DataUser user = null;
+            var result = new AuthenticateUserResult
+            {
+                Success = false,
+                ErrorMessage = "Invalid username or password"
+            };
+
             try
             {
-                user = await _dataStorage.ReadUserAsync(apiUser.Username);
-            }
-            catch (Exception)
-            {
-                throw;    
-            }
-
-            if (user == null)
-            {
-                //return new AuthenticateUserResult
-                //    {
-                //        Success = false,
-                //        ErrorMessage = "User not found"
-                //    };
-
-                // Create users on the fly. Password must be at least 8 characters
-                var result = await CreateUserAsync(apiUser);
-
-                if (!result.Success)
+                using (var db = _dbFactory.CreateDbContext())
                 {
-                    return new AuthenticateUserResult
+                    var passwordCrypt = await db.Users
+                        .Where(x => x.Username == apiUser.Username)
+                        .Select(x => x.PasswordCrypt)
+                        .SingleAsync();
+
+                    if (Validate(apiUser.Password, passwordCrypt))
                     {
-                        Success = false,
-                        ErrorMessage = "Internal server error"
-                    };
+                        result.Success = true;
+                        result.ErrorMessage = string.Empty;
+                    }
                 }
             }
-            else
+            catch (Exception e)
             {
-
-                var salt = user.Salt;
-                var hashedPasswordAttempt = HashedPassword(apiUser.Password, salt);
-
-                if (hashedPasswordAttempt != user.HashedPassword)
-                {
-                    return new AuthenticateUserResult
-                    {
-                        Success = false,
-                        ErrorMessage = "Incorrect password"
-                    };
-                }
+                _log.LogError(e.Message);
             }
 
-            return new AuthenticateUserResult
-            {
-                Success = true,
-                ErrorMessage = string.Empty
-            };
+            return result;        
         }
 
-        public async Task<ListEmailResult> ReadEmailsAsync(ApiUser user, int skip, int take)
+        /// <summary>
+        /// This method is used to insert newly delivered messages into the database
+        /// </summary>
+        /// <param name="messageStream"></param>
+        /// <returns></returns>
+        public async Task<bool> CreateEmail(Stream messageStream)
         {
-            var authResult = await AuthenticateUserAsync(user);
-            if (!authResult.Success)
+            try
             {
-                return new ListEmailResult
+                var stream = new MemoryStream();
+                messageStream.CopyTo(stream);
+
+                stream.Position = 0;
+                var m = MimeMessage.Load(stream);
+
+                // Extract out the parts of the message
+                // * from
+                // * to
+                // * cc
+                // * bcc
+                // * delivered-to
+                // * subject
+                // * received date
+                // * smtp username
+                var email = new DataEmail
                 {
-                    Success = false,
-                    ErrorMessage = "Authentication failure"
+                    EmailId = new Guid(RandomNumberGenerator.GetBytes(16)),
+                    From = m.Headers["From"],
+                    To = m.Headers["To"],
+                    DeliveredTo = m.Headers["Delivered-To"],
+                    Subject = m.Subject,
+                    BodyLength = m.TextBody.Length,
+                    MimeMessage = stream.GetBuffer()
                 };
+
+                var attachments = new List<DataAttachment>();
+
+             
+                using (var db = _dbFactory.CreateDbContext())
+                {
+                    db.Emails.Add(email);
+                    db.Attachments.AddRange(attachments);
+                    await db.SaveChangesAsync();
+                }
+            }
+            catch (Exception e)
+            {
+                _log.LogError(e.Message);
+                return false;
             }
 
-            var emails = await _dataStorage.ReadEmailsAsync(user.Username, skip, take);
-            return new ListEmailResult
-            {
-                Success = true,
-                Emails = emails.Select(e => new ApiEmail
-                {
-                    Subject = e.Subject,
-                    TextBody = e.TextBody,
-                    From = e.From,
-                    To = e.To.Split("; "),
-                    EmailId = e.EmailId,
-                    Attachments = e.Attachments?.Select(a => new ApiAttachment
-                    {
-                        AttachmentId = a.AttachmentId,
-                        Content = a.Content,
-                        Filename = a.Filename
-                    }).ToArray(),
-                }).ToArray()
-            };
+            return true;
+
         }
     }
 }

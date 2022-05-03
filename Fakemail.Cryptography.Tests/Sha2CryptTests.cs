@@ -5,7 +5,7 @@ using Xunit;
 namespace Fakemail.Cryptography.Tests
 {
     // These test cases copied from the specification document at https://akkadia.org/drepper/SHA-crypt.txt
-    public class UnixSha2CryptTests
+    public class Sha2CryptTests
     {
         [Theory]
         [InlineData("$6$saltstring",

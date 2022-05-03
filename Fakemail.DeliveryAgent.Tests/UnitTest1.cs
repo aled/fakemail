@@ -29,6 +29,11 @@ namespace Fakemail.DeliveryAgent.Tests
 
     public class UnitTest1
     {
+        public UnitTest1()
+        {
+
+        }
+
         [Fact]
         public void ShouldParseMimeEncodedMessage()
         {

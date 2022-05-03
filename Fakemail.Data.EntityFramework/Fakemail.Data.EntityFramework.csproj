@@ -15,8 +15,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Fakemail.DataModels\Fakemail.DataModels.csproj" />
-    <ProjectReference Include="..\Fakemail.Data\Fakemail.Data.csproj" />
+    <Folder Include="Migrations\" />
   </ItemGroup>
 
 </Project>

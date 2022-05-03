@@ -1,11 +1,11 @@
 # to-do list
 
 Immediate:
-- Delete redis. Use Sqlite/EF Core.
-- Use SMTP auth for user Id
+- Use database (postgresql?) for SMTP auth
+- Turn off tailscale VPN on public server
+- Write MDA program to insert email into database
 
-- Add production https certificate for gRPC
-- automated deployment
+- Automated deployment
 
 Next version:
 - Switch to private addresses
@@ -37,4 +37,4 @@ Done
 - command-line program (like wttr.in)
 - check if incoming address is valid
 - private addresses - no auth - "use this address xxx@fakemail.stream"
-
+- Use SMTP auth for user Id

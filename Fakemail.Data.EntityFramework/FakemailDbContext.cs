@@ -1,39 +1,59 @@
-﻿using Fakemail.DataModels;
+﻿using System.Reflection.Emit;
 
 using Microsoft.EntityFrameworkCore;
-using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
-
-using System.Linq;
+using Microsoft.EntityFrameworkCore.Design;
+using Microsoft.EntityFrameworkCore.Metadata;
 
 namespace Fakemail.Data.EntityFramework
 {
+    /// <summary>
+    /// This is needed for the dotnet ef tools to work
+    /// </summary>
+    public class FakemailContextFactory : IDesignTimeDbContextFactory<FakemailDbContext>
+    {
+        public FakemailDbContext CreateDbContext(string[] args)
+        {
+            var optionsBuilder = new DbContextOptionsBuilder<FakemailDbContext>();
+            optionsBuilder.UseSqlite("Data Source=fakemail-design.db");
+
+            return new FakemailDbContext(optionsBuilder.Options);
+        }
+    }
+
     public class FakemailDbContext : DbContext
     {
-        protected override void OnConfiguring(DbContextOptionsBuilder options)
-            => options.UseSqlite($"Data Source={"c:\\temp\\fakemail.db"}");
+        /// <summary>
+        /// This constructor used by the DI container
+        /// </summary>
+        /// <param name="options"></param>
+        public FakemailDbContext(DbContextOptions<FakemailDbContext> options)
+            : base(options)
+        {
+        }
 
         public DbSet<User> Users { get; set; }
+
+        public DbSet<SmtpUser> SmtpUsers { get; set; }
 
         public DbSet<Email> Emails { get; set; }
 
         public DbSet<Attachment> Attachments { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
-        {
-            builder.Entity<User>()
-                .Property(p => p.UserId)
-                .ValueGeneratedOnAdd();
+{
+            //This will singularize all table names
+            foreach (IMutableEntityType entityType in builder.Model.GetEntityTypes())
+            {
+                entityType.SetTableName(entityType.GetDefaultTableName());
+            }
+
+            // Seed data for SMTP Alias table - this is required by the smtp server in order to deliver mail, 
+            // using the linux 'fakemail' account.
+            builder.Entity<SmtpAlias>().HasData(new SmtpAlias() { Account = "fakemail"});
 
             builder.Entity<User>()
-                .HasIndex(x => x.Username).IsUnique();
-
-            builder.Entity<Email>()
-                .Property(p => p.EmailId)
-                .ValueGeneratedOnAdd();
-
-            builder.Entity<Attachment>()
-                .Property(p => p.AttachmentId)
-                .ValueGeneratedOnAdd();
+                .HasIndex(u => u.Username)
+                .IsUnique();
         }
     }
 }

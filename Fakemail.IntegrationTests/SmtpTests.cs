@@ -1,47 +1,21 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
-using System.Text.Json;
 using System.Text;
-using System.Linq;
 using System.Net.Mail;
 using System.Net;
 
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
-
 using Xunit;
-
-using Serilog;
-
-using SmtpServer.Authentication;
-using SmtpServer.Storage;
-
-using Fakemail.Core;
-using Fakemail.Data;
-using Fakemail.Data.EntityFramework;
-
 
 namespace Fakemail.IntegrationTests
 {
-   
-
     public class SmtpTests
     {
-        private int _port = 465;
-
-        //public SmtpTests(SmtpFixture smtpFixture)
-        //{
-        //    _port = smtpFixture.SmtpService.Ports.First();
-        //}
+        private int _port = 587;
 
         [Fact]
-        public async Task SendEmail()
+        public async Task UnencryptedSmtpShouldBeRejected()
         {
-            
-
             var smtpClient = new SmtpClient("fakemail.stream", _port);
             smtpClient.Credentials = new NetworkCredential
             {
@@ -56,7 +30,9 @@ namespace Fakemail.IntegrationTests
             email.From = new MailAddress("From@From");
             email.To.Add(new MailAddress("To@To"));
 
-            await smtpClient.SendMailAsync(email);
+            var send = new Func<Task>(() => smtpClient.SendMailAsync(email));
+            var exception = await Assert.ThrowsAsync<SmtpException>(send);
+            Assert.Equal(SmtpStatusCode.MustIssueStartTlsFirst, exception.StatusCode);
         }
 
         [Fact]
@@ -77,8 +53,12 @@ namespace Fakemail.IntegrationTests
             email.Subject = "Subject";
             email.Body = "Body";
             email.From = new MailAddress("From@From.example.com");
-            email.To.Add(new MailAddress("To@example.stream"));
-            email.To.Add(new MailAddress("To@example2.stream"));
+            email.To.Add(new MailAddress("To@example1.stream"));           
+            email.CC.Add(new MailAddress("To@example2.stream"));
+            email.CC.Add(new MailAddress("To@example3.stream"));
+
+            email.Bcc.Add(new MailAddress("To@example3.stream"));
+            email.Bcc.Add(new MailAddress("To@example4.stream"));
             var content = new MemoryStream(Encoding.UTF8.GetBytes("hello"));
             var attachment = new Attachment(content, "a.txt");
             

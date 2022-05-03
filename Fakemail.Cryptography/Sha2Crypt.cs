@@ -13,18 +13,18 @@ namespace Fakemail.Cryptography
     /// </summary>
     public static class Sha2Crypt
     {
-        public static readonly int MIN_ROUNDS = 1000;
-        public static readonly int DEFAULT_ROUNDS = 5000;
-        public static readonly int MAX_ROUNDS = 999999999;
-        public static readonly int MAX_SALT_LEN = 16;
-        public static readonly char SALT_FIELD_SEPARATOR = '$';
-        public static readonly string SHA256_IDENTIFIER = "5";
-        public static readonly string SHA512_IDENTIFIER = "6";
-        public static readonly string SHA256_PREFIX = "$5$";
-        public static readonly string SHA512_PREFIX = "$6$";
-        public static readonly int SHA256_BLOCKSIZE = 32;
-        public static readonly int SHA512_BLOCKSIZE = 64;
-        public static readonly string ROUNDS_PREFIX = "rounds=";
+        private static readonly int MIN_ROUNDS = 1000;
+        private static readonly int DEFAULT_ROUNDS = 5000;
+        private static readonly int MAX_ROUNDS = 999999999;
+        private static readonly int MAX_SALT_LEN = 16;
+        private static readonly char SALT_FIELD_SEPARATOR = '$';
+        private static readonly string SHA256_IDENTIFIER = "5";
+        private static readonly string SHA512_IDENTIFIER = "6";
+        private static readonly string SHA256_PREFIX = "$5$";
+        private static readonly string SHA512_PREFIX = "$6$";
+        private static readonly int SHA256_BLOCKSIZE = 32;
+        private static readonly int SHA512_BLOCKSIZE = 64;
+        private static readonly string ROUNDS_PREFIX = "rounds=";
 
         /// <summary>
         /// Generate a Sha512Crypt hash value that can be decoded using the unix libc crypt() function
@@ -77,7 +77,7 @@ namespace Fakemail.Cryptography
         /// <exception cref="ArgumentException"></exception>
         /// <exception cref="ArgumentOutOfRangeException"></exception>
         /// <exception cref="ArgumentNullException"></exception>
-        public static string Crypt(string algorithm, byte[] keyBytes, string salt = "")
+        private static string Crypt(string algorithm, byte[] keyBytes, string salt = "")
         {
             int rounds = DEFAULT_ROUNDS;
             string saltValue = "";

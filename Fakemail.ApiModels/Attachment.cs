@@ -6,6 +6,10 @@ namespace Fakemail.ApiModels
     {
         public Guid AttachmentId { get; set; }
         public string Filename { get; set; }
-        public byte[] Content { get; set; } 
+        public string ContentType { get; set; }
+        public byte[] Content { get; set; }
+
+        // Used to aggregate
+        public int Checksum { get; set; }
     }
 }
