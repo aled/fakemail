@@ -5,37 +5,15 @@ using System.Linq;
 
 using Xunit;
 using MimeKit;
+using Fakemail.Core;
+using System.Threading.Tasks;
 
-namespace Fakemail.DeliveryAgent.Tests
+namespace Fakemail.IntegrationTests
 {
-    static class Extensions
+    public partial class EngineTests
     {
-        public static byte[] GetContentBytes(this MimeEntity mimeEntity)
-        {
-            using (var m = new MemoryStream())
-            {
-                if (mimeEntity is MimePart mimePart)
-                {
-                    mimePart.Content.DecodeTo(m);
-                }
-                else if (mimeEntity is MessagePart messagePart)
-                {
-                    messagePart.Message.WriteTo(m);
-                }
-                return m.ToArray();
-            }
-        }
-    }
-
-    public class UnitTest1
-    {
-        public UnitTest1()
-        {
-
-        }
-
         [Fact]
-        public void ShouldParseMimeEncodedMessage()
+        public async Task ShouldParseMimeEncodedMessage()
         {
             var raw = "Return-Path: <From@From.example.com>\n" +
                 "Delivered-To: To@example2.stream\n" +
@@ -81,7 +59,9 @@ namespace Fakemail.DeliveryAgent.Tests
             Assert.Equal("Body", message.TextBody.Trim());
 
             // Create the data model
+            var isSuccess = await _fixture.Engine.CreateEmailAsync(new MemoryStream(Encoding.UTF8.GetBytes(raw)));
 
+            Assert.True(isSuccess);
         }
 
         [Fact]

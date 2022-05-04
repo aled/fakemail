@@ -21,6 +21,11 @@ using static Fakemail.Cryptography.Sha2Crypt;
 using System.IO;
 using MimeKit;
 using System.Collections.Generic;
+using System.Text;
+using System.Net.Mail;
+using System.Reflection.Metadata;
+using System.Text.RegularExpressions;
+using System.Dynamic;
 
 namespace Fakemail.Core
 {
@@ -147,7 +152,7 @@ namespace Fakemail.Core
         /// </summary>
         /// <param name="messageStream"></param>
         /// <returns></returns>
-        public async Task<bool> CreateEmail(Stream messageStream)
+        public async Task<bool> CreateEmailAsync(Stream messageStream)
         {
             try
             {
@@ -164,22 +169,69 @@ namespace Fakemail.Core
                 // * bcc
                 // * delivered-to
                 // * subject
-                // * received date
+                // * received date, other fields.
                 // * smtp username
+
+                // parse the Received header 
+
+                // from examplehost (static-123-234-12-23.example.co.uk [123.234.12.23])
+                //      by fakemail.stream (OpenSMTPD) with ESMTPSA id 392ecef5 (TLSv1.2:ECDHE-RSA-AES256-GCM-SHA384:256:NO) auth=yes user=user234;" +
+                //      Fri, 29 Apr 2022 21:28:41 +0000 (UTC)
+                var receivedHeaderRegex0 = new Regex(@"^from (?<ReceivedFromHost>.*) \((?<ReceivedFromDns>.*) \[(?<ReceivedFromIpAddress>.*)\]\)$");
+                var receivedHeaderRegex1 = new Regex(@"^.*?by (?<ReceivedByHost>.*) \((?<SmtpdName>.*)\) with (?<SmtpIdType>.*) id (?<smtpId>.*) \((?<TlsInfo>TLS.*)\) auth=yes user=(?<SmtpUser>.*)$");
+                var receivedHeaderRegex2 = new Regex(@"^(?<ReceivedWeekday>.*), (?<ReceivedDay>.*) (?<ReceivedMonth>.*) (?<ReceivedYear>.*) (?<ReceivedTime>.*) (?<ReceivedTimeOffset>.*) \((?<ReceivedTimezone>.*)\)$");
+                
+                var receivedHeader = m.Headers["Received"].Split("        ", StringSplitOptions.RemoveEmptyEntries);
+                var match0 = receivedHeaderRegex0.Match(receivedHeader[0]);
+                var match1 = receivedHeaderRegex1.Match(receivedHeader[1]);
+                var match2 = receivedHeaderRegex2.Match(receivedHeader[2]);
+
+                var receivedDay = match2.Groups["ReceivedDay"].Value;
+                var receivedMonth = match2.Groups["ReceivedMonth"].Value;
+                var receivedYear = match2.Groups["ReceivedYear"].Value;
+                var receivedTime = match2.Groups["ReceivedTime"].Value;
+                var receivedTimeOffset = match2.Groups["ReceivedTimeOffset"].Value;
+
+                var receivedTimestamp = DateTimeOffset.Parse($"{receivedYear}-{receivedMonth}-{receivedDay} {receivedTime}{receivedTimeOffset}");
+
+                var emailId = new Guid(RandomNumberGenerator.GetBytes(16));
+
                 var email = new DataEmail
                 {
-                    EmailId = new Guid(RandomNumberGenerator.GetBytes(16)),
-                    From = m.Headers["From"],
-                    To = m.Headers["To"],
-                    DeliveredTo = m.Headers["Delivered-To"],
-                    Subject = m.Subject,
+                    EmailId = emailId,
+                    From = m.Headers["From"] ?? "",
+                    To = m.Headers["To"] ?? "",
+                    CC = m.Headers["CC"] ?? "",
+                    DeliveredTo = m.Headers["Delivered-To"] ?? "",
+                    Subject = m.Headers["Subject"] ?? "",
                     BodyLength = m.TextBody.Length,
-                    MimeMessage = stream.GetBuffer()
+                    BodySummary = m.TextBody.Length <= 50 ? m.TextBody : m.TextBody.Substring(0, 50),
+                    MimeMessage = stream.GetBuffer(),
+                    BodyChecksum = Utils.Checksum(m.TextBody),
+                    ReceivedFromDns = match0.Groups["ReceivedFromDns"].Value,
+                    ReceivedFromHost = match0.Groups["ReceivedFromHost"].Value,
+                    ReceivedFromIp = match0.Groups["ReceivedFromIp"].Value,
+                    ReceivedSmtpId = match1.Groups["ReceivedSmtpId"].Value,
+                    ReceivedTlsInfo = match1.Groups["TlsInfo"].Value,
+                    SmtpUser = match1.Groups["SmtpUser"].Value,
+                    ReceivedTimestamp = receivedTimestamp
+
                 };
 
                 var attachments = new List<DataAttachment>();
-
-             
+                foreach (var x in m.Attachments)
+                {
+                    var contentBytes = x.GetContentBytes();
+                    attachments.Add(new DataAttachment
+                    {
+                        AttachmentId = new Guid(RandomNumberGenerator.GetBytes(16)),
+                        EmailId = emailId,
+                        Content = contentBytes,
+                        ContentChecksum = Utils.Checksum(contentBytes),
+                        Filename = x.ContentType.Name
+                    });
+                }
+                
                 using (var db = _dbFactory.CreateDbContext())
                 {
                     db.Emails.Add(email);

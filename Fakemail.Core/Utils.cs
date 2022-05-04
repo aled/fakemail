@@ -6,6 +6,8 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 
+using static System.Net.Mime.MediaTypeNames;
+
 namespace Fakemail.Core
 {
     public class Utils
@@ -37,6 +39,18 @@ namespace Fakemail.Core
 
             pos = 0;
             return sb.ToString(pos, sb.Length - pos);
+        }
+
+        public static int Checksum(byte[] bytes)
+        {
+            var a = new Adler32();
+            a.Update(bytes);
+            return (int)a.Value;
+        }
+
+        public static int Checksum(string text)
+        {
+            return Checksum(Encoding.UTF8.GetBytes(text));
         }
     }
 }

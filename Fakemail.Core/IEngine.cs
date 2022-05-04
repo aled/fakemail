@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Threading.Tasks;
 
 using Fakemail.ApiModels;
@@ -18,5 +19,7 @@ namespace Fakemail.Core
         Task<CreateUserResult> CreateUserAsync(User user);
 
         Task<AuthenticateUserResult> AuthenticateUserAsync(User user);
-     }
+
+        Task<bool> CreateEmailAsync(Stream messageStream);
+    }
 }
