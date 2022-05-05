@@ -65,7 +65,7 @@ namespace Fakemail.IntegrationTests
         }
 
         [Fact]
-        public void ShouldParseMimeEncodedMessageWithAttachment()
+        public async Task ShouldParseMimeEncodedMessageWithAttachment()
         {
             var raw = "Return-Path: <From@From.example.com>\n" +
                 "Delivered-To: To@example.stream\n" +
@@ -124,6 +124,11 @@ namespace Fakemail.IntegrationTests
             Assert.Single(message.Attachments);
             Assert.Equal("a.txt", message.Attachments.First().ContentType.Name);
             Assert.Equal(Encoding.UTF8.GetBytes("hello"), message.Attachments.First().GetContentBytes());
+
+            // Create the data model
+            var isSuccess = await _fixture.Engine.CreateEmailAsync(new MemoryStream(Encoding.UTF8.GetBytes(raw)));
+
+            Assert.True(isSuccess);
         }
     }
 }

@@ -177,8 +177,8 @@ namespace Fakemail.Core
                 // from examplehost (static-123-234-12-23.example.co.uk [123.234.12.23])
                 //      by fakemail.stream (OpenSMTPD) with ESMTPSA id 392ecef5 (TLSv1.2:ECDHE-RSA-AES256-GCM-SHA384:256:NO) auth=yes user=user234;" +
                 //      Fri, 29 Apr 2022 21:28:41 +0000 (UTC)
-                var receivedHeaderRegex0 = new Regex(@"^from (?<ReceivedFromHost>.*) \((?<ReceivedFromDns>.*) \[(?<ReceivedFromIpAddress>.*)\]\)$");
-                var receivedHeaderRegex1 = new Regex(@"^.*?by (?<ReceivedByHost>.*) \((?<SmtpdName>.*)\) with (?<SmtpIdType>.*) id (?<smtpId>.*) \((?<TlsInfo>TLS.*)\) auth=yes user=(?<SmtpUsername>.*)$");
+                var receivedHeaderRegex0 = new Regex(@"^from (?<ReceivedFromHost>.*) \((?<ReceivedFromDns>.*) \[(?<ReceivedFromIp>.*)\]\)$");
+                var receivedHeaderRegex1 = new Regex(@"^.*?by (?<ReceivedByHost>.*) \((?<SmtpdName>.*)\) with (?<SmtpIdType>.*) id (?<SmtpId>.*) \((?<TlsInfo>TLS.*)\) auth=yes user=(?<SmtpUsername>[a-zA-Z0-9]+);$");
                 var receivedHeaderRegex2 = new Regex(@"^(?<ReceivedWeekday>.*), (?<ReceivedDay>.*) (?<ReceivedMonth>.*) (?<ReceivedYear>.*) (?<ReceivedTime>.*) (?<ReceivedTimeOffset>.*) \((?<ReceivedTimezone>.*)\)$");
                 
                 var receivedHeader = m.Headers["Received"].Split("        ", StringSplitOptions.RemoveEmptyEntries);
@@ -198,7 +198,7 @@ namespace Fakemail.Core
 
                 var userId = new Guid(RandomNumberGenerator.GetBytes(16));
 
-                var smtpUsername = Utils.CreateId();
+                var smtpUsername = match1.Groups["SmtpUsername"].Value;
                 var smtpPassword = Utils.CreateId();
 
                 var dataUser = new DataUser
@@ -210,10 +210,25 @@ namespace Fakemail.Core
 
                 var dataSmtpUser = new DataSmtpUser
                 {
-                    UserId = dataUser.UserId,
                     SmtpUsername = smtpUsername,
+                    UserId = dataUser.UserId,
                     SmtpPasswordCrypt = Sha512Crypt(smtpPassword)
                 };
+
+                var attachments = new List<DataAttachment>();
+                foreach (var x in m.Attachments)
+                {
+                    var contentBytes = x.GetContentBytes();
+                    attachments.Add(new DataAttachment
+                    {
+                        AttachmentId = new Guid(RandomNumberGenerator.GetBytes(16)),
+                        EmailId = emailId,
+                        Content = contentBytes,
+                        ContentChecksum = Utils.Checksum(contentBytes),
+                        ContentType = "",
+                        Filename = x.ContentType.Name
+                    });
+                }
 
                 var email = new DataEmail
                 {
@@ -230,27 +245,13 @@ namespace Fakemail.Core
                     ReceivedFromDns = match0.Groups["ReceivedFromDns"].Value,
                     ReceivedFromHost = match0.Groups["ReceivedFromHost"].Value,
                     ReceivedFromIp = match0.Groups["ReceivedFromIp"].Value,
-                    ReceivedSmtpId = match1.Groups["ReceivedSmtpId"].Value,
+                    ReceivedSmtpId = match1.Groups["SmtpId"].Value,
                     ReceivedTlsInfo = match1.Groups["TlsInfo"].Value,
-                    SmtpUsername = match1.Groups["SmtpUsername"].Value,
-                    ReceivedTimestamp = receivedTimestamp
-
+                    SmtpUsername = smtpUsername,
+                    ReceivedTimestamp = receivedTimestamp,
+                    Attachments = attachments
                 };
 
-                var attachments = new List<DataAttachment>();
-                foreach (var x in m.Attachments)
-                {
-                    var contentBytes = x.GetContentBytes();
-                    attachments.Add(new DataAttachment
-                    {
-                        AttachmentId = new Guid(RandomNumberGenerator.GetBytes(16)),
-                        EmailId = emailId,
-                        Content = contentBytes,
-                        ContentChecksum = Utils.Checksum(contentBytes),
-                        Filename = x.ContentType.Name
-                    });
-                }
-                
                 using (var db = _dbFactory.CreateDbContext())
                 {
                     await db.Users.AddAsync(dataUser);
