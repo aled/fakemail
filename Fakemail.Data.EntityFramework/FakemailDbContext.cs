@@ -54,6 +54,8 @@ namespace Fakemail.Data.EntityFramework
             builder.Entity<User>()
                 .HasIndex(u => u.Username)
                 .IsUnique();
+
+            builder.Entity<Email>().HasOne(x => x.SmtpUser).WithMany(x => x.Emails).HasForeignKey(x => x.SmtpUsername);
         }
     }
 }

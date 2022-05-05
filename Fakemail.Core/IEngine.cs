@@ -1,11 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
 
 using Fakemail.ApiModels;
-
-using MimeKit;
 
 namespace Fakemail.Core
 {

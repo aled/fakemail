@@ -178,7 +178,7 @@ namespace Fakemail.Core
                 //      by fakemail.stream (OpenSMTPD) with ESMTPSA id 392ecef5 (TLSv1.2:ECDHE-RSA-AES256-GCM-SHA384:256:NO) auth=yes user=user234;" +
                 //      Fri, 29 Apr 2022 21:28:41 +0000 (UTC)
                 var receivedHeaderRegex0 = new Regex(@"^from (?<ReceivedFromHost>.*) \((?<ReceivedFromDns>.*) \[(?<ReceivedFromIpAddress>.*)\]\)$");
-                var receivedHeaderRegex1 = new Regex(@"^.*?by (?<ReceivedByHost>.*) \((?<SmtpdName>.*)\) with (?<SmtpIdType>.*) id (?<smtpId>.*) \((?<TlsInfo>TLS.*)\) auth=yes user=(?<SmtpUser>.*)$");
+                var receivedHeaderRegex1 = new Regex(@"^.*?by (?<ReceivedByHost>.*) \((?<SmtpdName>.*)\) with (?<SmtpIdType>.*) id (?<smtpId>.*) \((?<TlsInfo>TLS.*)\) auth=yes user=(?<SmtpUsername>.*)$");
                 var receivedHeaderRegex2 = new Regex(@"^(?<ReceivedWeekday>.*), (?<ReceivedDay>.*) (?<ReceivedMonth>.*) (?<ReceivedYear>.*) (?<ReceivedTime>.*) (?<ReceivedTimeOffset>.*) \((?<ReceivedTimezone>.*)\)$");
                 
                 var receivedHeader = m.Headers["Received"].Split("        ", StringSplitOptions.RemoveEmptyEntries);
@@ -195,6 +195,25 @@ namespace Fakemail.Core
                 var receivedTimestamp = DateTimeOffset.Parse($"{receivedYear}-{receivedMonth}-{receivedDay} {receivedTime}{receivedTimeOffset}");
 
                 var emailId = new Guid(RandomNumberGenerator.GetBytes(16));
+
+                var userId = new Guid(RandomNumberGenerator.GetBytes(16));
+
+                var smtpUsername = Utils.CreateId();
+                var smtpPassword = Utils.CreateId();
+
+                var dataUser = new DataUser
+                {
+                    UserId = userId,
+                    Username = Utils.CreateId(),
+                    PasswordCrypt = Sha512Crypt(Utils.CreateId())
+                };
+
+                var dataSmtpUser = new DataSmtpUser
+                {
+                    UserId = dataUser.UserId,
+                    SmtpUsername = smtpUsername,
+                    SmtpPasswordCrypt = Sha512Crypt(smtpPassword)
+                };
 
                 var email = new DataEmail
                 {
@@ -213,7 +232,7 @@ namespace Fakemail.Core
                     ReceivedFromIp = match0.Groups["ReceivedFromIp"].Value,
                     ReceivedSmtpId = match1.Groups["ReceivedSmtpId"].Value,
                     ReceivedTlsInfo = match1.Groups["TlsInfo"].Value,
-                    SmtpUser = match1.Groups["SmtpUser"].Value,
+                    SmtpUsername = match1.Groups["SmtpUsername"].Value,
                     ReceivedTimestamp = receivedTimestamp
 
                 };
@@ -234,8 +253,10 @@ namespace Fakemail.Core
                 
                 using (var db = _dbFactory.CreateDbContext())
                 {
-                    db.Emails.Add(email);
-                    db.Attachments.AddRange(attachments);
+                    await db.Users.AddAsync(dataUser);
+                    await db.SmtpUsers.AddAsync(dataSmtpUser);
+                    await db.Emails.AddAsync(email);
+                    await db.Attachments.AddRangeAsync(attachments);
                     await db.SaveChangesAsync();
                 }
             }

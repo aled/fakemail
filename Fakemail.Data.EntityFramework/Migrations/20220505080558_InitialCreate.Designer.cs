@@ -11,7 +11,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Fakemail.Data.EntityFramework.Migrations
 {
     [DbContext(typeof(FakemailDbContext))]
-    [Migration("20220503231624_InitialCreate")]
+    [Migration("20220505080558_InitialCreate")]
     partial class InitialCreate
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -47,7 +47,7 @@ namespace Fakemail.Data.EntityFramework.Migrations
 
                     b.HasIndex("EmailId");
 
-                    b.ToTable("Attachments");
+                    b.ToTable("Attachment");
                 });
 
             modelBuilder.Entity("Fakemail.Data.EntityFramework.Email", b =>
@@ -105,8 +105,7 @@ namespace Fakemail.Data.EntityFramework.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("SmtpUser")
-                        .IsRequired()
+                    b.Property<string>("SmtpUsername")
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Subject")
@@ -117,14 +116,27 @@ namespace Fakemail.Data.EntityFramework.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
-                    b.Property<Guid>("UserId")
-                        .HasColumnType("TEXT");
-
                     b.HasKey("EmailId");
 
-                    b.HasIndex("UserId");
+                    b.HasIndex("SmtpUsername");
 
-                    b.ToTable("Emails");
+                    b.ToTable("Email");
+                });
+
+            modelBuilder.Entity("Fakemail.Data.EntityFramework.SmtpAlias", b =>
+                {
+                    b.Property<string>("Account")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Account");
+
+                    b.ToTable("SmtpAlias");
+
+                    b.HasData(
+                        new
+                        {
+                            Account = "fakemail"
+                        });
                 });
 
             modelBuilder.Entity("Fakemail.Data.EntityFramework.SmtpUser", b =>
@@ -152,7 +164,7 @@ namespace Fakemail.Data.EntityFramework.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("SmtpUsers");
+                    b.ToTable("SmtpUser");
                 });
 
             modelBuilder.Entity("Fakemail.Data.EntityFramework.User", b =>
@@ -183,7 +195,7 @@ namespace Fakemail.Data.EntityFramework.Migrations
                     b.HasIndex("Username")
                         .IsUnique();
 
-                    b.ToTable("Users");
+                    b.ToTable("User");
                 });
 
             modelBuilder.Entity("Fakemail.Data.EntityFramework.Attachment", b =>
@@ -199,13 +211,11 @@ namespace Fakemail.Data.EntityFramework.Migrations
 
             modelBuilder.Entity("Fakemail.Data.EntityFramework.Email", b =>
                 {
-                    b.HasOne("Fakemail.Data.EntityFramework.User", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                    b.HasOne("Fakemail.Data.EntityFramework.SmtpUser", "SmtpUser")
+                        .WithMany("Emails")
+                        .HasForeignKey("SmtpUsername");
 
-                    b.Navigation("User");
+                    b.Navigation("SmtpUser");
                 });
 
             modelBuilder.Entity("Fakemail.Data.EntityFramework.SmtpUser", b =>
@@ -222,6 +232,11 @@ namespace Fakemail.Data.EntityFramework.Migrations
             modelBuilder.Entity("Fakemail.Data.EntityFramework.Email", b =>
                 {
                     b.Navigation("Attachments");
+                });
+
+            modelBuilder.Entity("Fakemail.Data.EntityFramework.SmtpUser", b =>
+                {
+                    b.Navigation("Emails");
                 });
 
             modelBuilder.Entity("Fakemail.Data.EntityFramework.User", b =>

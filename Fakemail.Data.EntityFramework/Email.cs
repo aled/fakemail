@@ -19,9 +19,6 @@ namespace Fakemail.Data.EntityFramework
         [Key]
         public Guid EmailId { get; set; }
 
-        [Required]
-        public Guid UserId { get; set; }
-
         /// <summary>
         /// The raw mime-encoded message.
         /// </summary>
@@ -59,9 +56,6 @@ namespace Fakemail.Data.EntityFramework
 
         [Required]
         public string ReceivedTlsInfo { get; set; }
-        
-        [Required]
-        public string SmtpUser { get; set; }
 
         [Required]
         public DateTimeOffset ReceivedTimestamp { get; set; }
@@ -81,9 +75,9 @@ namespace Fakemail.Data.EntityFramework
         [Required]
         public int BodyChecksum { get; set; }
 
-        [Required]
+
         public List<Attachment> Attachments { get; set; }
-        
-        public User User { get; set; }
+        public string SmtpUsername { get; set; }
+        public SmtpUser SmtpUser { get; set; }
     }
 }

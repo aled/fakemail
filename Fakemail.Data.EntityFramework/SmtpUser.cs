@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 
 namespace Fakemail.Data.EntityFramework
@@ -16,9 +17,11 @@ namespace Fakemail.Data.EntityFramework
         /// <summary>
         /// Uses the SHA512 crypt() function
         /// </summary>
-        [Required]        
+        [Required]
         public string SmtpPasswordCrypt { get; set; }
 
         public User User { get; set; }
+
+        public List<Email> Emails {get; set;}
     }
 }

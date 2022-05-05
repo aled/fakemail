@@ -3,4 +3,6 @@ Update EF tools:
 
 Change to Fakemail.Data.EntityFramework dir
 
-Change the solution's startup project to Fakemail.Web
+Initial create:
+    dotnet ef migrations add InitialCreate
+
