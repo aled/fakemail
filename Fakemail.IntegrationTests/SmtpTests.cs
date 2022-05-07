@@ -56,7 +56,6 @@ namespace Fakemail.IntegrationTests
             email.To.Add(new MailAddress("To@example1.stream"));           
             email.CC.Add(new MailAddress("To@example2.stream"));
             email.CC.Add(new MailAddress("To@example3.stream"));
-
             email.Bcc.Add(new MailAddress("To@example3.stream"));
             email.Bcc.Add(new MailAddress("To@example4.stream"));
             var content = new MemoryStream(Encoding.UTF8.GetBytes("hello"));

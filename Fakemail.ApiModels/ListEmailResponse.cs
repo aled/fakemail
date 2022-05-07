@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Fakemail.ApiModels
 {
-    public class ListEmailResult
+    public class ListEmailResponse
     {
         public bool Success { get; set; } = false;
         public string ErrorMessage { get; set; } = string.Empty;

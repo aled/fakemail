@@ -40,6 +40,8 @@ namespace Fakemail.IntegrationTests
                 .WriteTo.Console()
                 .CreateLogger();
 
+            var jwtSigningKey = "gfjherjhjhkdgfjhkgdfjhkgdfjhkgfdhjdfghjkfdg";
+
             return Host.CreateDefaultBuilder()
                 .UseSerilog()
                 .ConfigureServices((hostContext, services) =>
@@ -47,6 +49,7 @@ namespace Fakemail.IntegrationTests
                     services.AddDbContextFactory<FakemailDbContext>(options => options.UseSqlite($"Data Source={_dbFile}"));
                     services.AddSingleton(Log.Logger);
                     services.AddSingleton<IEngine, Engine>();
+                    services.AddSingleton<IJwtAuthentication>(new JwtAuthentication(jwtSigningKey));
                 })
                 .ConfigureHostConfiguration(configHost =>
                 {

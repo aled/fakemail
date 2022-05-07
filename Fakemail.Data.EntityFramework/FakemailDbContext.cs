@@ -14,7 +14,7 @@ namespace Fakemail.Data.EntityFramework
         public FakemailDbContext CreateDbContext(string[] args)
         {
             var optionsBuilder = new DbContextOptionsBuilder<FakemailDbContext>();
-            optionsBuilder.UseSqlite("Data Source=fakemail-design.db");
+            optionsBuilder.UseSqlite("Data Source=fakemail-design.sqlite");
 
             return new FakemailDbContext(optionsBuilder.Options);
         }

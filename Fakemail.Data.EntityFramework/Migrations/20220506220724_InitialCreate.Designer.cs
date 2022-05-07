@@ -11,7 +11,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Fakemail.Data.EntityFramework.Migrations
 {
     [DbContext(typeof(FakemailDbContext))]
-    [Migration("20220505080558_InitialCreate")]
+    [Migration("20220506220724_InitialCreate")]
     partial class InitialCreate
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -178,6 +178,9 @@ namespace Fakemail.Data.EntityFramework.Migrations
 
                     b.Property<DateTimeOffset>("InsertedTimestamp")
                         .HasColumnType("TEXT");
+
+                    b.Property<bool>("IsAdmin")
+                        .HasColumnType("INTEGER");
 
                     b.Property<DateTimeOffset>("LastUpdatedTimestamp")
                         .HasColumnType("TEXT");

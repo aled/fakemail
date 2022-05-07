@@ -1,43 +1,41 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using Microsoft.Extensions.Logging;
-using Microsoft.EntityFrameworkCore;
+
 using Microsoft.Data.Sqlite;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
-using DataUser = Fakemail.Data.EntityFramework.User;
-using DataSmtpUser = Fakemail.Data.EntityFramework.SmtpUser;
-using DataEmail = Fakemail.Data.EntityFramework.Email;
-using DataAttachment = Fakemail.Data.EntityFramework.Attachment;
-
-using ApiUser = Fakemail.ApiModels.User;
-
+using MimeKit;
 
 using Fakemail.ApiModels;
 using Fakemail.Data.EntityFramework;
 
 using static Fakemail.Cryptography.Sha2Crypt;
-using System.IO;
-using MimeKit;
-using System.Collections.Generic;
-using System.Text;
-using System.Net.Mail;
-using System.Reflection.Metadata;
-using System.Text.RegularExpressions;
-using System.Dynamic;
+
+using DataAttachment = Fakemail.Data.EntityFramework.Attachment;
+using DataEmail = Fakemail.Data.EntityFramework.Email;
+using DataSmtpUser = Fakemail.Data.EntityFramework.SmtpUser;
+using DataUser = Fakemail.Data.EntityFramework.User;
+using Newtonsoft.Json.Linq;
 
 namespace Fakemail.Core
 {
     public class Engine : IEngine
     {
-        private ILogger<Engine> _log;
         private IDbContextFactory<FakemailDbContext> _dbFactory;
+        private ILogger<Engine> _log;
+        private IJwtAuthentication _auth;
 
-        public Engine(IDbContextFactory<FakemailDbContext> dbFactory, ILogger<Engine> log)
+        public Engine(IDbContextFactory<FakemailDbContext> dbFactory, ILogger<Engine> log, IJwtAuthentication auth)
         {
-            _log = log;
             _dbFactory = dbFactory;
+            _log = log;
+            _auth = auth;
         }
 
         /// <summary>
@@ -45,47 +43,49 @@ namespace Fakemail.Core
         /// </summary>
         /// <param name="user"></param>
         /// <returns></returns>
-        public async Task<CreateUserResult> CreateUserAsync(ApiUser user)
+        public async Task<CreateUserResponse> CreateUserAsync(CreateUserRequest request)
         {
-            var result = new CreateUserResult
+            var result = new CreateUserResponse
             {
                 Success = false,
-                ErrorMessage = "Error creating user"
+                ErrorMessage = "Error creating account"
             };
 
             try
             {
                 // TODO: check quality of password
 
+                var userId = new Guid(RandomNumberGenerator.GetBytes(16));
+                var smtpUsername = Utils.CreateId();
+                var smtpPassword = Utils.CreateId();
+
+                var dataUser = new DataUser
+                {
+                    UserId = userId,
+                    Username = request.Username,
+                    PasswordCrypt = Sha512Crypt(request.Password)
+                };
+
+                var dataSmtpUser = new DataSmtpUser
+                {
+                    UserId = dataUser.UserId,
+                    SmtpUsername = smtpUsername,
+                    SmtpPasswordCrypt = Sha512Crypt(smtpPassword)
+                };
+
                 using (var db = _dbFactory.CreateDbContext())
                 {
-                    var userId = new Guid(RandomNumberGenerator.GetBytes(16));
-                    var smtpUsername = Utils.CreateId();
-                    var smtpPassword = Utils.CreateId();
-
-                    var dataUser = new DataUser
-                    {
-                        UserId = userId,
-                        Username = user.Username,
-                        PasswordCrypt = Sha512Crypt(user.Password)
-                    };
-                   
-                    var dataSmtpUser = new DataSmtpUser
-                    {
-                        UserId = dataUser.UserId,
-                        SmtpUsername = smtpUsername,
-                        SmtpPasswordCrypt = Sha512Crypt(smtpPassword)
-                    };
-
                     await db.Users.AddAsync(dataUser);
                     await db.SmtpUsers.AddAsync(dataSmtpUser);
                     await db.SaveChangesAsync();
-
-                    result.Success = true;
-                    result.Username = user.Username;
-                    result.SmtpUsername = smtpUsername;
-                    result.SmtpPassword = smtpPassword;                  
                 }
+
+                result.Success = true;
+                result.ErrorMessage = null;
+                result.Username = request.Username;
+                result.SmtpUsername = smtpUsername;
+                result.SmtpPassword = smtpPassword; 
+                result.BearerToken = _auth.GetAuthenticationToken(request.Username, false);
             }
             catch (DbUpdateException due)
             {
@@ -104,6 +104,7 @@ namespace Fakemail.Core
             }
             catch (Exception ex)
             {
+                result.ErrorMessage = "Server error";
                 _log.LogError(ex.Message);
             }
 
@@ -115,9 +116,9 @@ namespace Fakemail.Core
         /// </summary>
         /// <param name="apiUser"></param>
         /// <returns></returns>
-        public async Task<AuthenticateUserResult> AuthenticateUserAsync(ApiUser apiUser)
+        public async Task<GetTokenResponse> GetTokenAsync(GetTokenRequest request)
         {
-            var result = new AuthenticateUserResult
+            var response = new GetTokenResponse
             {
                 Success = false,
                 ErrorMessage = "Invalid username or password"
@@ -127,15 +128,16 @@ namespace Fakemail.Core
             {
                 using (var db = _dbFactory.CreateDbContext())
                 {
-                    var passwordCrypt = await db.Users
-                        .Where(x => x.Username == apiUser.Username)
-                        .Select(x => x.PasswordCrypt)
+                    var user = await db.Users
+                        .Where(x => x.Username == request.Username)
                         .SingleAsync();
 
-                    if (Validate(apiUser.Password, passwordCrypt))
+                    if (Validate(request.Password, user.PasswordCrypt))
                     {
-                        result.Success = true;
-                        result.ErrorMessage = string.Empty;
+                        response.Success = true;
+                        response.ErrorMessage = null;
+                        response.IsAdmin = user.IsAdmin;
+                        response.Token = _auth.GetAuthenticationToken(user.Username, user.IsAdmin);
                     }
                 }
             }
@@ -144,7 +146,7 @@ namespace Fakemail.Core
                 _log.LogError(e.Message);
             }
 
-            return result;        
+            return response;        
         }
 
         /// <summary>
@@ -195,7 +197,6 @@ namespace Fakemail.Core
                 var receivedTimestamp = DateTimeOffset.Parse($"{receivedYear}-{receivedMonth}-{receivedDay} {receivedTime}{receivedTimeOffset}");
 
                 var emailId = new Guid(RandomNumberGenerator.GetBytes(16));
-
                 var userId = new Guid(RandomNumberGenerator.GetBytes(16));
 
                 var smtpUsername = match1.Groups["SmtpUsername"].Value;
@@ -268,7 +269,43 @@ namespace Fakemail.Core
             }
 
             return true;
+        }
 
+        public async Task<ListUserResponse> ListUsers(ListUserRequest request)
+        {
+            using (var db = _dbFactory.CreateDbContext())
+            {
+                var users = await db.Users
+                    .Skip((request.Page - 1) * request.PageSize)
+                    .Take(request.PageSize)
+                    .Select(x => new
+                    {
+                        x.Username,
+                        x.IsAdmin,
+                        SmtpUsers = x.SmtpUsers.Select(y => new SmtpUserDetail
+                        {
+                            SmtpUsername = y.SmtpUsername,
+                            CurrentEmailCount = y.Emails.Count
+                        }),
+                    })
+                    .Select(x => new UserDetail
+                    {
+                        Username = x.Username,
+                        IsAdmin = x.IsAdmin,
+                        SmtpUsers = x.SmtpUsers.ToList(),
+                        CurrentEmailCount = x.SmtpUsers.Sum(y => y.CurrentEmailCount)
+                    })
+                    .ToListAsync();
+
+                return new ListUserResponse
+                {
+                    Success = true,
+                    ErrorMessage = null,
+                    Page = request.Page,
+                    PageSize = request.PageSize,
+                    Users = users
+                };
+            }
         }
     }
 }

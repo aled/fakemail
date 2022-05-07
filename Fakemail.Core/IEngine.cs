@@ -13,10 +13,12 @@ namespace Fakemail.Core
         /// </summary>
         /// <param name="user"></param>
         /// <returns></returns>
-        Task<CreateUserResult> CreateUserAsync(User user);
+        Task<CreateUserResponse> CreateUserAsync(CreateUserRequest request);
 
-        Task<AuthenticateUserResult> AuthenticateUserAsync(User user);
+        Task<GetTokenResponse> GetTokenAsync(GetTokenRequest user);
 
         Task<bool> CreateEmailAsync(Stream messageStream);
+
+        Task<ListUserResponse> ListUsers(ListUserRequest request);
     }
 }

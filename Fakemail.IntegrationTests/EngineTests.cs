@@ -1,12 +1,12 @@
 using System.Threading.Tasks;
 
-using Fakemail.Core;
-
+using Xunit;
 using FluentAssertions;
 
 using MimeKit;
 
-using Xunit;
+using Fakemail.ApiModels;
+using Fakemail.Core;
 
 namespace Fakemail.IntegrationTests
 {
@@ -26,15 +26,15 @@ namespace Fakemail.IntegrationTests
             var username = Utils.CreateId();
             var password = Utils.CreateId();
 
-            var result = await _fixture.Engine.CreateUserAsync(
-                new ApiModels.User {
+            var response = await _fixture.Engine.CreateUserAsync(
+                new CreateUserRequest {
                     Username = username,
                     Password = password
                 }
             );
 
-            result.Should().NotBeNull();
-            result.Success.Should().BeTrue();
+            response.Should().NotBeNull();
+            response.Success.Should().BeTrue();
         }
 
         [Fact]
@@ -43,87 +43,106 @@ namespace Fakemail.IntegrationTests
             var username = Utils.CreateId();
             var password = Utils.CreateId();
 
-            var result = await _fixture.Engine.CreateUserAsync(
-                new ApiModels.User
+            var response = await _fixture.Engine.CreateUserAsync(
+                new CreateUserRequest
                 {
                     Username = username,
                     Password = password
                 }
             );
 
-            result.Should().NotBeNull();
-            result.Success.Should().BeTrue();
+            response.Should().NotBeNull();
+            response.Success.Should().BeTrue();
 
-            result = await _fixture.Engine.CreateUserAsync(
-               new ApiModels.User
+            response = await _fixture.Engine.CreateUserAsync(
+               new CreateUserRequest
                {
                    Username = username,
                    Password = password
                }
            );
 
-            result.Should().NotBeNull();
-            result.Success.Should().BeFalse();
-            result.ErrorMessage.Should().Be("User already exists");
+            response.Should().NotBeNull();
+            response.Success.Should().BeFalse();
+            response.ErrorMessage.Should().Be("User already exists");
         }
 
         [Fact]
         public async Task AuthenticateUser_WrongPassword()
         {
-           var user = new ApiModels.User
-            {
+           var request = new CreateUserRequest
+           {
                 Username = Utils.CreateId(),
                 Password = Utils.CreateId()
             };
 
-            var result = await _fixture.Engine.CreateUserAsync(user);
+            var response = await _fixture.Engine.CreateUserAsync(request);
 
-            result.Should().NotBeNull();
-            result.Success.Should().BeTrue();
+            response.Should().NotBeNull();
+            response.Success.Should().BeTrue();
 
-            user.Password = "WrongPassword!!!";
-            var auth = await _fixture.Engine.AuthenticateUserAsync(user);
+            var authRequest = new GetTokenRequest
+            {
+                Username = request.Username,
+                Password = "WrongPassword!!!"
+            };
 
-            auth.Success.Should().Be(false);
+            var authResponse = await _fixture.Engine.GetTokenAsync(authRequest);
+
+            authResponse.Success.Should().Be(false);
+            authResponse.Token.Should().BeNull();
         }
 
         [Fact]
         public async Task AuthenticateUser_CorrectPassword()
         {
-            var user = new ApiModels.User
+            var request = new CreateUserRequest
             {
                 Username = Utils.CreateId(),
                 Password = Utils.CreateId()
             };
 
-            var result = await _fixture.Engine.CreateUserAsync(user);
+            var response = await _fixture.Engine.CreateUserAsync(request);
 
-            result.Should().NotBeNull();
-            result.Success.Should().BeTrue();
+            response.Should().NotBeNull();
+            response.Success.Should().BeTrue();
 
-            var auth = await _fixture.Engine.AuthenticateUserAsync(user);
+            var authRequest = new GetTokenRequest
+            {
+                Username = request.Username,
+                Password = request.Password
+            };
 
-            auth.Success.Should().Be(true);
+            var authResponse = await _fixture.Engine.GetTokenAsync(authRequest);
+
+            authResponse.Success.Should().Be(true);
+            authResponse.Token.Should().NotBeNull();
         }
 
         [Fact]
         public async Task AuthenticateUser_NoSuchUser()
         {
-            var user = new ApiModels.User
+            var request = new CreateUserRequest
             {
                 Username = Utils.CreateId(),
                 Password = Utils.CreateId()
+};
+
+            var response = await _fixture.Engine.CreateUserAsync(request);
+
+            response.Should().NotBeNull();
+            response.Success.Should().BeTrue();
+
+            var authRequest = new GetTokenRequest
+            {
+                Username = "NoSuchUser!!!",
+                Password = request.Password
             };
 
-            var result = await _fixture.Engine.CreateUserAsync(user);
+            var authResponse = await _fixture.Engine.GetTokenAsync(authRequest);
 
-            result.Should().NotBeNull();
-            result.Success.Should().BeTrue();
-
-            user.Username = "NoSuchUser!!!";
-            var auth = await _fixture.Engine.AuthenticateUserAsync(user);
-
-            auth.Success.Should().Be(false);
+            authResponse.Success.Should().Be(false);
+            authResponse.Token.Should().BeNull();
         }
 
         private static MimeMessage GenerateEmail()

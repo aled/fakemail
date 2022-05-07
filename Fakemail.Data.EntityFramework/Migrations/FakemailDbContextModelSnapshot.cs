@@ -177,6 +177,9 @@ namespace Fakemail.Data.EntityFramework.Migrations
                     b.Property<DateTimeOffset>("InsertedTimestamp")
                         .HasColumnType("TEXT");
 
+                    b.Property<bool>("IsAdmin")
+                        .HasColumnType("INTEGER");
+
                     b.Property<DateTimeOffset>("LastUpdatedTimestamp")
                         .HasColumnType("TEXT");
 

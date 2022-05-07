@@ -19,6 +19,9 @@ namespace Fakemail.Data.EntityFramework
         [Required]
         public string PasswordCrypt { get; set; }
 
+        [Required]
+        public bool IsAdmin { get; set; } = false;
+
         public List<SmtpUser> SmtpUsers { get; set; }
     }
 }

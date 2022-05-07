@@ -27,6 +27,7 @@ namespace Fakemail.Data.EntityFramework.Migrations
                     UserId = table.Column<Guid>(type: "TEXT", nullable: false),
                     Username = table.Column<string>(type: "TEXT", nullable: false),
                     PasswordCrypt = table.Column<string>(type: "TEXT", nullable: false),
+                    IsAdmin = table.Column<bool>(type: "INTEGER", nullable: false),
                     InsertedTimestamp = table.Column<DateTimeOffset>(type: "TEXT", nullable: false),
                     LastUpdatedTimestamp = table.Column<DateTimeOffset>(type: "TEXT", nullable: false),
                     DeletedTimestamp = table.Column<DateTimeOffset>(type: "TEXT", nullable: false)
