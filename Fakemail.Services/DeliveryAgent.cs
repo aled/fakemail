@@ -120,11 +120,6 @@ namespace Fakemail.Services
             watcher.EnableRaisingEvents = true;
             watcher.IncludeSubdirectories = false;
             
-            //foreach (var file in directoryInfo.GetFiles())
-            //{
-            //    _queue.TryAdd(file.Name); // don't block here
-            //}
-
             var pollTimestamp = DateTime.MinValue;
             var pollTimeSpan = TimeSpan.FromSeconds(_config.PollSeconds);
             var pollPeriodMillis = (int)(pollTimeSpan.TotalMilliseconds);
