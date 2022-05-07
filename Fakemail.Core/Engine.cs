@@ -149,6 +149,19 @@ namespace Fakemail.Core
             return response;        
         }
 
+
+        private string Extract(GroupCollection groups, string groupName)
+        {
+            var value = groups[groupName];
+
+            if (value.Success)
+            {
+                return value.Value;
+            }
+
+            throw new Exception($"Failed to parse '{groupName}'");
+        }
+
         /// <summary>
         /// This method is used to insert newly delivered messages into the database
         /// </summary>
@@ -174,7 +187,7 @@ namespace Fakemail.Core
                 // * received date, other fields.
                 // * smtp username
 
-                // parse the Received header 
+                // Parse the 'Received header'. This is fragile and may break on updates of the SMTP server.
 
                 // from examplehost (static-123-234-12-23.example.co.uk [123.234.12.23])
                 //      by fakemail.stream (OpenSMTPD) with ESMTPSA id 392ecef5 (TLSv1.2:ECDHE-RSA-AES256-GCM-SHA384:256:NO) auth=yes user=user234;" +
@@ -183,39 +196,29 @@ namespace Fakemail.Core
                 var receivedHeaderRegex1 = new Regex(@"^.*?by (?<ReceivedByHost>.*) \((?<SmtpdName>.*)\) with (?<SmtpIdType>.*) id (?<SmtpId>.*) \((?<TlsInfo>TLS.*)\) auth=yes user=(?<SmtpUsername>[a-zA-Z0-9]+);$");
                 var receivedHeaderRegex2 = new Regex(@"^(?<ReceivedWeekday>.*), (?<ReceivedDay>.*) (?<ReceivedMonth>.*) (?<ReceivedYear>.*) (?<ReceivedTime>.*) (?<ReceivedTimeOffset>.*) \((?<ReceivedTimezone>.*)\)$");
                 
-                var receivedHeader = m.Headers["Received"].Split("        ", StringSplitOptions.RemoveEmptyEntries);
+                var receivedHeader = m.Headers["Received"].Split(new[] { "        ", "\t" }, StringSplitOptions.RemoveEmptyEntries);
+
+                if (receivedHeader.Length != 3)
+                {
+                    throw new Exception("Failed to parse 'Received' header");
+                }
+
                 var match0 = receivedHeaderRegex0.Match(receivedHeader[0]);
                 var match1 = receivedHeaderRegex1.Match(receivedHeader[1]);
                 var match2 = receivedHeaderRegex2.Match(receivedHeader[2]);
 
-                var receivedDay = match2.Groups["ReceivedDay"].Value;
-                var receivedMonth = match2.Groups["ReceivedMonth"].Value;
-                var receivedYear = match2.Groups["ReceivedYear"].Value;
-                var receivedTime = match2.Groups["ReceivedTime"].Value;
-                var receivedTimeOffset = match2.Groups["ReceivedTimeOffset"].Value;
+                var receivedDay = Extract(match2.Groups, "ReceivedDay");
+                var receivedMonth = Extract(match2.Groups, "ReceivedMonth");
+                var receivedYear = Extract(match2.Groups, "ReceivedYear");
+                var receivedTime = Extract(match2.Groups, "ReceivedTime");
+                var receivedTimeOffset = Extract(match2.Groups, "ReceivedTimeOffset");
 
                 var receivedTimestamp = DateTimeOffset.Parse($"{receivedYear}-{receivedMonth}-{receivedDay} {receivedTime}{receivedTimeOffset}");
 
                 var emailId = new Guid(RandomNumberGenerator.GetBytes(16));
-                var userId = new Guid(RandomNumberGenerator.GetBytes(16));
 
-                var smtpUsername = match1.Groups["SmtpUsername"].Value;
-                var smtpPassword = Utils.CreateId();
-
-                var dataUser = new DataUser
-                {
-                    UserId = userId,
-                    Username = Utils.CreateId(),
-                    PasswordCrypt = Sha512Crypt(Utils.CreateId())
-                };
-
-                var dataSmtpUser = new DataSmtpUser
-                {
-                    SmtpUsername = smtpUsername,
-                    UserId = dataUser.UserId,
-                    SmtpPasswordCrypt = Sha512Crypt(smtpPassword)
-                };
-
+                var smtpUsername = Extract(match1.Groups, "SmtpUsername");
+                
                 var attachments = new List<DataAttachment>();
                 foreach (var x in m.Attachments)
                 {
@@ -255,8 +258,6 @@ namespace Fakemail.Core
 
                 using (var db = _dbFactory.CreateDbContext())
                 {
-                    await db.Users.AddAsync(dataUser);
-                    await db.SmtpUsers.AddAsync(dataSmtpUser);
                     await db.Emails.AddAsync(email);
                     await db.Attachments.AddRangeAsync(attachments);
                     await db.SaveChangesAsync();

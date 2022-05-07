@@ -1,9 +1,11 @@
 # to-do list
 
 Immediate:
-- Use database (postgresql?) for SMTP auth
+- Implement GetEmails API
+- Implement RenewToken API
 - Turn off tailscale VPN on public server
-- Write MDA program to insert email into database
+- Write MDA program to insert email into database - use filesystemwatcher in C#,
+  running as a service in the API project
 
 - Automated deployment
 
@@ -38,3 +40,4 @@ Done
 - check if incoming address is valid
 - private addresses - no auth - "use this address xxx@fakemail.stream"
 - Use SMTP auth for user Id
+- Use database (postgresql?) for SMTP auth

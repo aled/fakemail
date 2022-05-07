@@ -50,9 +50,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Fakemail.Api", "Fakemail.Ap
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Fakemail.Web", "Fakemail.Web\Fakemail.Web.csproj", "{3B9BE731-3B9E-46CD-A860-90F5C56F3754}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Fakemail.DeliveryAgent", "Fakemail.DeliveryAgent\Fakemail.DeliveryAgent.csproj", "{8BD2C96B-B282-4E46-A297-AF08756FEF9F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Fakemail.Services", "Fakemail.DeliveryAgent\Fakemail.Services.csproj", "{8BD2C96B-B282-4E46-A297-AF08756FEF9F}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Fakemail.DeliveryAgent.Tests", "Fakemail.DeliveryAgent.Tests\Fakemail.DeliveryAgent.Tests.csproj", "{D8ECA569-6291-4806-B93B-0C7CBEF45F13}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Fakemail.Services.Tests", "Fakemail.DeliveryAgent.Tests\Fakemail.Services.Tests.csproj", "{D8ECA569-6291-4806-B93B-0C7CBEF45F13}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Fakemail.Cryptography", "Fakemail.Cryptography\Fakemail.Cryptography.csproj", "{A7825F3F-FAB0-4FFA-8146-33505B1716DD}"
 EndProject
