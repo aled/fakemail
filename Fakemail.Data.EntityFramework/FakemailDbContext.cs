@@ -1,4 +1,6 @@
-﻿using System.Reflection.Emit;
+﻿using System.Linq;
+using System;
+using System.Reflection.Emit;
 
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
@@ -38,6 +40,26 @@ namespace Fakemail.Data.EntityFramework
         public DbSet<Email> Emails { get; set; }
 
         public DbSet<Attachment> Attachments { get; set; }
+
+        public override int SaveChanges()
+        {
+            var utcNow = DateTime.UtcNow;
+
+            foreach (var entry in ChangeTracker.Entries())
+            {
+                if (entry.Entity is BaseEntity baseEntity)
+                {
+                    if (entry.State == EntityState.Added)
+                    {
+                        baseEntity.CreatedTimestampUtc = utcNow;
+                    }
+
+                    baseEntity.UpdatedTimestampUtc = utcNow;
+                }
+            }
+
+            return base.SaveChanges();
+        }
 
         protected override void OnModelCreating(ModelBuilder builder)
 {

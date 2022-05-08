@@ -58,7 +58,7 @@ namespace Fakemail.Data.EntityFramework
         public string ReceivedTlsInfo { get; set; }
 
         [Required]
-        public DateTimeOffset ReceivedTimestamp { get; set; }
+        public DateTime ReceivedTimestampUtc { get; set; }
 
         /// <summary>
         /// Number of bytes in body content

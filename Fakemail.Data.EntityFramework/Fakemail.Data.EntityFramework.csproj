@@ -5,6 +5,11 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="20220506220724_InitialCreate.sql" />
+    <None Remove="20220508130133_ChangeDateTimeOffsetToDateTime.sql" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="6.0.4" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="6.0.4">
       <PrivateAssets>all</PrivateAssets>

@@ -6,10 +6,8 @@ namespace Fakemail.Data.EntityFramework
     public abstract class BaseEntity
     { 
         [Required]
-        public DateTimeOffset InsertedTimestamp { get; set; }
+        public DateTime CreatedTimestampUtc { get; set; }
         
-        public DateTimeOffset LastUpdatedTimestamp { get; set; }
-
-        public DateTimeOffset DeletedTimestamp { get; set; }
-    }
+        public DateTime UpdatedTimestampUtc { get; set; }
+  }
 }

@@ -1,12 +1,7 @@
 ﻿using System;
 using System.Collections.Concurrent;
 
-using Fakemail.ApiModels;
-using Fakemail.Core;
-using Fakemail.Data.EntityFramework;
-
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -14,14 +9,11 @@ using Microsoft.Extensions.Logging;
 
 using Serilog;
 
+using Fakemail.Core;
+using Fakemail.Data.EntityFramework;
+
 namespace Fakemail.Services
 {
-    public class DeliveryAgentConfig
-    {
-        public string IncomingDirectory { get; set; } = "c:\\temp\\fakemail\\incoming";
-        public string FailedDirectory { get; set; } = "c:\\temp\\fakemail\\failed";
-        public int PollSeconds { get; set; } = 30;
-    }
 
     // To be run either as a standalone executable, or as a worker service within the API
     public class DeliveryAgent
@@ -34,7 +26,7 @@ namespace Fakemail.Services
         public static async Task Main(string[] args)
         {
             // Usage:
-            //  Fakemail.DeliveryAgent [-poll [seconds]] directory
+            //  Fakemail.DeliveryAgent [-poll [seconds]] [-fail directory] directory
             var config = new DeliveryAgentConfig();
 
             for (int i = 0; i < args.Length; i++)
@@ -42,6 +34,10 @@ namespace Fakemail.Services
                 if (i == args.Length - 1)
                 {
                     config.IncomingDirectory = args[i];
+                }
+                else if (args[i] == "-fail")
+                {
+                    config.FailedDirectory = args[++i];
                 }
                 else if (args[i] == "-poll")
                 {
@@ -166,7 +162,7 @@ namespace Fakemail.Services
                         }
                         catch (IOException ioe)
                         {
-                            // This is mainly to temporary issues (e.g. locked files), which should be retried.
+                            // This is mainly for temporary issues (e.g. locked files), which should be retried.
                             // There are potentially some permanent issues (e.g. permissions) which should not be retried.
                             // TODO: Don't have infinite retries
                             _log.LogError(ioe.Message);

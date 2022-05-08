@@ -8,8 +8,11 @@ namespace Fakemail.ApiModels
 {
     public class ListEmailResponse
     {
-        public bool Success { get; set; } = false;
-        public string ErrorMessage { get; set; } = string.Empty;
-        public Email[] Emails { get; set; } = new Email[0];
+        public bool Success { get; set; }
+        public string ErrorMessage { get; set; }
+        public int Page { get; set; }
+        public int PageSize { get; set; }
+        public int MaxPage { get; set; }
+        public List<EmailSummary> Emails { get; set; }
     }
 }

@@ -21,12 +21,16 @@ using DataAttachment = Fakemail.Data.EntityFramework.Attachment;
 using DataEmail = Fakemail.Data.EntityFramework.Email;
 using DataSmtpUser = Fakemail.Data.EntityFramework.SmtpUser;
 using DataUser = Fakemail.Data.EntityFramework.User;
-using Newtonsoft.Json.Linq;
+using System.Net.Http;
+using System.Text;
 
 namespace Fakemail.Core
 {
     public class Engine : IEngine
     {
+        // For haveIBeenPwned - todo: move into a separate class
+        private static HttpClient _httpClient = new HttpClient();
+
         private IDbContextFactory<FakemailDbContext> _dbFactory;
         private ILogger<Engine> _log;
         private IJwtAuthentication _auth;
@@ -53,11 +57,39 @@ namespace Fakemail.Core
 
             try
             {
-                // TODO: check quality of password
+                // Check quality of password
+                // 1. Must be at least 10 chars
+                if (request.Password == null || request.Password.Length < 10)
+                {
+                    result.ErrorMessage = "Password must be at least 10 characters";
+                    return result;
+                }
+
+                // 2. Must not be in HaveIGotPwned
+                var sha1 = HashAlgorithm.Create("SHA1");
+                var sha1PasswordBytes = sha1.ComputeHash(Encoding.UTF8.GetBytes(request.Password));
+                var sb = new StringBuilder();
+
+                // Loop through each byte of the hashed data
+                // and format each one as a hexadecimal string.
+                for (int i = 0; i < sha1PasswordBytes.Length; i++)
+                {
+                    sb.Append(sha1PasswordBytes[i].ToString("X2"));
+                }
+
+                var pwnedPasswordHashes = await _httpClient.GetStringAsync($"https://api.pwnedpasswords.com/range/{sb.ToString().Substring(0, 5)}");
+
+                if (pwnedPasswordHashes.Contains(sb.ToString().Substring(5)))
+                {
+                    result.ErrorMessage = "Password was listed in HaveIBeenPwned";
+                    return result;
+                }
 
                 var userId = new Guid(RandomNumberGenerator.GetBytes(16));
-                var smtpUsername = Utils.CreateId();
-                var smtpPassword = Utils.CreateId();
+
+                var smtpUsernameBytes = 4;
+                var smtpUsername = Utils.CreateId(smtpUsernameBytes);
+                var smtpPassword = Utils.CreateId(8);
 
                 var dataUser = new DataUser
                 {
@@ -75,6 +107,10 @@ namespace Fakemail.Core
 
                 using (var db = _dbFactory.CreateDbContext())
                 {
+                    while (db.SmtpUsers.Any(u => u.SmtpUsername == smtpUsername))
+                    {
+                        smtpUsername = Utils.CreateId(smtpUsernameBytes); // increase the length in case of collision
+                    }
                     await db.Users.AddAsync(dataUser);
                     await db.SmtpUsers.AddAsync(dataSmtpUser);
                     await db.SaveChangesAsync();
@@ -84,7 +120,7 @@ namespace Fakemail.Core
                 result.ErrorMessage = null;
                 result.Username = request.Username;
                 result.SmtpUsername = smtpUsername;
-                result.SmtpPassword = smtpPassword; 
+                result.SmtpPassword = smtpPassword;
                 result.BearerToken = _auth.GetAuthenticationToken(request.Username, false);
             }
             catch (DbUpdateException due)
@@ -146,7 +182,7 @@ namespace Fakemail.Core
                 _log.LogError(e.Message);
             }
 
-            return response;        
+            return response;
         }
 
 
@@ -195,7 +231,7 @@ namespace Fakemail.Core
                 var receivedHeaderRegex0 = new Regex(@"^from (?<ReceivedFromHost>.*) \((?<ReceivedFromDns>.*) \[(?<ReceivedFromIp>.*)\]\)$");
                 var receivedHeaderRegex1 = new Regex(@"^.*?by (?<ReceivedByHost>.*) \((?<SmtpdName>.*)\) with (?<SmtpIdType>.*) id (?<SmtpId>.*) \((?<TlsInfo>TLS.*)\) auth=yes user=(?<SmtpUsername>[a-zA-Z0-9]+);$");
                 var receivedHeaderRegex2 = new Regex(@"^(?<ReceivedWeekday>.*), (?<ReceivedDay>.*) (?<ReceivedMonth>.*) (?<ReceivedYear>.*) (?<ReceivedTime>.*) (?<ReceivedTimeOffset>.*) \((?<ReceivedTimezone>.*)\)$");
-                
+
                 var receivedHeader = m.Headers["Received"].Split(new[] { "        ", "\t" }, StringSplitOptions.RemoveEmptyEntries);
 
                 if (receivedHeader.Length != 3)
@@ -218,7 +254,7 @@ namespace Fakemail.Core
                 var emailId = new Guid(RandomNumberGenerator.GetBytes(16));
 
                 var smtpUsername = Extract(match1.Groups, "SmtpUsername");
-                
+
                 var attachments = new List<DataAttachment>();
                 foreach (var x in m.Attachments)
                 {
@@ -252,7 +288,7 @@ namespace Fakemail.Core
                     ReceivedSmtpId = match1.Groups["SmtpId"].Value,
                     ReceivedTlsInfo = match1.Groups["TlsInfo"].Value,
                     SmtpUsername = smtpUsername,
-                    ReceivedTimestamp = receivedTimestamp,
+                    ReceivedTimestampUtc = new DateTime(receivedTimestamp.UtcTicks),
                     Attachments = attachments
                 };
 
@@ -272,7 +308,7 @@ namespace Fakemail.Core
             return true;
         }
 
-        public async Task<ListUserResponse> ListUsers(ListUserRequest request)
+        public async Task<ListUserResponse> ListUsersAsync(ListUserRequest request)
         {
             using (var db = _dbFactory.CreateDbContext())
             {
@@ -308,5 +344,111 @@ namespace Fakemail.Core
                 };
             }
         }
-    }
+
+        /// <summary>
+        /// Regular users may list emails from only their own SMTP usernames.
+        /// Admin users may list emails from any SMTP username.
+        /// </summary>
+        /// <param name="authenticatedUsername"></param>
+        /// <param name="request"></param>
+        /// <returns></returns>
+        public async Task<ListEmailResponse> ListEmailsAsync(string authenticatedUsername, ListEmailRequest request)
+        {
+            var response = new ListEmailResponse
+            {
+                Success = false,
+                Page = request.Page,
+                PageSize = request.PageSize,
+            };
+
+            if (request.PageSize <= 0 || request.PageSize > 100)
+            {
+                response.Page = 0;
+                response.PageSize = 0;
+                response.ErrorMessage = "Invalid page size";
+
+                return response;
+            }
+
+            using (var db = _dbFactory.CreateDbContext())
+            {
+                var authenticatedUser = await db.Users
+                    .SingleOrDefaultAsync(x => x.Username == authenticatedUsername);
+
+                var authorized = false;
+                if (authenticatedUser == null)
+                {
+                    authorized = false;
+                }
+                else if (authenticatedUser.IsAdmin)
+                {
+                    authorized = true;
+                }
+                else
+                {
+                    authorized = await db.SmtpUsers
+                        .AnyAsync(u => u.SmtpUsername == request.SmtpUsername && u.UserId == authenticatedUser.UserId);
+                }
+
+                if (!authorized)
+                {
+                    response.Page = 0;
+                    response.PageSize = 0;
+                    response.ErrorMessage = "Unauthorized SMTP username for authorized user";
+
+                    return response;
+                }
+
+                var emails = db.Emails
+                    .Where(x => x.SmtpUsername == request.SmtpUsername);
+
+                var emailsCount = await emails.CountAsync();
+                response.MaxPage = ((emailsCount - 1) / request.PageSize) + 1;
+
+                if (emailsCount == 0)
+                {
+                    response.Success = true;
+                    response.Page = 0;
+                    response.Emails = new List<EmailSummary>();
+
+                    return response;
+                }
+
+                if (request.Page > response.MaxPage)
+                {
+                    response.Success = false;
+                    response.ErrorMessage = "Invalid page";
+                    response.Page = 0;
+                    //response.Emails = new List<EmailSummary>();
+
+                    return response;
+                }
+
+                response.Emails = await emails
+                    .OrderByDescending(e => e.ReceivedTimestampUtc)
+                    .ThenByDescending(e => e.EmailId)
+                    .Skip((request.Page - 1) * request.PageSize)
+                    .Take(request.PageSize)
+                    .Select(e => new EmailSummary
+                    {
+                        EmailId = e.EmailId,
+                        SmtpUsername = e.SmtpUsername,
+                        Timestamp = e.ReceivedTimestampUtc,
+                        Subject = e.Subject,
+                        DeliveredTo = e.DeliveredTo,
+                        BodySummary = e.BodySummary,
+                        Attachments = (from a in db.Attachments where a.EmailId == e.EmailId
+                                       select new AttachmentSummary
+                                       {
+                                           AttachmentId = a.AttachmentId,
+                                           Name = a.Filename
+                                       }).ToList()
+                    }).ToListAsync();
+
+                response.Success = true;
+                
+                return response;
+            }
+        }
+    } 
 }

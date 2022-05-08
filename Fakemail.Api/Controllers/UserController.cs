@@ -1,45 +1,35 @@
-﻿using System.Security.Claims;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 
 using Fakemail.ApiModels;
 using Fakemail.Core;
 
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
-
 namespace Fakemail.Api.Controllers
 {
     [Route("api/user")]
+    [Authorize]
     [ApiController]
     public class UserController : ControllerBase
     {
-        private readonly IJwtAuthentication _auth;
+        //private readonly IJwtAuthentication _auth;
         private readonly IEngine _engine;
 
-        public UserController(IJwtAuthentication auth, IEngine engine)
+        public UserController(/*IJwtAuthentication auth,*/ IEngine engine)
         {
-            _auth = auth;
+            //_auth = auth;
             _engine = engine;
         }
 
-        // GET: api/user/all
+        // POST: api/user/list
         [Authorize(Roles="admin")]
-        [HttpGet]
-        [Route("all")]
-        public async Task<IActionResult> ListUsers(int page, int pageSize)
+        [HttpPost]
+        [Route("list")]
+        public async Task<IActionResult> ListUsers([FromBody] ListUserRequest request)
         {
-            var request = new ListUserRequest { Page = page, PageSize = pageSize }; 
-            var response = await _engine.ListUsers(request);
+            var response = await _engine.ListUsersAsync(request);
 
             return Ok(response);
         }
-
-        // GET api/<userController>/5
-        //[Authorize(Roles = "Admin")]
-        //[HttpGet("{id}")]
-        //public user Get(int id)
-        //{
-        //    return _users.Find(x => x.Id == id);
-        //}
 
         // POST api/user/create
         [AllowAnonymous]
@@ -66,12 +56,6 @@ namespace Fakemail.Api.Controllers
             }
 
             return Unauthorized();
-        }
-      
-        // DELETE api/<userController>/5
-        [HttpDelete("{id}")]
-        public void Delete(int id)
-        {
         }
     }
 }

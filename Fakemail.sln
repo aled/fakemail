@@ -56,6 +56,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Fakemail.Services", "Fakema
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Fakemail.Services.Tests", "Fakemail.Services.Tests\Fakemail.Services.Tests.csproj", "{36C9E803-9138-4573-83A3-08900DA5889A}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fakemail.Core.Tests", "Fakemail.Core.Tests\Fakemail.Core.Tests.csproj", "{21128D8C-5790-4ED0-9E2A-C2FBC209737A}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -102,6 +104,10 @@ Global
 		{36C9E803-9138-4573-83A3-08900DA5889A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{36C9E803-9138-4573-83A3-08900DA5889A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{36C9E803-9138-4573-83A3-08900DA5889A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{21128D8C-5790-4ED0-9E2A-C2FBC209737A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{21128D8C-5790-4ED0-9E2A-C2FBC209737A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{21128D8C-5790-4ED0-9E2A-C2FBC209737A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{21128D8C-5790-4ED0-9E2A-C2FBC209737A}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

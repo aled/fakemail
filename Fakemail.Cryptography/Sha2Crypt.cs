@@ -181,7 +181,7 @@ namespace Fakemail.Cryptography
             /*
              * Add the key string.
              */
-            ctx.Update(keyBytes);
+            ctx!.Update(keyBytes);
 
             // 3. the salt string is added to digest A. This is just the salt string
             // itself without the enclosing '$', without the magic salt_prefix $5$ and
@@ -196,7 +196,7 @@ namespace Fakemail.Cryptography
              * The last part is the salt string. This must be at most 16 characters and it ends at the first `$' character
              * (for compatibility with existing implementations).
              */
-            ctx.Update(saltBytes);
+            ctx!.Update(saltBytes);
 
             // 4. start digest B
             /*
@@ -209,25 +209,25 @@ namespace Fakemail.Cryptography
             /*
              * Add key.
              */
-            altCtx.Update(keyBytes);
+            altCtx!.Update(keyBytes);
 
             // 6. add the salt string to digest B
             /*
              * Add salt.
              */
-            altCtx.Update(saltBytes);
+            altCtx!.Update(saltBytes);
 
             // 7. add the password again to digest B
             /*
              * Add key again.
              */
-            altCtx.Update(keyBytes);
+            altCtx!.Update(keyBytes);
 
             // 8. finish digest B
             /*
              * Now get result of this (32 bytes) and add it to the other context.
              */
-            var altResult = altCtx.Digest();
+            var altResult = altCtx!.Digest();
 
             // 9. For each block of 32 or 64 bytes in the password string (excluding
             // the terminating NUL in the C representation), add digest B to digest A
@@ -240,13 +240,13 @@ namespace Fakemail.Cryptography
             int cnt = keyLen;
             while (cnt > blocksize)
             {
-                ctx.Update(altResult!, 0, blocksize);
+                ctx!.Update(altResult!, 0, blocksize);
                 cnt -= blocksize;
             }
 
             // 10. For the remaining N bytes of the password string add the first
             // N bytes of digest B to digest A
-            ctx.Update(altResult!, 0, cnt);
+            ctx!.Update(altResult!, 0, cnt);
 
             // 11. For each bit of the binary representation of the length of the
             // password string up to and including the highest 1-digit, starting
@@ -267,11 +267,11 @@ namespace Fakemail.Cryptography
             {
                 if ((cnt & 1) != 0)
                 {
-                    ctx.Update(altResult!, 0, blocksize);
+                    ctx!.Update(altResult!, 0, blocksize);
                 }
                 else
                 {
-                    ctx.Update(keyBytes, 0, keyBytes.Length);
+                    ctx!.Update(keyBytes, 0, keyBytes.Length);
                 }
                 cnt >>= 1;
             }
@@ -280,7 +280,7 @@ namespace Fakemail.Cryptography
             /*
              * Create intermediate result.
              */
-            altResult = ctx.Digest();
+            altResult = ctx!.Digest();
 
             // 13. start digest DP
             /*
@@ -297,14 +297,14 @@ namespace Fakemail.Cryptography
              */
             for (int i = 1; i <= keyLen; i++)
             {
-                altCtx.Update(keyBytes);
+                altCtx!.Update(keyBytes);
             }
 
             // 15. finish digest DP
             /*
              * Finish the digest.
              */
-            byte[] tempResult = altCtx.Digest();
+            byte[] tempResult = altCtx!.Digest();
 
             // 16. produce byte sequence P of the same length as the password where
             //
@@ -340,14 +340,14 @@ namespace Fakemail.Cryptography
              */
             for (int i = 1; i <= 16 + (altResult[0] & 0xff); i++)
             {
-                altCtx.Update(saltBytes);
+                altCtx!.Update(saltBytes);
             }
 
             // 19. finish digest DS
             /*
              * Finish the digest.
              */
-            tempResult = altCtx.Digest();
+            tempResult = altCtx!.Digest();
 
             // 20. produce byte sequence S of the same length as the salt string where
             //
@@ -395,11 +395,11 @@ namespace Fakemail.Cryptography
                  */
                 if ((i & 1) != 0)
                 {
-                    ctx.Update(pBytes, 0, keyLen);
+                    ctx!.Update(pBytes, 0, keyLen);
                 }
                 else
                 {
-                    ctx.Update(altResult, 0, blocksize);
+                    ctx!.Update(altResult, 0, blocksize);
                 }
 
                 // d) for all round numbers not divisible by 3 add the byte sequence S
@@ -408,7 +408,7 @@ namespace Fakemail.Cryptography
                  */
                 if (i % 3 != 0)
                 {
-                    ctx.Update(sBytes, 0, saltLen);
+                    ctx!.Update(sBytes, 0, saltLen);
                 }
 
                 // e) for all round numbers not divisible by 7 add the byte sequence P
@@ -417,7 +417,7 @@ namespace Fakemail.Cryptography
                  */
                 if (i % 7 != 0)
                 {
-                    ctx.Update(pBytes, 0, keyLen);
+                    ctx!.Update(pBytes, 0, keyLen);
                 }
 
                 // f) for odd round numbers add digest A/C
@@ -427,18 +427,18 @@ namespace Fakemail.Cryptography
                  */
                 if ((i & 1) != 0)
                 {
-                    ctx.Update(altResult, 0, blocksize);
+                    ctx!.Update(altResult, 0, blocksize);
                 }
                 else
                 {
-                    ctx.Update(pBytes, 0, keyLen);
+                    ctx!.Update(pBytes, 0, keyLen);
                 }
 
                 // h) finish digest C.
                 /*
                  * Create intermediate result.
                  */
-                altResult = ctx.Digest();
+                altResult = ctx!.Digest();
             }
 
             // 22. Produce the output string. This is an ASCII string of the maximum
@@ -534,8 +534,8 @@ namespace Fakemail.Cryptography
             Array.Fill(tempResult, (byte)0);
             Array.Fill(pBytes, (byte)0);
             Array.Fill(sBytes, (byte)0);
-            ctx.Clear();
-            altCtx.Clear();
+            ctx!.Clear();
+            altCtx!.Clear();
             Array.Fill(keyBytes, (byte)0);
             Array.Fill(saltBytes, (byte)0);
 
