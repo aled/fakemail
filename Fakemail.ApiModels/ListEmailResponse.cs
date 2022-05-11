@@ -10,9 +10,9 @@ namespace Fakemail.ApiModels
     {
         public bool Success { get; set; }
         public string ErrorMessage { get; set; }
-        public int Page { get; set; }
-        public int PageSize { get; set; }
-        public int MaxPage { get; set; }
+        public int? Page { get; set; }
+        public int? PageSize { get; set; }
+        public int? MaxPage { get; set; }
         public List<EmailSummary> Emails { get; set; }
     }
 }

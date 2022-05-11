@@ -49,53 +49,67 @@ namespace Fakemail.Core
         /// <returns></returns>
         public async Task<CreateUserResponse> CreateUserAsync(CreateUserRequest request)
         {
-            var result = new CreateUserResponse
+            var response = new CreateUserResponse
             {
                 Success = false,
                 ErrorMessage = "Error creating account"
             };
 
+            var serverCreatedPassword = false;
+            var password = request.Password;
             try
             {
+                // Check password:
+                // 1. If not specified, create one automatically
+                if (password == null)
+                {
+                    password = Utils.CreateId(10);  // will return a 14 char password
+                    serverCreatedPassword = true;
+                    // TODO: retry if listed in HaveIBeenPwned
+                }
+
                 // Check quality of password
-                // 1. Must be at least 10 chars
-                if (request.Password == null || request.Password.Length < 10)
+                // 2. Must be at least 10 chars
+                else if (password.Length < 10)
                 {
-                    result.ErrorMessage = "Password must be at least 10 characters";
-                    return result;
+                    response.ErrorMessage = "Password must be at least 10 characters";
+                    return response;
                 }
 
-                // 2. Must not be in HaveIGotPwned
-                var sha1 = HashAlgorithm.Create("SHA1");
-                var sha1PasswordBytes = sha1.ComputeHash(Encoding.UTF8.GetBytes(request.Password));
-                var sb = new StringBuilder();
-
-                // Loop through each byte of the hashed data
-                // and format each one as a hexadecimal string.
-                for (int i = 0; i < sha1PasswordBytes.Length; i++)
+                // 3. Must not be in HaveIGotPwned
+                else
                 {
-                    sb.Append(sha1PasswordBytes[i].ToString("X2"));
-                }
+                    var sha1 = HashAlgorithm.Create("SHA1");
+                    var sha1PasswordBytes = sha1.ComputeHash(Encoding.UTF8.GetBytes(password));
+                    var sb = new StringBuilder();
 
-                var pwnedPasswordHashes = await _httpClient.GetStringAsync($"https://api.pwnedpasswords.com/range/{sb.ToString().Substring(0, 5)}");
+                    // Loop through each byte of the hashed data
+                    // and format each one as a hexadecimal string.
+                    for (int i = 0; i < sha1PasswordBytes.Length; i++)
+                    {
+                        sb.Append(sha1PasswordBytes[i].ToString("X2"));
+                    }
 
-                if (pwnedPasswordHashes.Contains(sb.ToString().Substring(5)))
-                {
-                    result.ErrorMessage = "Password was listed in HaveIBeenPwned";
-                    return result;
+                    var pwnedPasswordHashes = await _httpClient.GetStringAsync($"https://api.pwnedpasswords.com/range/{sb.ToString().Substring(0, 5)}");
+
+                    if (pwnedPasswordHashes.Contains(sb.ToString().Substring(5)))
+                    {
+                        response.ErrorMessage = "Password was listed in HaveIBeenPwned";
+                        return response;
+                    }
                 }
 
                 var userId = new Guid(RandomNumberGenerator.GetBytes(16));
 
                 var smtpUsernameBytes = 4;
-                var smtpUsername = Utils.CreateId(smtpUsernameBytes);
+                var smtpUsername = "s" + Utils.CreateId(smtpUsernameBytes);
                 var smtpPassword = Utils.CreateId(8);
 
                 var dataUser = new DataUser
                 {
                     UserId = userId,
                     Username = request.Username,
-                    PasswordCrypt = Sha512Crypt(request.Password)
+                    PasswordCrypt = Sha512Crypt(password)
                 };
 
                 var dataSmtpUser = new DataSmtpUser
@@ -109,19 +123,20 @@ namespace Fakemail.Core
                 {
                     while (db.SmtpUsers.Any(u => u.SmtpUsername == smtpUsername))
                     {
-                        smtpUsername = Utils.CreateId(smtpUsernameBytes); // increase the length in case of collision
+                        smtpUsername = "s" + Utils.CreateId(smtpUsernameBytes); // increase the length in case of collision
                     }
                     await db.Users.AddAsync(dataUser);
                     await db.SmtpUsers.AddAsync(dataSmtpUser);
                     await db.SaveChangesAsync();
                 }
 
-                result.Success = true;
-                result.ErrorMessage = null;
-                result.Username = request.Username;
-                result.SmtpUsername = smtpUsername;
-                result.SmtpPassword = smtpPassword;
-                result.BearerToken = _auth.GetAuthenticationToken(request.Username, false);
+                response.Success = true;
+                response.ErrorMessage = null;
+                response.Username = request.Username;
+                if (serverCreatedPassword) response.Password = password;
+                response.SmtpUsername = smtpUsername;
+                response.SmtpPassword = smtpPassword;
+                response.BearerToken = _auth.GetAuthenticationToken(request.Username, false);
             }
             catch (DbUpdateException due)
             {
@@ -130,7 +145,7 @@ namespace Fakemail.Core
                     _log.LogError(se.Message);
                     if (se.SqliteErrorCode == 19)
                     {
-                        result.ErrorMessage = "User already exists";
+                        response.ErrorMessage = "User already exists";
                     }
                 }
                 else
@@ -140,11 +155,11 @@ namespace Fakemail.Core
             }
             catch (Exception ex)
             {
-                result.ErrorMessage = "Server error";
+                response.ErrorMessage = "Server error";
                 _log.LogError(ex.Message);
             }
 
-            return result;
+            return response;
         }
 
         /// <summary>
@@ -228,32 +243,25 @@ namespace Fakemail.Core
                 // from examplehost (static-123-234-12-23.example.co.uk [123.234.12.23])
                 //      by fakemail.stream (OpenSMTPD) with ESMTPSA id 392ecef5 (TLSv1.2:ECDHE-RSA-AES256-GCM-SHA384:256:NO) auth=yes user=user234;" +
                 //      Fri, 29 Apr 2022 21:28:41 +0000 (UTC)
-                var receivedHeaderRegex0 = new Regex(@"^from (?<ReceivedFromHost>.*) \((?<ReceivedFromDns>.*) \[(?<ReceivedFromIp>.*)\]\)$");
-                var receivedHeaderRegex1 = new Regex(@"^.*?by (?<ReceivedByHost>.*) \((?<SmtpdName>.*)\) with (?<SmtpIdType>.*) id (?<SmtpId>.*) \((?<TlsInfo>TLS.*)\) auth=yes user=(?<SmtpUsername>[a-zA-Z0-9]+);$");
-                var receivedHeaderRegex2 = new Regex(@"^(?<ReceivedWeekday>.*), (?<ReceivedDay>.*) (?<ReceivedMonth>.*) (?<ReceivedYear>.*) (?<ReceivedTime>.*) (?<ReceivedTimeOffset>.*) \((?<ReceivedTimezone>.*)\)$");
+                var receivedHeaderRegex = new Regex(
+                    @"^from (?<ReceivedFromHost>.*) \((?<ReceivedFromDns>.*) \[(?<ReceivedFromIp>.*)\]\)" +
+                    @"\s+by (?<ReceivedByHost>.*) \((?<SmtpdName>.*)\) with (?<SmtpIdType>.*) id (?<SmtpId>.*) \((?<TlsInfo>TLS.*)\) auth=yes user=(?<SmtpUsername>[a-zA-Z0-9]+)" +
+                    @"(\s+for <(?<ReceivedFor>.*)>)?;" +
+                    @"\s(?<ReceivedWeekday>.*), (?<ReceivedDay>.*) (?<ReceivedMonth>.*) (?<ReceivedYear>.*) (?<ReceivedTime>.*) (?<ReceivedTimeOffset>.*) \((?<ReceivedTimezone>.*)\)$");
 
-                var receivedHeader = m.Headers["Received"].Split(new[] { "        ", "\t" }, StringSplitOptions.RemoveEmptyEntries);
-
-                if (receivedHeader.Length != 3)
-                {
-                    throw new Exception("Failed to parse 'Received' header");
-                }
-
-                var match0 = receivedHeaderRegex0.Match(receivedHeader[0]);
-                var match1 = receivedHeaderRegex1.Match(receivedHeader[1]);
-                var match2 = receivedHeaderRegex2.Match(receivedHeader[2]);
-
-                var receivedDay = Extract(match2.Groups, "ReceivedDay");
-                var receivedMonth = Extract(match2.Groups, "ReceivedMonth");
-                var receivedYear = Extract(match2.Groups, "ReceivedYear");
-                var receivedTime = Extract(match2.Groups, "ReceivedTime");
-                var receivedTimeOffset = Extract(match2.Groups, "ReceivedTimeOffset");
+                var match = receivedHeaderRegex.Match(m.Headers["Received"]);
+               
+                var receivedDay = Extract(match.Groups, "ReceivedDay");
+                var receivedMonth = Extract(match.Groups, "ReceivedMonth");
+                var receivedYear = Extract(match.Groups, "ReceivedYear");
+                var receivedTime = Extract(match.Groups, "ReceivedTime");
+                var receivedTimeOffset = Extract(match.Groups, "ReceivedTimeOffset");
 
                 var receivedTimestamp = DateTimeOffset.Parse($"{receivedYear}-{receivedMonth}-{receivedDay} {receivedTime}{receivedTimeOffset}");
 
                 var emailId = new Guid(RandomNumberGenerator.GetBytes(16));
 
-                var smtpUsername = Extract(match1.Groups, "SmtpUsername");
+                var smtpUsername = Extract(match.Groups, "SmtpUsername");
 
                 var attachments = new List<DataAttachment>();
                 foreach (var x in m.Attachments)
@@ -282,11 +290,11 @@ namespace Fakemail.Core
                     BodySummary = m.TextBody.Length <= 50 ? m.TextBody : m.TextBody.Substring(0, 50),
                     MimeMessage = stream.GetBuffer(),
                     BodyChecksum = Utils.Checksum(m.TextBody),
-                    ReceivedFromDns = match0.Groups["ReceivedFromDns"].Value,
-                    ReceivedFromHost = match0.Groups["ReceivedFromHost"].Value,
-                    ReceivedFromIp = match0.Groups["ReceivedFromIp"].Value,
-                    ReceivedSmtpId = match1.Groups["SmtpId"].Value,
-                    ReceivedTlsInfo = match1.Groups["TlsInfo"].Value,
+                    ReceivedFromDns = match.Groups["ReceivedFromDns"].Value,
+                    ReceivedFromHost = match.Groups["ReceivedFromHost"].Value,
+                    ReceivedFromIp = match.Groups["ReceivedFromIp"].Value,
+                    ReceivedSmtpId = match.Groups["SmtpId"].Value,
+                    ReceivedTlsInfo = match.Groups["TlsInfo"].Value,
                     SmtpUsername = smtpUsername,
                     ReceivedTimestampUtc = new DateTime(receivedTimestamp.UtcTicks),
                     Attachments = attachments
@@ -357,15 +365,19 @@ namespace Fakemail.Core
             var response = new ListEmailResponse
             {
                 Success = false,
-                Page = request.Page,
-                PageSize = request.PageSize,
             };
 
             if (request.PageSize <= 0 || request.PageSize > 100)
             {
-                response.Page = 0;
-                response.PageSize = 0;
                 response.ErrorMessage = "Invalid page size";
+
+                return response;
+            }
+
+            if (request.Page <= 0)
+            {
+                response.Success = false;
+                response.ErrorMessage = "Invalid page";
 
                 return response;
             }
@@ -392,8 +404,6 @@ namespace Fakemail.Core
 
                 if (!authorized)
                 {
-                    response.Page = 0;
-                    response.PageSize = 0;
                     response.ErrorMessage = "Unauthorized SMTP username for authorized user";
 
                     return response;
@@ -403,23 +413,20 @@ namespace Fakemail.Core
                     .Where(x => x.SmtpUsername == request.SmtpUsername);
 
                 var emailsCount = await emails.CountAsync();
-                response.MaxPage = ((emailsCount - 1) / request.PageSize) + 1;
-
                 if (emailsCount == 0)
                 {
                     response.Success = true;
-                    response.Page = 0;
                     response.Emails = new List<EmailSummary>();
 
                     return response;
                 }
 
+                response.MaxPage = ((emailsCount - 1) / request.PageSize) + 1;
+
                 if (request.Page > response.MaxPage)
                 {
                     response.Success = false;
                     response.ErrorMessage = "Invalid page";
-                    response.Page = 0;
-                    //response.Emails = new List<EmailSummary>();
 
                     return response;
                 }
@@ -444,6 +451,9 @@ namespace Fakemail.Core
                                            Name = a.Filename
                                        }).ToList()
                     }).ToListAsync();
+
+                response.Page = request.Page;
+                response.PageSize = request.PageSize;
 
                 response.Success = true;
                 

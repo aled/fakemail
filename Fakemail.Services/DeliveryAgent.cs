@@ -55,7 +55,7 @@ namespace Fakemail.Services
                 .UseSerilog()
                 .ConfigureServices((hostContext, services) =>
                 {
-                    services.AddDbContextFactory<FakemailDbContext>(options => options.UseSqlite($"Data Source={"c:\\temp\\fakemail.sqlite"}"));
+                    services.AddDbContextFactory<FakemailDbContext>(options => options.UseSqlite($"Data Source={"/home/fakemail/fakemail.sqlite"}"));
                     services.AddSingleton(Log.Logger);
                     services.AddSingleton<IEngine, Engine>();
                     services.AddSingleton<IJwtAuthentication>(new JwtAuthentication(jwtSigningKey));
@@ -156,9 +156,22 @@ namespace Fakemail.Services
                             _log.LogInformation($"Delivering: {fileInfo.Name}");
                             using (var stream = new FileStream(fileInfo.FullName, FileMode.Open, FileAccess.ReadWrite))
                             {
-                                await _engine.CreateEmailAsync(stream);
+                                if (await _engine.CreateEmailAsync(stream))
+                                {
+                                    File.Delete(fileInfo.FullName);
+                                }
+                                else
+                                {
+                                    try
+                                    {
+                                        File.Move(fileInfo.FullName, Path.Join(failedDirectoryInfo.FullName, fileInfo.Name));
+                                    }
+                                    catch (Exception e2)
+                                    {
+                                        _log.LogError(e2.Message);
+                                    }
+                                }
                             }
-                            File.Delete(fileInfo.FullName);
                         }
                         catch (IOException ioe)
                         {
@@ -170,14 +183,7 @@ namespace Fakemail.Services
                         catch (Exception e)
                         {
                             _log.LogError(e.Message);
-                            try
-                            {
-                                File.Move(fileInfo.FullName, Path.Join(failedDirectoryInfo.FullName, fileInfo.Name));
-                            }
-                            catch (Exception e2)
-                            {
-                                _log.LogError(e2.Message);
-                            }
+                            
                         }
                     }
                 }

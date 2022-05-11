@@ -15,6 +15,7 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "wiki", "wiki", "{408ADE05-0007-4896-803D-C1712AE2523B}"
 	ProjectSection(SolutionItems) = preProject
 		entity-framework.md = entity-framework.md
+		linux-commands.md = linux-commands.md
 		ssl.md = ssl.md
 		systemd.md = systemd.md
 		TODO.md = TODO.md

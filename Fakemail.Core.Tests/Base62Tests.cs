@@ -7,7 +7,7 @@ namespace Fakemail.Core.Tests
     public class Base62Tests
     {
         [Fact]
-        public void LengthOfIdShould()
+        public void LengthOfIdShouldBeCorrect()
         {
             Assert.Equal(22, Utils.CreateId().Length);
             Assert.Equal(22, Utils.CreateId(16).Length);
