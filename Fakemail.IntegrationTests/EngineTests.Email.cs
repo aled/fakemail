@@ -67,9 +67,6 @@ namespace Fakemail.IntegrationTests
             // Not sure this is correct. The sent body did not have any \r or \n characters, but the received one does, hence needs the Trim() to pass
             Assert.Equal("Body", message.TextBody.Trim());
 
-
-            
-
             var isSuccess = await _fixture.Engine.CreateEmailAsync(new MemoryStream(Encoding.UTF8.GetBytes(raw)));
 
             Assert.True(isSuccess);

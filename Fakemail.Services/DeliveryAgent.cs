@@ -126,21 +126,21 @@ namespace Fakemail.Services
                 // (it will stop if the queue gets full)
                 if (DateTime.Now - pollTimestamp >= pollTimeSpan && !_queue.Any())
                 {
-                    _log.LogInformation("Polling now...");
+                    _log.LogTrace("Polling now...");
                     var completedPoll = true;
 
                     foreach (var file in directoryInfo.GetFiles())
                     {
                         if (!_queue.TryAdd(file.Name))
                         {
-                            _log.LogInformation("Pausing poll - queue full");
+                            _log.LogTrace("Pausing poll - queue full");
                             completedPoll = false;
                             break;
                         }
                     }
                     if (completedPoll)
                     {
-                        _log.LogInformation("Poll completed");
+                        _log.LogTrace("Poll completed");
                         pollTimestamp = DateTime.Now;
                     }
                 }

@@ -250,7 +250,7 @@ namespace Fakemail.Core
                     @"\s(?<ReceivedWeekday>.*), (?<ReceivedDay>.*) (?<ReceivedMonth>.*) (?<ReceivedYear>.*) (?<ReceivedTime>.*) (?<ReceivedTimeOffset>.*) \((?<ReceivedTimezone>.*)\)$");
 
                 var match = receivedHeaderRegex.Match(m.Headers["Received"]);
-               
+
                 var receivedDay = Extract(match.Groups, "ReceivedDay");
                 var receivedMonth = Extract(match.Groups, "ReceivedMonth");
                 var receivedYear = Extract(match.Groups, "ReceivedYear");
@@ -263,19 +263,23 @@ namespace Fakemail.Core
 
                 var smtpUsername = Extract(match.Groups, "SmtpUsername");
 
-                var attachments = new List<DataAttachment>();
-                foreach (var x in m.Attachments)
+                List<DataAttachment> attachments = null;
+                if (m.Attachments != null)
                 {
-                    var contentBytes = x.GetContentBytes();
-                    attachments.Add(new DataAttachment
+                    attachments = new List<DataAttachment>();
+                    foreach (var x in m.Attachments)
                     {
-                        AttachmentId = new Guid(RandomNumberGenerator.GetBytes(16)),
-                        EmailId = emailId,
-                        Content = contentBytes,
-                        ContentChecksum = Utils.Checksum(contentBytes),
-                        ContentType = "",
-                        Filename = x.ContentType.Name
-                    });
+                        var contentBytes = x.GetContentBytes();
+                        attachments.Add(new DataAttachment
+                        {
+                            AttachmentId = new Guid(RandomNumberGenerator.GetBytes(16)),
+                            EmailId = emailId,
+                            Content = contentBytes,
+                            ContentChecksum = Utils.Checksum(contentBytes),
+                            ContentType = "",
+                            Filename = x.ContentType?.Name
+                        });
+                    }
                 }
 
                 var email = new DataEmail
@@ -286,15 +290,15 @@ namespace Fakemail.Core
                     CC = m.Headers["CC"] ?? "",
                     DeliveredTo = m.Headers["Delivered-To"] ?? "",
                     Subject = m.Headers["Subject"] ?? "",
-                    BodyLength = m.TextBody.Length,
-                    BodySummary = m.TextBody.Length <= 50 ? m.TextBody : m.TextBody.Substring(0, 50),
+                    BodyLength = m.TextBody?.Length ?? 0,
+                    BodySummary = m.TextBody?.Length <= 50 ? m.TextBody : m.TextBody?.Substring(0, 50) ?? "",
                     MimeMessage = stream.GetBuffer(),
-                    BodyChecksum = Utils.Checksum(m.TextBody),
-                    ReceivedFromDns = match.Groups["ReceivedFromDns"].Value,
-                    ReceivedFromHost = match.Groups["ReceivedFromHost"].Value,
-                    ReceivedFromIp = match.Groups["ReceivedFromIp"].Value,
-                    ReceivedSmtpId = match.Groups["SmtpId"].Value,
-                    ReceivedTlsInfo = match.Groups["TlsInfo"].Value,
+                    BodyChecksum = Utils.Checksum(m.TextBody ?? ""),
+                    ReceivedFromDns = match.Groups["ReceivedFromDns"]?.Value,
+                    ReceivedFromHost = match.Groups["ReceivedFromHost"]?.Value,
+                    ReceivedFromIp = match.Groups["ReceivedFromIp"]?.Value,
+                    ReceivedSmtpId = match.Groups["SmtpId"]?.Value,
+                    ReceivedTlsInfo = match.Groups["TlsInfo"]?.Value,
                     SmtpUsername = smtpUsername,
                     ReceivedTimestampUtc = new DateTime(receivedTimestamp.UtcTicks),
                     Attachments = attachments
@@ -303,13 +307,17 @@ namespace Fakemail.Core
                 using (var db = _dbFactory.CreateDbContext())
                 {
                     await db.Emails.AddAsync(email);
-                    await db.Attachments.AddRangeAsync(attachments);
+                    if (attachments != null)
+                    {
+                        await db.Attachments.AddRangeAsync(attachments);
+                    }
                     await db.SaveChangesAsync();
                 }
             }
             catch (Exception e)
             {
                 _log.LogError(e.Message);
+                _log.LogError(e.StackTrace);
                 return false;
             }
 
