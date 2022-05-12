@@ -1,25 +1,26 @@
 # to-do list
 
 Immediate:
-- Implement GetEmails API
-- Implement RenewToken API
-- Turn off tailscale VPN on public server
-- Write MDA program to insert email into database - use filesystemwatcher in C#,
-  running as a service in the API project
-
-- Automated deployment
+- Investigate - does API automatically apply migrations?
+- Why do failed deliveries get deleted?
+- Switch to sha256 for shorter tokens
+- Use MimeMessage to remove Delivered-To/MessageId and re-serialize?
 
 Next version:
-- Switch to private addresses
-- Use a database to enable searching/filtering/authorization (pgsql?)
-- Initial page: still public - "public@fakemail.stream"
-- CSS for full mail page
+- store plaintext smtp passwords
+- store emails and attachments using hash-of-content (or messageid) as the key
+  (need to remove delivered-to header)
+- Unit testing
+- No hardcoding - use appsettings.json and appsettings.development.json
+- Incorporate the delivery agent into the API?
+- Automated deployment
+- Add metrics/logs
 
 Future:
+- private addresses - no auth - "use this address xxx@fakemail.stream"
 - change to not show all mails - have a unique id per user.
 - webhooks
 - Dockerize everything
-- SSL for SMTP
 - Testing/CI/CD
 - Responsive static website (bootstrap). Allow toggle of auto-refresh.
 - Asp.net website (blazor webassembly? svelte? react?)
@@ -38,6 +39,11 @@ Done
 - Custom SMTP server (no postfix?)
 - command-line program (like wttr.in)
 - check if incoming address is valid
-- private addresses - no auth - "use this address xxx@fakemail.stream"
 - Use SMTP auth for user Id
 - Use database (postgresql?) for SMTP auth
+- Implement GetEmails API
+- Implement RenewToken API
+- Turn off tailscale VPN on public server
+- Write MDA program to insert email into database - use filesystemwatcher in C#,
+  running as a service in the API project
+- SSL for SMTP

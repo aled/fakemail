@@ -1,16 +1,16 @@
 using System.Text;
 using System.Text.Json.Serialization;
 
-using Fakemail.Api;
 using Fakemail.Core;
 using Fakemail.Data.EntityFramework;
 
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Http.Json;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+
+using Polly;
+using Polly.Extensions.Http;
 
 using Serilog;
 
@@ -20,17 +20,17 @@ var connectionString = builder.Configuration.GetConnectionString("fakemail");
 
 builder.Host.UseSerilog((ctx, loggerConfiguration) => loggerConfiguration.WriteTo.Console());
 
-//builder.Services.Configure<JsonOptions>(options => options
-//.SerializerOptions
-//.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull);
-
-
 builder.Services.AddDbContextFactory<FakemailDbContext>(options => options.UseSqlite(connectionString));
 builder.Services.AddSingleton(Log.Logger);
 builder.Services.AddSingleton<IEngine, Engine>();
+builder.Services.AddHttpClient<IPwnedPasswordApi, PwnedPasswordApi>()
+    .AddPolicyHandler(HttpPolicyExtensions.HandleTransientHttpError()
+        .OrResult(msg => msg.StatusCode == System.Net.HttpStatusCode.NotFound)
+        .WaitAndRetryAsync(3, retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt))));
 
 builder.Services.AddControllers().AddJsonOptions(options => options.JsonSerializerOptions.DefaultIgnoreCondition
-   = JsonIgnoreCondition.WhenWritingDefault | JsonIgnoreCondition.WhenWritingNull);
+   = JsonIgnoreCondition.WhenWritingDefault 
+   | JsonIgnoreCondition.WhenWritingNull);
 
 // TODO: read from settings
 var jwtSigningKey = "gfjherjhjhkdgfjhkgdfjhkgdfjhkgfdhjdfghjkfdg";

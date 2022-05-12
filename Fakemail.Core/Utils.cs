@@ -1,11 +1,52 @@
 ﻿using System;
+using System.Net.Http;
 using System.Numerics;
 using System.Security.Cryptography;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace Fakemail.Core
 {
-    public class Utils
+    public class PwnedPasswordApi : IPwnedPasswordApi
+    {   
+        private readonly HttpClient _httpClient;
+
+        public PwnedPasswordApi(HttpClient httpClient)
+        {
+            _httpClient = httpClient;
+        }
+
+        public async Task<string> RangeAsync(string hashPrefix)
+        {
+            return await _httpClient.GetStringAsync($"https://api.pwnedpasswords.com/range/{hashPrefix}");
+        }
+    }
+
+    public interface IPwnedPasswordApi
+    {
+        Task<string> RangeAsync(string prefix);
+
+        async Task<bool> IsPwnedPasswordAsync(string password)
+        {
+            var algorithm = HashAlgorithm.Create("SHA1");
+            var hashBytes = algorithm.ComputeHash(Encoding.UTF8.GetBytes(password));
+            var hash = new StringBuilder(32);
+
+            // Loop through each byte of the hashed data
+            // and format each one as a hexadecimal string.
+            for (int i = 0; i < hashBytes.Length; i++)
+                hash.Append(hashBytes[i].ToString("X2"));
+
+            var prefix = hash.ToString().Substring(0, 5);
+            var suffix = hash.ToString().Substring(5);
+            
+            var pwnedPasswordHashes = await RangeAsync(prefix);
+
+            return pwnedPasswordHashes.Contains(suffix);
+        }
+    }
+
+    public static class Utils
     {
         /// <summary>
         /// Create a base-62 string representing a number of up to 16 bytes.

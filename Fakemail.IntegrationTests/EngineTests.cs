@@ -10,7 +10,6 @@ using Fakemail.Core;
 
 namespace Fakemail.IntegrationTests
 {
-
     public partial class EngineTests : IClassFixture<EngineFixture>
     {
         EngineFixture _fixture;
@@ -20,11 +19,57 @@ namespace Fakemail.IntegrationTests
             _fixture = fixture;
         }
 
+
+        [Theory]
+        [InlineData(0)]
+        [InlineData(5)]
+        public async Task CreateUser_WithTooShortUsername(int length)
+        {
+            var username = new string('a', length);
+            var password = Utils.CreateId();
+
+            var response = await _fixture.Engine.CreateUserAsync(
+                new CreateUserRequest
+                {
+                    Username = username,
+                    Password = password
+                }
+            );
+
+            response.Should().NotBeNull();
+            response.Success.Should().BeFalse();
+            response.Password.Should().BeNull();
+            response.ErrorMessage.Should().Be("Username length must be at least 6 characters");
+        }
+
         [Fact]
-        public async Task CreateUser()
+        public async Task CreateUser_WithTooLongUsername()
+        {
+            var username = new string('a', 31); 
+            var password = Utils.CreateId();
+
+            var response = await _fixture.Engine.CreateUserAsync(
+                new CreateUserRequest
+                {
+                    Username = username,
+                    Password = password
+                }
+            );
+
+            response.Should().NotBeNull();
+            response.Success.Should().BeFalse();
+            response.Password.Should().BeNull();
+            response.ErrorMessage.Should().Be("Username length must not be greater than 30 characters");
+        }
+
+
+        [Theory]
+        [InlineData(0)]
+        [InlineData(9)]
+        public async Task CreateUser_WithTooShortPassword(int length)
         {
             var username = Utils.CreateId();
-            var password = Utils.CreateId();
+            var password = new string('*', length);
 
             var response = await _fixture.Engine.CreateUserAsync(
                 new CreateUserRequest {
@@ -34,9 +79,88 @@ namespace Fakemail.IntegrationTests
             );
 
             response.Should().NotBeNull();
-            response.Success.Should().BeTrue();
+            response.Success.Should().BeFalse();
+            response.Password.Should().BeNull();
+            response.ErrorMessage.Should().Be("Password length must be at least 10 characters");
         }
 
+        [Fact]
+        public async Task CreateUser_WithTooLongPassword()
+        {
+            var username = Utils.CreateId();
+
+            var response = await _fixture.Engine.CreateUserAsync(
+                new CreateUserRequest
+                {
+                    Username = username,
+                    Password = new string('*', 41)
+                }
+            );
+
+            response.Should().NotBeNull();
+            response.Success.Should().BeFalse();
+            response.Password.Should().BeNull();
+            response.ErrorMessage.Should().Be("Password length must not be greater than 40 characters");
+        }
+
+        [Theory]
+        [InlineData(10)]
+        [InlineData(39)]
+        public async Task CreateUser_WithAdequatelySizedUsernameAndPassword(int length)
+        {
+            var username = Utils.CreateId();
+
+            var response = await _fixture.Engine.CreateUserAsync(
+                new CreateUserRequest
+                {
+                    Username = username,
+                    Password = new string('*', length)
+                }
+            );
+
+            response.Should().NotBeNull();
+            response.Success.Should().BeTrue();
+            response.Password.Should().BeNull();
+        }
+
+        [Fact]
+        public async Task CreateUser_WithPwnedPassword()
+        {
+            var username = Utils.CreateId();
+
+            var response = await _fixture.Engine.CreateUserAsync(
+                new CreateUserRequest
+                {
+                    Username = username,
+                    Password = EngineFixture.ExamplePwnedPassword // the password is asdfasdfasdf
+                }
+            );
+
+            response.Should().NotBeNull();
+            response.Success.Should().BeFalse();
+            response.Password.Should().BeNull();
+            response.ErrorMessage.Should().Be("Password was found in HaveIBeenPwned");
+        }
+
+        [Fact]
+        public async Task CreateUser_WithNullPassword()
+        {
+            var username = Utils.CreateId();
+
+            var response = await _fixture.Engine.CreateUserAsync(
+                new CreateUserRequest
+                {
+                    Username = username,
+                    Password = null
+                }
+            );
+
+            response.Should().NotBeNull();
+            response.Success.Should().BeTrue();
+            response.Password.Should().NotBeNullOrEmpty();
+            response.Password.Length.Should().Be(14);
+        }
+  
         [Fact]
         public async Task CreateUser_WillNotCreateDuplicate()
         {

@@ -21,25 +21,22 @@ using DataAttachment = Fakemail.Data.EntityFramework.Attachment;
 using DataEmail = Fakemail.Data.EntityFramework.Email;
 using DataSmtpUser = Fakemail.Data.EntityFramework.SmtpUser;
 using DataUser = Fakemail.Data.EntityFramework.User;
-using System.Net.Http;
-using System.Text;
 
 namespace Fakemail.Core
 {
     public class Engine : IEngine
     {
-        // For haveIBeenPwned - todo: move into a separate class
-        private static HttpClient _httpClient = new HttpClient();
-
         private IDbContextFactory<FakemailDbContext> _dbFactory;
         private ILogger<Engine> _log;
         private IJwtAuthentication _auth;
+        private IPwnedPasswordApi _pwnedPasswordApi;
 
-        public Engine(IDbContextFactory<FakemailDbContext> dbFactory, ILogger<Engine> log, IJwtAuthentication auth)
+        public Engine(IDbContextFactory<FakemailDbContext> dbFactory, ILogger<Engine> log, IJwtAuthentication auth, IPwnedPasswordApi pwnedPasswordApi )
         {
             _dbFactory = dbFactory;
             _log = log;
             _auth = auth;
+            _pwnedPasswordApi = pwnedPasswordApi;
         }
 
         /// <summary>
@@ -59,42 +56,48 @@ namespace Fakemail.Core
             var password = request.Password;
             try
             {
-                // Check password:
-                // 1. If not specified, create one automatically
-                if (password == null)
+                // Validate username
+                if (request.Username == null || request.Username.Length < 6)
                 {
-                    password = Utils.CreateId(10);  // will return a 14 char password
-                    serverCreatedPassword = true;
-                    // TODO: retry if listed in HaveIBeenPwned
+                    response.ErrorMessage = "Username length must be at least 6 characters";
+                    return response;
                 }
-
-                // Check quality of password
-                // 2. Must be at least 10 chars
-                else if (password.Length < 10)
+                else if (request.Username.Length > 30)
                 {
-                    response.ErrorMessage = "Password must be at least 10 characters";
+                    response.ErrorMessage = "Username length must not be greater than 30 characters";
                     return response;
                 }
 
-                // 3. Must not be in HaveIGotPwned
+                // Validate password
+                if (password == null)
+                {
+                    // If not specified, create one automatically.
+                    // Retry if listed in HaveIBeenPwned
+                    do
+                    {
+                        password = Utils.CreateId(10);  // will return a 14 char password
+                    }
+                    while (await _pwnedPasswordApi.IsPwnedPasswordAsync(password));
+
+                    serverCreatedPassword = true;
+                }
+                else if (password.Length < 10)
+                {
+                    // Password must be at least 10 chars but maximum 40
+                    response.ErrorMessage = "Password length must be at least 10 characters";
+                    return response;
+                }
+                else if (password.Length > 40)
+                {
+                    response.ErrorMessage = "Password length must not be greater than 40 characters";
+                    return response;
+                }
                 else
                 {
-                    var sha1 = HashAlgorithm.Create("SHA1");
-                    var sha1PasswordBytes = sha1.ComputeHash(Encoding.UTF8.GetBytes(password));
-                    var sb = new StringBuilder();
-
-                    // Loop through each byte of the hashed data
-                    // and format each one as a hexadecimal string.
-                    for (int i = 0; i < sha1PasswordBytes.Length; i++)
+                    // Password must not be in HaveIBeenPwned list of compromised passwords
+                    if (await _pwnedPasswordApi.IsPwnedPasswordAsync(password))
                     {
-                        sb.Append(sha1PasswordBytes[i].ToString("X2"));
-                    }
-
-                    var pwnedPasswordHashes = await _httpClient.GetStringAsync($"https://api.pwnedpasswords.com/range/{sb.ToString().Substring(0, 5)}");
-
-                    if (pwnedPasswordHashes.Contains(sb.ToString().Substring(5)))
-                    {
-                        response.ErrorMessage = "Password was listed in HaveIBeenPwned";
+                        response.ErrorMessage = "Password was found in HaveIBeenPwned";
                         return response;
                     }
                 }
@@ -102,28 +105,28 @@ namespace Fakemail.Core
                 var userId = new Guid(RandomNumberGenerator.GetBytes(16));
 
                 var smtpUsernameBytes = 4;
-                var smtpUsername = "s" + Utils.CreateId(smtpUsernameBytes);
+                var smtpUsername = Utils.CreateId(smtpUsernameBytes).ToLower(); // SMTP auth fails if upper-case chars are used
                 var smtpPassword = Utils.CreateId(8);
 
                 var dataUser = new DataUser
                 {
                     UserId = userId,
                     Username = request.Username,
-                    PasswordCrypt = Sha512Crypt(password)
+                    PasswordCrypt = Sha256Crypt(password)
                 };
 
                 var dataSmtpUser = new DataSmtpUser
                 {
                     UserId = dataUser.UserId,
                     SmtpUsername = smtpUsername,
-                    SmtpPasswordCrypt = Sha512Crypt(smtpPassword)
+                    SmtpPasswordCrypt = Sha256Crypt(smtpPassword)
                 };
 
                 using (var db = _dbFactory.CreateDbContext())
                 {
                     while (db.SmtpUsers.Any(u => u.SmtpUsername == smtpUsername))
                     {
-                        smtpUsername = "s" + Utils.CreateId(smtpUsernameBytes); // increase the length in case of collision
+                        smtpUsername = Utils.CreateId(smtpUsernameBytes).ToLower(); // increase the length in case of collision
                     }
                     await db.Users.AddAsync(dataUser);
                     await db.SmtpUsers.AddAsync(dataSmtpUser);
@@ -200,7 +203,6 @@ namespace Fakemail.Core
             return response;
         }
 
-
         private string Extract(GroupCollection groups, string groupName)
         {
             var value = groups[groupName];
@@ -227,6 +229,15 @@ namespace Fakemail.Core
 
                 stream.Position = 0;
                 var m = MimeMessage.Load(stream);
+
+                // Remove the headers that are specific to the envelope
+                //stream.Position = 0;
+                //var m2 = MimeMessage.Load(stream);
+
+                //m.Headers.Remove("Message-Id");
+                //m.Headers.Remove("Delivered-To");
+
+                //m.WriteTo()
 
                 // Extract out the parts of the message
                 // * from
