@@ -1,9 +1,15 @@
-﻿namespace Fakemail.ApiModels
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace Fakemail.ApiModels
 {
     public class ListEmailRequest
     {
-        public int Page { get; set; }
-        public int PageSize { get; set; }
+        [Required]
         public string SmtpUsername { get; set; }
+
+        public int Page { get; set; } = 1;
+
+        public int PageSize { get; set; } = 10;
+
     }
 }

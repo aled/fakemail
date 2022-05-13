@@ -109,12 +109,13 @@ namespace Fakemail.IntegrationTests
         public async Task CreateUser_WithAdequatelySizedUsernameAndPassword(int length)
         {
             var username = Utils.CreateId();
+            var password = (Utils.CreateId() + Utils.CreateId()).Substring(1, length);
 
             var response = await _fixture.Engine.CreateUserAsync(
                 new CreateUserRequest
                 {
                     Username = username,
-                    Password = new string('*', length)
+                    Password = password
                 }
             );
 

@@ -10,11 +10,15 @@ namespace Fakemail.Core
 {
     public class JwtAuthentication : IJwtAuthentication
     {
-        private readonly string _key;
+        private readonly string _secret;
+        private readonly string _validIssuer;
+        private readonly int _expiryMinutes;
 
-        public JwtAuthentication(string key)
+        public JwtAuthentication(string secret, string validIssuer, int expiryMinutes)
         {
-            _key = key;
+            _secret = secret;
+            _validIssuer = validIssuer;
+            _expiryMinutes = expiryMinutes;
         }
 
         public string GetAuthenticationToken(string username, bool isAdmin = false)
@@ -29,14 +33,14 @@ namespace Fakemail.Core
             }
 
             var tokenHandler = new JwtSecurityTokenHandler();
-            var tokenKey = Encoding.ASCII.GetBytes(_key);
+            var tokenKey = Encoding.ASCII.GetBytes(_secret);
             var tokenDescriptor = new SecurityTokenDescriptor
             {
-                Issuer = "localhost:7053/", //"fakemail.stream/"                ,
+                Issuer = _validIssuer,
                 Subject = new ClaimsIdentity(claims),
                 NotBefore = DateTime.UtcNow,
-                Expires = DateTime.UtcNow.AddDays(1),
-                SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(tokenKey), SecurityAlgorithms.HmacSha512Signature)
+                Expires = DateTime.UtcNow.AddMinutes(_expiryMinutes),
+                SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(tokenKey), SecurityAlgorithms.HmacSha256Signature)
             };
 
             var token = tokenHandler.CreateToken(tokenDescriptor);

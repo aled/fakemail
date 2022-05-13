@@ -158,7 +158,13 @@ namespace Fakemail.Core
             }
             catch (Exception ex)
             {
+                response.Success = false;
                 response.ErrorMessage = "Server error";
+                response.Username = null;
+                response.Password = null;
+                response.SmtpPassword = null;
+                response.SmtpUsername = null;
+                response.BearerToken = null;
                 _log.LogError(ex.Message);
             }
 

@@ -3,7 +3,6 @@
 Immediate:
 - Investigate - does API automatically apply migrations?
 - Why do failed deliveries get deleted?
-- Switch to sha256 for shorter tokens
 - Use MimeMessage to remove Delivered-To/MessageId and re-serialize?
 
 Next version:
@@ -47,3 +46,4 @@ Done
 - Write MDA program to insert email into database - use filesystemwatcher in C#,
   running as a service in the API project
 - SSL for SMTP
+- Switch to sha256 for shorter tokens

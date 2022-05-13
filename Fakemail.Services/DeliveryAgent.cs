@@ -6,6 +6,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 using Serilog;
 
@@ -14,51 +15,61 @@ using Fakemail.Data.EntityFramework;
 
 namespace Fakemail.Services
 {
-
     // To be run either as a standalone executable, or as a worker service within the API
-    public class DeliveryAgent
+    public class DeliveryAgent : BackgroundService
     {
         private ILogger<DeliveryAgent> _log;
-        private DeliveryAgentConfig _config;  
+        private DeliveryAgentOptions _options;
         private IEngine _engine;
         private BlockingCollection<string> _queue = new BlockingCollection<string>(new ProducerConsumerSet<string>(), 2);
 
         public static async Task Main(string[] args)
         {
             // Usage:
-            //  Fakemail.DeliveryAgent [-poll [seconds]] [-fail directory] directory
-            var config = new DeliveryAgentConfig();
-
-            for (int i = 0; i < args.Length; i++)
-            {
-                if (i == args.Length - 1)
-                {
-                    config.IncomingDirectory = args[i];
-                }
-                else if (args[i] == "-fail")
-                {
-                    config.FailedDirectory = args[++i];
-                }
-                else if (args[i] == "-poll")
-                {
-                    config.PollSeconds = Convert.ToInt32(args[++i]);
-                }
-            }
-
+            //  Fakemail.DeliveryAgent -p seconds -f <fail directory> -n <new mail directory>
             Log.Logger = new LoggerConfiguration()
                 .WriteTo.Console()
                 .CreateLogger();
 
-            var jwtSigningKey = "gfjherjhjhkdgfjhkgdfjhkgdfjhkgfdhjdfghjkfdg";
+            IConfigurationRoot configRoot = null;
 
             var host = Host.CreateDefaultBuilder()
+                .ConfigureHostConfiguration(configHost =>
+                {
+                    // this reads the 'Environment' environment variable, which should set to Development in the debug profile
+                    configHost.AddEnvironmentVariables();
+                })
+                .ConfigureAppConfiguration((hostContext, config) =>
+                {
+                    config.Sources.Clear();
+                    config.AddJsonFile("appsettings.json", true);
+                    config.AddJsonFile($"appsettings.{hostContext.HostingEnvironment.EnvironmentName}.json", true);
+                    config.AddCommandLine(args, new Dictionary<string, string>
+                    {
+                        { "-n", "IncomingDirectory" },
+                        { "-f", "FailedDirectory" },
+                        { "-p", "PollSeconds" },
+                    });
+                    configRoot = config.Build();
+                })
                 .UseSerilog()
                 .ConfigureServices((hostContext, services) =>
                 {
-                    services.AddDbContextFactory<FakemailDbContext>(options => options.UseSqlite($"Data Source={"/home/fakemail/fakemail.sqlite"}"));
+                    var connectionString = hostContext.Configuration.GetConnectionString("fakemail");
+                    services.AddDbContextFactory<FakemailDbContext>(options => options.UseSqlite(connectionString));
+
                     services.AddSingleton(Log.Logger);
                     services.AddSingleton<IEngine, Engine>();
-                    services.AddSingleton<IJwtAuthentication>(new JwtAuthentication(jwtSigningKey));
+                    services.AddHttpClient<IPwnedPasswordApi, PwnedPasswordApi>();
+
+                    // TODO: make a JwtOptions class, similar to DeliveryAgentOptions
+                    var jwtSecret = hostContext.Configuration["Jwt:Secret"];
+                    var jwtValidIssuer = hostContext.Configuration["Jwt:ValidIssuer"];
+                    var jwtExpiryMinutes = Convert.ToInt32(hostContext.Configuration["Jwt:ExpiryMinutes"]);
+                    services.AddSingleton<IJwtAuthentication>(new JwtAuthentication(jwtSecret, jwtValidIssuer, jwtExpiryMinutes));
+
+                    services.Configure<DeliveryAgentOptions>(hostContext.Configuration.GetSection("DeliveryAgent"));
+                    services.AddHostedService<DeliveryAgent>();
                 })
                 .ConfigureHostConfiguration(configHost =>
                 {
@@ -74,30 +85,28 @@ namespace Fakemail.Services
 
             var engine = host.Services.GetRequiredService<IEngine>();
             var log = host.Services.GetRequiredService<ILogger<DeliveryAgent>>();
-        
+
             var cancellationToken = new CancellationTokenSource().Token;
 
-            await new DeliveryAgent(config, engine, log).RunAsync(cancellationToken);
+            await host.RunAsync();
         }
 
-        public DeliveryAgent(DeliveryAgentConfig config, IEngine engine, ILogger<DeliveryAgent> log)
+        public DeliveryAgent(IEngine engine, ILogger<DeliveryAgent> log, IOptions<DeliveryAgentOptions> options)
         {
             _log = log;
-            _config = config;
+            _options = options.Value;
             _engine = engine;
         }
 
         private void OnRenamed(object source, FileSystemEventArgs e)
         {
-            // In this application we should be able to process the changed file immediately,
-            // as it is moved rather than created.
             _queue.Add(e.Name);
         }
 
-        public async Task RunAsync(CancellationToken cancellationToken)
+        protected override async Task ExecuteAsync(CancellationToken cancellationToken)
         {
-            var directoryInfo = new DirectoryInfo(_config.IncomingDirectory);
-            var failedDirectoryInfo = new DirectoryInfo(_config.FailedDirectory);
+            var directoryInfo = new DirectoryInfo(_options.IncomingDirectory);
+            var failedDirectoryInfo = new DirectoryInfo(_options.FailedDirectory);
 
             var watcher = new FileSystemWatcher(directoryInfo.FullName);
 
@@ -115,9 +124,9 @@ namespace Fakemail.Services
 
             watcher.EnableRaisingEvents = true;
             watcher.IncludeSubdirectories = false;
-            
+
             var pollTimestamp = DateTime.MinValue;
-            var pollTimeSpan = TimeSpan.FromSeconds(_config.PollSeconds);
+            var pollTimeSpan = TimeSpan.FromSeconds(_options.PollSeconds);
             var pollPeriodMillis = (int)(pollTimeSpan.TotalMilliseconds);
 
             while (!cancellationToken.IsCancellationRequested)
@@ -150,26 +159,30 @@ namespace Fakemail.Services
                     {
                         var fileInfo = new FileInfo(Path.Join(directoryInfo.FullName, filename));
 
-                        // Open in read/write mode to ensure it isn't still being written to.
                         try
                         {
                             _log.LogInformation($"Delivering: {fileInfo.Name}");
+
+                            // Open in read/write mode to ensure it isn't still being written by the SMTP server.
+                            var success = false;
                             using (var stream = new FileStream(fileInfo.FullName, FileMode.Open, FileAccess.ReadWrite))
                             {
-                                if (await _engine.CreateEmailAsync(stream))
+                                success = await _engine.CreateEmailAsync(stream);
+                            }
+                            
+                            if (success) 
+                            {
+                                File.Delete(fileInfo.FullName);
+                            }
+                            else
+                            {
+                                try
                                 {
-                                    File.Delete(fileInfo.FullName);
+                                    File.Move(fileInfo.FullName, Path.Join(failedDirectoryInfo.FullName, fileInfo.Name));
                                 }
-                                else
+                                catch (Exception e2)
                                 {
-                                    try
-                                    {
-                                        File.Move(fileInfo.FullName, Path.Join(failedDirectoryInfo.FullName, fileInfo.Name));
-                                    }
-                                    catch (Exception e2)
-                                    {
-                                        _log.LogError(e2.Message);
-                                    }
+                                    _log.LogError(e2.Message);
                                 }
                             }
                         }
@@ -183,7 +196,7 @@ namespace Fakemail.Services
                         catch (Exception e)
                         {
                             _log.LogError(e.Message);
-                            
+
                         }
                     }
                 }

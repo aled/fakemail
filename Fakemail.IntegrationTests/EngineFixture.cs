@@ -18,10 +18,15 @@ namespace Fakemail.IntegrationTests
     {
         public async Task<string> RangeAsync(string prefix)
         {
+            // Prevent warning about async method lacking await operators
+            await Task.Yield();
+
             // The hash for 'asdfasdfasdf' is 79437F5EDDA13F9C0669B978DD7A9066DD2059F1
-            // Return this one (and a couple of others), so that this password triggers the 
+            // Return this one (and a couple of others), to make that password trigger the 
             // PwnedPassword check
-            return "F56E4F3B8721E983BA9C23C260EBF4AA526:1\nF5EDDA13F9C0669B978DD7A9066DD2059F1:7322\nF5FDC0B32D57F567BE7E6F5A932B995F642:2";
+            return "F56E4F3B8721E983BA9C23C260EBF4AA526:1\r\n"
+                 + "F5EDDA13F9C0669B978DD7A9066DD2059F1:7322\r\n"
+                 + "F5FDC0B32D57F567BE7E6F5A932B995F642:2\r\n";
         }
     }
     public class EngineFixture : IDisposable
@@ -53,7 +58,8 @@ namespace Fakemail.IntegrationTests
                 .WriteTo.Console()
                 .CreateLogger();
 
-            var jwtSigningKey = "gfjherjhjhkdgfjhkgdfjhkgdfjhkgfdhjdfghjkfdg";
+            // use a random jwt signing key, so tokens generated here will not be valid in production or anywhere else
+            var jwtSigningKey = Utils.CreateId(16);
 
             return Host.CreateDefaultBuilder()
                 .UseSerilog()
@@ -62,7 +68,7 @@ namespace Fakemail.IntegrationTests
                     services.AddDbContextFactory<FakemailDbContext>(options => options.UseSqlite($"Data Source={_dbFile}"));
                     services.AddSingleton(Log.Logger);
                     services.AddSingleton<IEngine, Engine>();
-                    services.AddSingleton<IJwtAuthentication>(new JwtAuthentication(jwtSigningKey));
+                    services.AddSingleton<IJwtAuthentication>(new JwtAuthentication(jwtSigningKey, "", 10));
                     
                     // Swap the commented line to use the real PwnedPassword Api in tests
                     services.AddSingleton<IPwnedPasswordApi, DummyPwnedPasswordApi>();

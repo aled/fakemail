@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "Fakemail.Services": {
+      "commandName": "Project",
+      "environmentVariables": {
+        "Environment": "Development"
+      }
+    }
+  }
+}

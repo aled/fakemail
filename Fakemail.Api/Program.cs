@@ -18,6 +18,10 @@ var builder = WebApplication.CreateBuilder(args);
 
 var connectionString = builder.Configuration.GetConnectionString("fakemail");
 
+var jwtSecret = builder.Configuration["Jwt:Secret"];
+var jwtValidIssuer = builder.Configuration["Jwt:ValidIssuer"];
+var jwtExpiryMinutes = Convert.ToInt32(builder.Configuration["Jwt:ExpiryMinutes"]);
+
 builder.Host.UseSerilog((ctx, loggerConfiguration) => loggerConfiguration.WriteTo.Console());
 
 builder.Services.AddDbContextFactory<FakemailDbContext>(options => options.UseSqlite(connectionString));
@@ -28,12 +32,21 @@ builder.Services.AddHttpClient<IPwnedPasswordApi, PwnedPasswordApi>()
         .OrResult(msg => msg.StatusCode == System.Net.HttpStatusCode.NotFound)
         .WaitAndRetryAsync(3, retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt))));
 
+// In the development environment, allow CORS from the web server to the API.
+// In production, they will use the same origin (using a reverse proxy)
+var corsPolicyName = "_fakemail_development_allowed_origins";
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy(corsPolicyName, policy =>
+    {
+        policy.WithOrigins("https://localhost:7150");
+    });
+});
+      
 builder.Services.AddControllers().AddJsonOptions(options => options.JsonSerializerOptions.DefaultIgnoreCondition
    = JsonIgnoreCondition.WhenWritingDefault 
    | JsonIgnoreCondition.WhenWritingNull);
 
-// TODO: read from settings
-var jwtSigningKey = "gfjherjhjhkdgfjhkgdfjhkgdfjhkgfdhjdfghjkfdg";
 builder.Services.AddAuthentication(x =>
 {
     x.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -46,13 +59,13 @@ builder.Services.AddAuthentication(x =>
     {
         ValidateIssuerSigningKey = true,
         ValidateIssuer = true,
-        ValidIssuers = new[] {"localhost:7053/"},
+        ValidIssuer = jwtValidIssuer,
         ValidateAudience = false,
-        IssuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(jwtSigningKey))
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(jwtSecret))
     };
 });
 
-builder.Services.AddSingleton<IJwtAuthentication>(new JwtAuthentication(jwtSigningKey));
+builder.Services.AddSingleton<IJwtAuthentication>(new JwtAuthentication(jwtSecret, jwtValidIssuer, jwtExpiryMinutes));
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
@@ -60,6 +73,8 @@ builder.Services.AddSwaggerGen(options =>
 {
     options.SwaggerDoc("v1", new OpenApiInfo { Title = "Demo API", Version = "v1" });
 
+    // This allows the user to enter the bearer token into the swagger explorer, so
+    // that authorized API calls can be made
     options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
         In = ParameterLocation.Header,
@@ -93,6 +108,7 @@ if (app.Environment.IsDevelopment())
     app.UseDeveloperExceptionPage();
     app.UseSwagger();
     app.UseSwaggerUI();
+    app.UseCors(corsPolicyName);
 }
 
 if (!app.Environment.IsDevelopment())
