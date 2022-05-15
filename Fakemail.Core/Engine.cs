@@ -52,34 +52,30 @@ namespace Fakemail.Core
                 ErrorMessage = "Error creating account"
             };
 
-            var serverCreatedPassword = false;
+            var userId = new Guid(RandomNumberGenerator.GetBytes(16));
             var password = request.Password;
             try
             {
-                // Validate username
-                if (request.Username == null || request.Username.Length < 6)
+                // Validate username, if present
+                if (request.Username == null)
+                {
+                    request.Username = "anon-" + userId.ToString();
+                } 
+                else if (request.Username.Length < 6)
                 {
                     response.ErrorMessage = "Username length must be at least 6 characters";
                     return response;
                 }
-                else if (request.Username.Length > 30)
+                else if (request.Username.Length > 40)
                 {
-                    response.ErrorMessage = "Username length must not be greater than 30 characters";
+                    response.ErrorMessage = "Username length must not be greater than 40 characters";
                     return response;
                 }
 
                 // Validate password
                 if (password == null)
                 {
-                    // If not specified, create one automatically.
-                    // Retry if listed in HaveIBeenPwned
-                    do
-                    {
-                        password = Utils.CreateId(10);  // will return a 14 char password
-                    }
-                    while (await _pwnedPasswordApi.IsPwnedPasswordAsync(password));
-
-                    serverCreatedPassword = true;
+                    // If not specified, create an Unsecured account
                 }
                 else if (password.Length < 10)
                 {
@@ -102,23 +98,24 @@ namespace Fakemail.Core
                     }
                 }
 
-                var userId = new Guid(RandomNumberGenerator.GetBytes(16));
 
                 var smtpUsernameBytes = 4;
                 var smtpUsername = Utils.CreateId(smtpUsernameBytes).ToLower(); // SMTP auth fails if upper-case chars are used
                 var smtpPassword = Utils.CreateId(8);
+                var passwordCrypt = password == null ? string.Empty : Sha256Crypt(password);
 
                 var dataUser = new DataUser
                 {
                     UserId = userId,
                     Username = request.Username,
-                    PasswordCrypt = Sha256Crypt(password)
+                    PasswordCrypt = passwordCrypt
                 };
 
                 var dataSmtpUser = new DataSmtpUser
                 {
                     UserId = dataUser.UserId,
                     SmtpUsername = smtpUsername,
+                    SmtpPassword = smtpPassword,
                     SmtpPasswordCrypt = Sha256Crypt(smtpPassword)
                 };
 
@@ -135,11 +132,10 @@ namespace Fakemail.Core
 
                 response.Success = true;
                 response.ErrorMessage = null;
+                response.UserId = userId;
                 response.Username = request.Username;
-                if (serverCreatedPassword) response.Password = password;
                 response.SmtpUsername = smtpUsername;
                 response.SmtpPassword = smtpPassword;
-                response.BearerToken = _auth.GetAuthenticationToken(request.Username, false);
             }
             catch (DbUpdateException due)
             {
@@ -161,10 +157,8 @@ namespace Fakemail.Core
                 response.Success = false;
                 response.ErrorMessage = "Server error";
                 response.Username = null;
-                response.Password = null;
                 response.SmtpPassword = null;
                 response.SmtpUsername = null;
-                response.BearerToken = null;
                 _log.LogError(ex.Message);
             }
 
@@ -189,7 +183,7 @@ namespace Fakemail.Core
                 using (var db = _dbFactory.CreateDbContext())
                 {
                     var user = await db.Users
-                        .Where(x => x.Username == request.Username)
+                        .Where(x => x.UserId == request.UserId)
                         .SingleAsync();
 
                     if (Validate(request.Password, user.PasswordCrypt))
@@ -197,7 +191,7 @@ namespace Fakemail.Core
                         response.Success = true;
                         response.ErrorMessage = null;
                         response.IsAdmin = user.IsAdmin;
-                        response.Token = _auth.GetAuthenticationToken(user.Username, user.IsAdmin);
+                        response.Token = _auth.GetAuthenticationToken(user.UserId, user.IsAdmin);
                     }
                 }
             }
@@ -379,15 +373,16 @@ namespace Fakemail.Core
         }
 
         /// <summary>
-        /// Regular users may list emails from only their own SMTP usernames.
+        /// Unsecured users may list emails from only their own SMTP usernames.
+        /// Secured users may list emails from only their own SMTP usernames.
         /// Admin users may list emails from any SMTP username.
         /// </summary>
         /// <param name="authenticatedUsername"></param>
         /// <param name="request"></param>
         /// <returns></returns>
-        public async Task<ListEmailResponse> ListEmailsAsync(string authenticatedUsername, ListEmailRequest request)
+        public async Task<ListEmailsResponse> ListEmailsAsync(ListEmailsRequest request, Guid authenticatedUserId)
         {
-            var response = new ListEmailResponse
+            var response = new ListEmailsResponse
             {
                 Success = false,
             };
@@ -409,40 +404,46 @@ namespace Fakemail.Core
 
             using (var db = _dbFactory.CreateDbContext())
             {
-                var authenticatedUser = await db.Users
-                    .SingleOrDefaultAsync(x => x.Username == authenticatedUsername);
+                User user = null;
 
-                var authorized = false;
-                if (authenticatedUser == null)
+                if (authenticatedUserId == Guid.Empty)
                 {
-                    authorized = false;
-                }
-                else if (authenticatedUser.IsAdmin)
-                {
-                    authorized = true;
+                    user = await db.Users.SingleOrDefaultAsync(x => x.UserId == request.UserId && x.PasswordCrypt == string.Empty);
                 }
                 else
                 {
-                    authorized = await db.SmtpUsers
-                        .AnyAsync(u => u.SmtpUsername == request.SmtpUsername && u.UserId == authenticatedUser.UserId);
+                    user = await db.Users.SingleOrDefaultAsync(x => x.UserId == authenticatedUserId);
                 }
-
-                if (!authorized)
+                
+                if (user == null)
                 {
-                    response.ErrorMessage = "Unauthorized SMTP username for authorized user";
-
+                    response.ErrorMessage = "Unauthorized";
                     return response;
                 }
 
-                var emails = db.Emails
-                    .Where(x => x.SmtpUsername == request.SmtpUsername);
+                var smtpUsersDetail = await db.SmtpUsers
+                                             .Where(su => su.UserId == user.UserId)
+                                             .Select(su => new SmtpUserDetail
+                                                 {
+                                                     SmtpUsername = su.SmtpUsername,
+                                                     SmtpPassword = su.SmtpPassword,
+                                                     CurrentEmailCount = su.Emails.Count()
+                                                 })
+                                             .ToListAsync();
+
+                var emails = (from e in db.Emails
+                              join su in db.SmtpUsers on e.SmtpUsername equals su.SmtpUsername
+                              join u in db.Users on su.UserId equals u.UserId
+                              where u.UserId == user.UserId
+                              select e);
 
                 var emailsCount = await emails.CountAsync();
                 if (emailsCount == 0)
                 {
                     response.Success = true;
                     response.Emails = new List<EmailSummary>();
-
+                    response.Username = user.Username;
+                    response.SmtpUsers = smtpUsersDetail;
                     return response;
                 }
 
@@ -465,7 +466,8 @@ namespace Fakemail.Core
                     {
                         EmailId = e.EmailId,
                         SmtpUsername = e.SmtpUsername,
-                        Timestamp = e.ReceivedTimestampUtc,
+                        TimestampUtc = e.ReceivedTimestampUtc,
+                        From = e.From,
                         Subject = e.Subject,
                         DeliveredTo = e.DeliveredTo,
                         BodySummary = e.BodySummary,
@@ -479,7 +481,8 @@ namespace Fakemail.Core
 
                 response.Page = request.Page;
                 response.PageSize = request.PageSize;
-
+                response.Username = user.Username;
+                response.SmtpUsers = smtpUsersDetail;
                 response.Success = true;
                 
                 return response;

@@ -7,7 +7,6 @@ using Fakemail.Core;
 namespace Fakemail.Api.Controllers
 {
     [Route("api/mail")]
-    [Authorize]
     [ApiController]
     public class MailController : ControllerBase
     {
@@ -21,18 +20,11 @@ namespace Fakemail.Api.Controllers
         // POST: api/mail/list
         [HttpPost]
         [Route("list")]
-        public async Task<IActionResult> ListEmail([FromBody] ListEmailRequest request)
+        public async Task<IActionResult> ListEmails([FromBody] ListEmailsRequest request)
         {
-            var authenticatedUsername = HttpContext.User.Identity.Name;
-
-            if (!string.IsNullOrEmpty(authenticatedUsername))
-            {
-                var response = await _engine.ListEmailsAsync(authenticatedUsername, request);
-                
-                return Ok(response);
-            }
-
-            return Unauthorized();
+            Guid.TryParse(HttpContext.User.Identity.Name, out var authenticatedUserId);            
+            var response = await _engine.ListEmailsAsync(request, authenticatedUserId);               
+            return Ok(response);
         }
     }
 }

@@ -1,0 +1,74 @@
+﻿@model Fakemail.Web.Models.UserModel
+
+@{
+    ViewData["Title"] = "fakemail.stream";
+}
+
+<div class="text-left">
+    <h5><em>A fake SMTP server for software integration testing.</em></h5>
+</div>
+
+<p><h6 class="fm-bo">Welcome, @Model.Username</h6></p>
+
+<!--<p>Using this server you can send emails, and they will not be delivered, but shown here instead. Emails are also available via a REST api for your automated integration testing pleasure.</p>
+
+<p>All accounts are unsecured. This means anyone who knows your username will be able read the emails you send.</p>
+-->
+<p>
+Here are your personal SMTP settings =>
+Host: <span class="sourcecode">fakemail.stream:587</span>
+Username: <span class="sourcecode">@Model.SmtpCredentials.First().SmtpUsername</span>
+Password: <span class="sourcecode">@Model.SmtpCredentials.First().SmtpPassword</span>
+</p>
+
+<table>
+    <tr>
+        <th>Timestamp</th>
+        <th>From</th>
+        @if (Model.EmailAggregation == EmailAggregationModel.Received)
+        {
+            <th>Delivered-To</th>
+        }
+        else
+        {
+            <th>To</th>
+            <th>CC</th>
+            <th>BCC</th>
+        }
+        <th>Subject</th>
+        <th>Body</th>
+        <th>Attachments</th>
+    </tr>
+    @{ var evenRow = true; }
+    @foreach (var emailSummary in @Model.EmailSummaries.OrderByDescending(x => x.TimestampUtc))
+    {
+        <tr class="fm-summary @(evenRow ? "row-even" : "row-odd")">
+            @{
+                evenRow = !evenRow;
+                var timestamp = emailSummary.TimestampUtc.ToString("yyyy-MM-dd HH:mm:ss");
+                var from = emailSummary.From;
+                var subject = emailSummary.Subject;
+                var body = emailSummary.Body;
+                var attachments = string.Join("; ", emailSummary.Attachments.Select(x => x.Name));
+            }
+
+        <td><div class='fm-ts tc'><div class='tc-content'>@timestamp</div><div class='tc-spacer'>@timestamp</div><span>&nbsp;</span></div></td>
+        <td><div class='fm-fr tc'><div class='tc-content'>@from</div><div class='tc-spacer'>@from</div><span>&nbsp;</span></div></td>
+        @if (Model.EmailAggregation == EmailAggregationModel.Received)
+        {
+            var to = ((ReceivedEmailSummaryModel)emailSummary).DeliveredTo;
+            <td><div class='fm-to tc'><div class='tc-content'>@to</div><div class='tc-spacer'>@to</div><span>&nbsp;</span></div></td>
+        }
+        else
+        {
+            <td>@(emailSummary as SentEmailSummaryModel).To</td>
+            <td>@(emailSummary as SentEmailSummaryModel).CC</td>
+            <td>@(emailSummary as SentEmailSummaryModel).BCC</td>
+        }
+        <td><div class='fm-su tc'><div class='tc-content'><a href=''>@subject</a></div><div class='tc-spacer'>subject</div><span>&nbsp;</span></div></td>
+        <td><div class='fm-su tc'><div class='tc-content'>@body</div><div class='tc-spacer'>@body</div><span>&nbsp;</span></div></td>
+        <td><div class='fm-su tc'><div class='tc-content'>@attachments</div><div class='tc-spacer'>@attachments</div><span>&nbsp;</span></div></td>
+   
+    </tr>    
+    }
+</table>

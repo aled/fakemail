@@ -21,6 +21,6 @@ namespace Fakemail.Core
 
         Task<ListUserResponse> ListUsersAsync(ListUserRequest request);
 
-        Task<ListEmailResponse> ListEmailsAsync(string authenticatedUsername, ListEmailRequest request);
+        Task<ListEmailsResponse> ListEmailsAsync(ListEmailsRequest request, Guid authenticatedUserId);
     }
 }

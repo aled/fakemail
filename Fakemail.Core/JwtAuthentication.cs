@@ -21,10 +21,10 @@ namespace Fakemail.Core
             _expiryMinutes = expiryMinutes;
         }
 
-        public string GetAuthenticationToken(string username, bool isAdmin = false)
+        public string GetAuthenticationToken(Guid userId, bool isAdmin = false)
         {
             var claims = new List<Claim>();
-            claims.Add(new Claim(ClaimTypes.Name, username));
+            claims.Add(new Claim(ClaimTypes.Name, userId.ToString()));
             claims.Add(new Claim(ClaimTypes.Role, "user"));
 
             if (isAdmin)

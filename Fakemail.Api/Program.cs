@@ -1,6 +1,7 @@
 using System.Text;
 using System.Text.Json.Serialization;
 
+using Fakemail.Api;
 using Fakemail.Core;
 using Fakemail.Data.EntityFramework;
 
@@ -109,6 +110,12 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
     app.UseCors(corsPolicyName);
+}
+
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<FakemailDbContext>();
+    db.Database.Migrate();
 }
 
 if (!app.Environment.IsDevelopment())

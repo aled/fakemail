@@ -1,7 +1,9 @@
-﻿namespace Fakemail.Core
+﻿using System;
+
+namespace Fakemail.Core
 {
     public interface IJwtAuthentication
     {
-        string GetAuthenticationToken(string username, bool isAdmin);
+        string GetAuthenticationToken(Guid userId, bool isAdmin);
     }
 }

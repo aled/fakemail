@@ -15,6 +15,12 @@ namespace Fakemail.Data.EntityFramework
         public Guid UserId { get; set; }
 
         /// <summary>
+        /// Store the plaintext smtp password
+        /// </summary>
+        [Required]
+        public string SmtpPassword { get; set; }
+
+        /// <summary>
         /// Uses the crypt() function, with one of SHA512 or SHA256 hash algorithms
         /// </summary>
         [Required]

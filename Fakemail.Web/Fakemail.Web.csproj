@@ -2,22 +2,17 @@
 
   <PropertyGroup>
     <TargetFramework>net6.0</TargetFramework>
-    <Nullable>enable</Nullable>
+    <Nullable>disable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-    <UserSecretsId>aspnet-Fakemail.Web-04AF4F43-631C-4C38-94E0-D3920692A83C</UserSecretsId>
+    <UserSecretsId>aspnet-Fakemail.Web-C991C834-9D04-4776-A7E3-231643FB2661</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore" Version="6.0.4" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="6.0.4" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="6.0.4">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>
+    <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="6.0.4" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Fakemail.Data.EntityFramework\Fakemail.Data.EntityFramework.csproj" />
+    <ProjectReference Include="..\Fakemail.Core\Fakemail.Core.csproj" />
   </ItemGroup>
 
 </Project>

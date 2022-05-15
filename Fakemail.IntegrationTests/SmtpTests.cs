@@ -40,12 +40,12 @@ namespace Fakemail.IntegrationTests
         {
             // Uncomment following line to accept invalid server certificate
             //ServicePointManager.ServerCertificateValidationCallback = (sender, certificate, chain, sslPolicyErrors) => true;
-
+            
             var smtpClient = new SmtpClient("fakemail.stream", _port);
             smtpClient.Credentials = new NetworkCredential
             {
-                UserName = "user2",
-                Password = "Hello world!"
+                UserName = "1dzrch",
+                Password = "helloworld"
             };
             smtpClient.EnableSsl = true;
 

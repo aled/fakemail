@@ -11,12 +11,10 @@ namespace Fakemail.Api.Controllers
     [ApiController]
     public class UserController : ControllerBase
     {
-        //private readonly IJwtAuthentication _auth;
         private readonly IEngine _engine;
 
-        public UserController(/*IJwtAuthentication auth,*/ IEngine engine)
+        public UserController(IEngine engine)
         {
-            //_auth = auth;
             _engine = engine;
         }
 

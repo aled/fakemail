@@ -9,11 +9,13 @@ namespace Fakemail.ApiModels
 {
     public class CreateUserRequest
     {
-        [Required(ErrorMessage = "Username is required")]
+        /// <summary>
+        /// Optional
+        /// </summary>
         public string Username { get; set; }
 
         /// <summary>
-        /// Optional. Server will create a new password if null or empty.
+        /// Optional. User will be unsecured.
         /// </summary>
         public string Password { get; set; }
     }

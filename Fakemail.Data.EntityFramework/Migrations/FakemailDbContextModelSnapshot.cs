@@ -15,7 +15,7 @@ namespace Fakemail.Data.EntityFramework.Migrations
         protected override void BuildModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
-            modelBuilder.HasAnnotation("ProductVersion", "6.0.4");
+            modelBuilder.HasAnnotation("ProductVersion", "6.0.5");
 
             modelBuilder.Entity("Fakemail.Data.EntityFramework.Attachment", b =>
                 {
@@ -143,6 +143,10 @@ namespace Fakemail.Data.EntityFramework.Migrations
                         .HasColumnType("TEXT");
 
                     b.Property<DateTime>("CreatedTimestampUtc")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("SmtpPassword")
+                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<string>("SmtpPasswordCrypt")

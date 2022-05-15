@@ -1,0 +1,77 @@
+html {
+  font-size: 14px;
+}
+
+@media (min-width: 768px) {
+  html {
+    font-size: 16px;
+  }
+}
+
+html {
+  position: relative;
+  min-height: 100%;
+}
+
+body {
+    margin-bottom: 60px;
+    background-color: ivory;
+}
+
+table {
+    width: 100%;
+}
+
+th {
+    text-align: left;
+    font-size: 18px;
+}
+
+tr {
+    text-align: left;
+}
+
+.sourcecode {
+    background-color: lightgrey;
+    font-family: monospace;
+    padding: 2px;
+    margin: 8px;
+}
+
+.row-even {
+    background-color: honeydew;
+}
+
+.row-odd { 
+    background-color: ivory; 
+}
+
+.small {
+    font-size: 12px;
+}
+
+.tc {
+    position: relative;
+    height: 16px;
+}
+
+.tc-content {
+    position: absolute;
+    max-width: 100%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.tc-spacer {
+    height: 0;
+    overflow: hidden
+}
+
+.fm-su {
+    font-style: italic;
+}
+
+.fm-bo {
+    font-weight: bold;
+}

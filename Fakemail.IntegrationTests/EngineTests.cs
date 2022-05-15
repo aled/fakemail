@@ -1,3 +1,4 @@
+using System;
 using System.Threading.Tasks;
 
 using Xunit;
@@ -38,14 +39,13 @@ namespace Fakemail.IntegrationTests
 
             response.Should().NotBeNull();
             response.Success.Should().BeFalse();
-            response.Password.Should().BeNull();
             response.ErrorMessage.Should().Be("Username length must be at least 6 characters");
         }
 
         [Fact]
         public async Task CreateUser_WithTooLongUsername()
         {
-            var username = new string('a', 31); 
+            var username = new string('a', 41); 
             var password = Utils.CreateId();
 
             var response = await _fixture.Engine.CreateUserAsync(
@@ -58,8 +58,7 @@ namespace Fakemail.IntegrationTests
 
             response.Should().NotBeNull();
             response.Success.Should().BeFalse();
-            response.Password.Should().BeNull();
-            response.ErrorMessage.Should().Be("Username length must not be greater than 30 characters");
+            response.ErrorMessage.Should().Be("Username length must not be greater than 40 characters");
         }
 
 
@@ -80,7 +79,6 @@ namespace Fakemail.IntegrationTests
 
             response.Should().NotBeNull();
             response.Success.Should().BeFalse();
-            response.Password.Should().BeNull();
             response.ErrorMessage.Should().Be("Password length must be at least 10 characters");
         }
 
@@ -99,7 +97,6 @@ namespace Fakemail.IntegrationTests
 
             response.Should().NotBeNull();
             response.Success.Should().BeFalse();
-            response.Password.Should().BeNull();
             response.ErrorMessage.Should().Be("Password length must not be greater than 40 characters");
         }
 
@@ -121,7 +118,6 @@ namespace Fakemail.IntegrationTests
 
             response.Should().NotBeNull();
             response.Success.Should().BeTrue();
-            response.Password.Should().BeNull();
         }
 
         [Fact]
@@ -139,7 +135,6 @@ namespace Fakemail.IntegrationTests
 
             response.Should().NotBeNull();
             response.Success.Should().BeFalse();
-            response.Password.Should().BeNull();
             response.ErrorMessage.Should().Be("Password was found in HaveIBeenPwned");
         }
 
@@ -158,10 +153,8 @@ namespace Fakemail.IntegrationTests
 
             response.Should().NotBeNull();
             response.Success.Should().BeTrue();
-            response.Password.Should().NotBeNullOrEmpty();
-            response.Password.Length.Should().Be(14);
         }
-  
+
         [Fact]
         public async Task CreateUser_WillNotCreateDuplicate()
         {
@@ -208,7 +201,7 @@ namespace Fakemail.IntegrationTests
 
             var authRequest = new GetTokenRequest
             {
-                Username = request.Username,
+                UserId = response.UserId,
                 Password = "WrongPassword!!!"
             };
 
@@ -234,7 +227,7 @@ namespace Fakemail.IntegrationTests
 
             var authRequest = new GetTokenRequest
             {
-                Username = request.Username,
+                UserId = response.UserId,
                 Password = request.Password
             };
 
@@ -260,7 +253,7 @@ namespace Fakemail.IntegrationTests
 
             var authRequest = new GetTokenRequest
             {
-                Username = "NoSuchUser!!!",
+                UserId = Guid.NewGuid(),
                 Password = request.Password
             };
 

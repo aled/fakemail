@@ -1,0 +1,27 @@
+﻿@{
+    ViewData["Title"] = "fakemail.stream";
+}
+
+<div class="text-left">
+    <h1 class="display-7"><em>A fake SMTP server for software integration testing.</em></h1>
+</div>
+ 
+<p><h4>Welcome, anonymous user...</h4></p>
+
+<p>Using this server you can send emails, and they will not be delivered, but shown here instead. Emails are also available via a REST api for your automated integration testing pleasure.</p>
+
+<p>All accounts are unsecured. This means anyone who knows your username will be able read the emails you send.</p>
+
+<p>Please use the following settings to begin sending fake emails:</p>
+<table>
+    <tr><td>SMTP hostname:</td><td><span class="sourcecode">fakemail.stream</span></td></tr>
+    <tr><td>Port:</td><td><span class="sourcecode">587</span></td></tr>
+    <tr><td>SSL:</td><td><span class="sourcecode">Yes</span></td></tr>
+    <tr><td>SMTP Credentials:</td><td><button style="padding: 2px; margin: 8px" onclick="generate_onclick()">Generate...</button></td></tr>
+</table>
+
+<script>
+    function generate_onclick() {
+        window.location.href = '/user/'
+    }
+</script>
