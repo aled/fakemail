@@ -1,5 +1,7 @@
 ﻿@model Fakemail.Web.Models.UserModel
 
+@using System.Linq;
+
 @{
     ViewData["Title"] = "fakemail.stream";
 }
@@ -17,74 +19,37 @@ Username: <span class="sourcecode">@Model.SmtpCredentials.First().SmtpUsername</
 Password: <span class="sourcecode">@Model.SmtpCredentials.First().SmtpPassword</span>
 </p>
 
-<table class="table">
-    <thead>
-        <tr>
-            <th>Timestamp</th>
-            <th>From</th>
-            @if (Model.EmailAggregation == EmailAggregationModel.Received)
-            {
-                <th>Delivered-To</th>
-            }
-            else
-            {
-                <th>To</th>
-                <th>CC</th>
-                <th>BCC</th>
-            }
-            <th>Subject</th>
-            <th>Body</th>
-            <th>Attachments</th>
-        </tr>
-    </thead>
-    <tbody>    
-    @foreach (var emailSummary in @Model.EmailSummaries.OrderByDescending(x => x.SequenceNumber))
-    {
-        <tr>
-            @{
-                var timestamp = emailSummary.TimestampUtc.ToString("yyyy-MM-dd HH:mm:ss");
-                var from = emailSummary.From;
-                var subject = emailSummary.Subject;
-                var body = emailSummary.Body;
-                var attachments = string.Join("; ", emailSummary.Attachments.Select(x => x.Name));
-            }
-
-        <td>@timestamp</td>
-        <td>@from</td>
-        @if (Model.EmailAggregation == EmailAggregationModel.Received)
-        {
-            var to = ((ReceivedEmailSummaryModel)emailSummary).DeliveredTo;
-            <td>@to</td>
-        }
-        else
-        {
-            <td>@(emailSummary as SentEmailSummaryModel).To</td>
-            <td>@(emailSummary as SentEmailSummaryModel).CC</td>
-            <td>@(emailSummary as SentEmailSummaryModel).BCC</td>
-        }
-        <td>@subject</td>
-        <td>@body</td>
-        <td>@attachments</td>
-   
-        </tr>    
-    }
-    </tbody>    
-</table>
+<div id="_ReceivedEmailsTable">
+    @await Html.PartialAsync("_ReceivedEmailsTable")
+</div>
 
 <div class="spinner-border" role="status"></div>
 <br />
 <span class="">Waiting for emails to arrive...</span>
 
-<script>
-window.onload = (event) => {
-    var checkpoint = @Model.EmailSummaries.Max(x => (int?)x.SequenceNumber) ?? -1;
-    RefreshTable();
-}
+<script type="text/javascript">
+    var sequenceNumber = 0;
 
-function RefreshTable() {
-    // JS object containing timestamp, from, delivered-to, subject, attachments.
+    window.onload = (event) => {
+        @if (Model.EmailSummaries.Any())
+    {
+       <text>sequenceNumber=@Model.EmailSummaries.Max(x => x.SequenceNumber);</text>
+    }
+        setTimeout(() => RefreshTable(), 10000);
+    }
 
-}
+    function RefreshTable() {
+        fetch("@Model.UserId/update/" + sequenceNumber, {
+            method: 'GET'
+        }).then(response => response.text())
+        .then(data => {
+            if (data.length > 2) {
+                $('#_ReceivedEmailsTbody:first').prepend(data);
+                sequenceNumber = $('tr[sequenceNumber]:first').attr("sequenceNumber")
+            }
+        })
+        setTimeout(() => RefreshTable(), 10000);
+    }
 </script>
 
 

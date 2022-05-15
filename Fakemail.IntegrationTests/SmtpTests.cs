@@ -44,8 +44,8 @@ namespace Fakemail.IntegrationTests
             var smtpClient = new SmtpClient("fakemail.stream", _port);
             smtpClient.Credentials = new NetworkCredential
             {
-                UserName = "1dzrch",
-                Password = "helloworld"
+                UserName = "1tpxdz",
+                Password = "9o77B2C7gEU"
             };
             smtpClient.EnableSsl = true;
 

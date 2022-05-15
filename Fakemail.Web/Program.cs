@@ -1,7 +1,20 @@
+using Fakemail.Core;
+using Fakemail.Web;
+
+using Polly;
+using Polly.Extensions.Http;
+
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllersWithViews();
 builder.Services.AddRazorPages();
+
+builder.Services.Configure<FakemailApiOptions>(builder.Configuration.GetSection("Api"));
+
+builder.Services.AddHttpClient<IFakemailApi, FakemailApi>()
+    .AddPolicyHandler(HttpPolicyExtensions.HandleTransientHttpError()
+        .OrResult(msg => msg.StatusCode == System.Net.HttpStatusCode.NotFound)
+        .WaitAndRetryAsync(3, retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt))));
 
 var app = builder.Build();
 
@@ -20,9 +33,6 @@ app.UseHttpsRedirection();
 app.UseStaticFiles();
 
 app.UseRouting();
-
-//app.UseAuthentication();
-//app.UseAuthorization();
 
 app.MapControllerRoute(
     name: "default",

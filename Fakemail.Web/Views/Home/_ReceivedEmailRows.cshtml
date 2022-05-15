@@ -1,0 +1,21 @@
+﻿@model Fakemail.Web.Models.UserModel
+
+@foreach (var e in Model.EmailSummaries.Select(x => (ReceivedEmailSummaryModel)x).OrderByDescending(x => x.SequenceNumber))
+{
+<tr sequenceNumber=@e.SequenceNumber>
+    @{
+    var timestamp = e.TimestampUtc.ToString("yyyy-MM-dd HH:mm:ss");
+    var from = e.From;
+    var subject = e.Subject;
+    var body = e.Body;
+    var attachments = string.Join("; ", e.Attachments.Select(x => x.Name));
+    var to = e.DeliveredTo;
+    }
+    <td>@timestamp</td>
+    <td>@from</td>
+    <td>@to</td>
+    <td>@subject</td>
+    <td>@body</td>
+    <td>@attachments</td>   
+</tr>    
+}

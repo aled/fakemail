@@ -4,9 +4,6 @@
       <NamedTestSelector>
         <TestName>Fakemail.IntegrationTests.SmtpTests.SendEmail</TestName>
       </NamedTestSelector>
-      <FixtureTestSelector>
-        <FixtureName>Fakemail.IntegrationTests.SmtpTests</FixtureName>
-      </FixtureTestSelector>
     </IgnoredTests>
   </Settings>
 </ProjectConfiguration>

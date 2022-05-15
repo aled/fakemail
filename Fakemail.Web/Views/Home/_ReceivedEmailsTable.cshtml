@@ -1,0 +1,28 @@
+﻿@model Fakemail.Web.Models.UserModel
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>Timestamp</th>
+            <th>From</th>
+            @if (Model.EmailAggregation == EmailAggregationModel.Received)
+            {
+            <th>Delivered-To</th>
+            }
+            else
+            {
+            <th>To</th>
+            <th>CC</th>
+            <th>BCC</th>
+            }
+            <th>Subject</th>
+            <th>Body</th>
+            <th>Attachments</th>
+        </tr>
+    </thead>
+    <tbody id='_ReceivedEmailsTbody'>
+
+    @await Html.PartialAsync("_ReceivedEmailRows")      
+
+    </tbody>    
+</table>
