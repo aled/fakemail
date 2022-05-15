@@ -1,25 +1,35 @@
 ﻿@{
     ViewData["Title"] = "fakemail.stream";
 }
-
 <div class="text-left">
-    <h1 class="display-7"><em>A fake SMTP server for software integration testing.</em></h1>
+    <h5><em>A fake SMTP server for software integration testing.</em></h5>
 </div>
- 
-<p><h4>Welcome, anonymous user...</h4></p>
 
-<p>Using this server you can send emails, and they will not be delivered, but shown here instead. Emails are also available via a REST api for your automated integration testing pleasure.</p>
+<br />
 
-<p>All accounts are unsecured. This means anyone who knows your username will be able read the emails you send.</p>
+<p><span style="font-weight: 700">Welcome, Anonymous user.</span></p>
+<p>Here are your SMTP settings =>
+Host: <span class="sourcecode">fakemail.stream:587</span>
+Credentials: <button style="padding: 2px; margin: 8px" onclick="generate_onclick()">Generate...</button>
+</p>
 
-<p>Please use the following settings to begin sending fake emails:</p>
-<table>
-    <tr><td>SMTP hostname:</td><td><span class="sourcecode">fakemail.stream</span></td></tr>
-    <tr><td>Port:</td><td><span class="sourcecode">587</span></td></tr>
-    <tr><td>SSL:</td><td><span class="sourcecode">Yes</span></td></tr>
-    <tr><td>SMTP Credentials:</td><td><button style="padding: 2px; margin: 8px" onclick="generate_onclick()">Generate...</button></td></tr>
+<table class="table">
+    <thead>
+        <tr>
+            <th>Timestamp</th>
+            <th>From</th>
+            <th>Delivered-To</th>
+            <th>Subject</th>
+            <th>Body</th>
+            <th>Attachments</th>
+        </tr>
+    </thead> 
+    <tbody></tbody>
 </table>
 
+<div class="spinner-border" role="status"></div>
+<br />
+<span class="">Waiting for emails to arrive...</span>
 <script>
     function generate_onclick() {
         window.location.href = '/user/'

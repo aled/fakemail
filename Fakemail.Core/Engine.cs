@@ -296,6 +296,7 @@ namespace Fakemail.Core
                 var email = new DataEmail
                 {
                     EmailId = emailId,
+                    SequenceNumber = 0,
                     From = m.Headers["From"] ?? "",
                     To = m.Headers["To"] ?? "",
                     CC = m.Headers["CC"] ?? "",
@@ -317,6 +318,12 @@ namespace Fakemail.Core
 
                 using (var db = _dbFactory.CreateDbContext())
                 {
+                    var currentSequenceNumber = await db.Emails
+                        .Where(x => x.SmtpUsername == smtpUsername)
+                        .Select(x => (int?)x.SequenceNumber).MaxAsync() ?? 0;
+
+                    email.SequenceNumber = currentSequenceNumber + 1;
+
                     await db.Emails.AddAsync(email);
                     if (attachments != null)
                     {
@@ -465,6 +472,7 @@ namespace Fakemail.Core
                     .Select(e => new EmailSummary
                     {
                         EmailId = e.EmailId,
+                        SequenceNumber = e.SequenceNumber,
                         SmtpUsername = e.SmtpUsername,
                         TimestampUtc = e.ReceivedTimestampUtc,
                         From = e.From,

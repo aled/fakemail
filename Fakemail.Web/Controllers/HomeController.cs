@@ -75,6 +75,8 @@ namespace Fakemail.Web.Controllers
                     EmailAggregation = EmailAggregationModel.Received,
                     EmailSummaries = resp.Emails.Select(x => (EmailSummaryModel) new ReceivedEmailSummaryModel
                     {
+                        EmailId = x.EmailId,
+                        SequenceNumber = x.SequenceNumber,
                         TimestampUtc = x.TimestampUtc,
                         From = x.From,
                         DeliveredTo = x.DeliveredTo,

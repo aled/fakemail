@@ -16,6 +16,7 @@
     public class EmailSummaryModel
     {
         public Guid EmailId { get; set; }
+        public int SequenceNumber { get; set; }
         public DateTime TimestampUtc { get; set; }
         public string From { get; set; }
         public string Subject { get; set; }

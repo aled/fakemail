@@ -20,6 +20,12 @@ namespace Fakemail.Data.EntityFramework
         public Guid EmailId { get; set; }
 
         /// <summary>
+        /// Sequence number for email - per SmtpUser
+        /// </summary>
+        [Required]
+        public int SequenceNumber { get; set; }
+
+        /// <summary>
         /// The raw mime-encoded message.
         /// </summary>
         [Required]

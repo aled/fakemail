@@ -3,6 +3,7 @@ using System;
 using Fakemail.Data.EntityFramework;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,10 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Fakemail.Data.EntityFramework.Migrations
 {
     [DbContext(typeof(FakemailDbContext))]
-    partial class FakemailDbContextModelSnapshot : ModelSnapshot
+    [Migration("20220515113851_AddEmailSequenceNumber")]
+    partial class AddEmailSequenceNumber
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "6.0.5");
