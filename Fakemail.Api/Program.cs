@@ -1,7 +1,6 @@
 using System.Text;
 using System.Text.Json.Serialization;
 
-using Fakemail.Api;
 using Fakemail.Core;
 using Fakemail.Data.EntityFramework;
 

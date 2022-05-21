@@ -573,7 +573,9 @@ namespace Fakemail.Core
                     };
                 }
 
-                var email = await db.Emails.Where(x => x.EmailId == request.EmailId && x.SmtpUser.UserId == user.UserId).FirstOrDefaultAsync();
+                var email = await db.Emails
+                    .Where(x => x.EmailId == request.EmailId && x.SmtpUser.UserId == user.UserId)
+                    .FirstOrDefaultAsync();
 
                 if (email == null)
                 {
