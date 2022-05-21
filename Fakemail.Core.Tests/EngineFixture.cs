@@ -12,7 +12,7 @@ using Microsoft.Extensions.Hosting;
 
 using Serilog;
 
-namespace Fakemail.IntegrationTests
+namespace Fakemail.Core.Tests
 {
     public class DummyPwnedPasswordApi : IPwnedPasswordApi
     {

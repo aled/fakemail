@@ -9,7 +9,7 @@ using MimeKit;
 using Fakemail.ApiModels;
 using Fakemail.Core;
 
-namespace Fakemail.IntegrationTests
+namespace Fakemail.Core.Tests
 {
     public partial class EngineTests : IClassFixture<EngineFixture>
     {

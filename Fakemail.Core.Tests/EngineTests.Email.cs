@@ -2,13 +2,12 @@ using System;
 using System.IO;
 using System.Text;
 using System.Linq;
+using System.Threading.Tasks;
 
 using Xunit;
 using MimeKit;
-using Fakemail.Core;
-using System.Threading.Tasks;
 
-namespace Fakemail.IntegrationTests
+namespace Fakemail.Core.Tests
 {
     public partial class EngineTests
     {
