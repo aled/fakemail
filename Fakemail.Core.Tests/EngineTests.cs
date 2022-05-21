@@ -20,7 +20,6 @@ namespace Fakemail.Core.Tests
             _fixture = fixture;
         }
 
-
         [Theory]
         [InlineData(0)]
         [InlineData(5)]
@@ -45,7 +44,7 @@ namespace Fakemail.Core.Tests
         [Fact]
         public async Task CreateUser_WithTooLongUsername()
         {
-            var username = new string('a', 41); 
+            var username = new string('a', 41);
             var password = Utils.CreateId();
 
             var response = await _fixture.Engine.CreateUserAsync(
@@ -188,8 +187,8 @@ namespace Fakemail.Core.Tests
         [Fact]
         public async Task AuthenticateUser_WrongPassword()
         {
-           var request = new CreateUserRequest
-           {
+            var request = new CreateUserRequest
+            {
                 Username = Utils.CreateId(),
                 Password = Utils.CreateId()
             };
@@ -244,7 +243,7 @@ namespace Fakemail.Core.Tests
             {
                 Username = Utils.CreateId(),
                 Password = Utils.CreateId()
-};
+            };
 
             var response = await _fixture.Engine.CreateUserAsync(request);
 

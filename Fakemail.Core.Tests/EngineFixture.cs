@@ -69,7 +69,7 @@ namespace Fakemail.Core.Tests
                     services.AddSingleton(Log.Logger);
                     services.AddSingleton<IEngine, Engine>();
                     services.AddSingleton<IJwtAuthentication>(new JwtAuthentication(jwtSigningKey, "", 10));
-                    
+
                     // Swap the commented line to use the real PwnedPassword Api in tests
                     services.AddSingleton<IPwnedPasswordApi, DummyPwnedPasswordApi>();
                     //services.AddHttpClient<IPwnedPasswordApi, PwnedPasswordApi>();
@@ -79,7 +79,7 @@ namespace Fakemail.Core.Tests
                     configHost.SetBasePath(Directory.GetCurrentDirectory());
                 });
         }
-        
+
         public void Dispose()
         {
             var log = host.Services.GetRequiredService<ILogger>();
