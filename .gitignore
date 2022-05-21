@@ -28,3 +28,4 @@ msbuild.err
 msbuild.wrn
 
 .vs/
+*.sqlite
