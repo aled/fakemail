@@ -1,0 +1,44 @@
+name: dotnet test
+
+on:
+  push:
+    branches: [master, dev, beta]
+
+env:
+  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+  DOTNET_NOLOGO: true  
+
+jobs:
+  build:
+
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-22.04, ubuntu-20.04]
+        dotnet-version: ['6.0.x']
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Setup .NET SDK
+      uses: actions/setup-dotnet@v2
+      with:
+        dotnet-version: ${{ matrix.dotnet-version }}
+
+    - name: Install dependencies
+      run: dotnet restore
+
+    - name: Build
+      run: dotnet build --configuration Release --no-restore
+
+    - name: Test
+      run: dotnet test --configuration Release --filter FullyQualifiedName!~Fakemail.IntegrationTests --no-restore --verbosity normal
+ 
+    - name: Upload test results
+      uses: actions/upload-artifact@v3
+      with:
+        name: dotnet-test-results-${{ matrix.dotnet-version }}
+        path: dotnet-test-results-${{ matrix.dotnet-version }}
+        if: ${{ always() }}
+        
