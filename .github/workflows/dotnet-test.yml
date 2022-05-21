@@ -40,5 +40,5 @@ jobs:
       with:
         name: dotnet-test-results-${{ matrix.dotnet-version }}
         path: dotnet-test-results-${{ matrix.dotnet-version }}
-        if: ${{ always() }}
+      if: ${{ always() }}
         
