@@ -1,5 +1,8 @@
 name: Super-Linter
-on: push
+on:
+    push:      
+    pull_request:
+      branches: [master]
 jobs:
   super-lint:
     name: Lint Code Base
@@ -7,13 +10,14 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
 
       - name: Run Super-Linter
-        uses: github/super-linter@v3
+        uses: github/super-linter@v4
         env:
           DEFAULT_BRANCH: master
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           VALIDATE_ALL_CODEBASE: false
           VALIDATE_CSHARP: true
-          FILTER_REGEX_EXCLUDE: .*Fakemail.DataModels.*
