@@ -1,9 +1,14 @@
 ﻿using System.Diagnostics;
+using System.Net.Http.Headers;
+using System.Net.Mime;
+using System.Text;
 
 using Fakemail.ApiModels;
 using Fakemail.Web.Models;
 
 using Microsoft.AspNetCore.Mvc;
+
+using MimeKit;
 
 namespace Fakemail.Web.Controllers
 {
@@ -35,7 +40,7 @@ namespace Fakemail.Web.Controllers
         [HttpGet]
         [Route("user/{userId}/update/{sequenceNumber}")]
         public async Task<IActionResult> UserUpdate(Guid userId, int sequenceNumber)
-{
+        {
             return PartialView("_ReceivedEmailRows", await GetUserModel(userId, sequenceNumber));
         }
 
@@ -44,6 +49,90 @@ namespace Fakemail.Web.Controllers
         public async Task<IActionResult> UserHome(Guid userId)
         {
             return View("User", await GetUserModel(userId, -1));
+        }
+
+        [HttpGet]
+        [Route("user/{userId}/smtpuser/{smtpUsername}/inject-test")]
+        public async Task<IActionResult> UserInjectTestEmail(Guid userId, string smtpUsername)
+        {
+            var receivedTimestamp = DateTime.UtcNow.ToString("ddd, dd MMM yyyy HH:mm:ss +0000 (UTC)");
+            var dateTimestamp = DateTime.UtcNow.ToString("dd MMM yyyy HH:mm:ss zzz");
+
+            var raw = "Return-Path: <From@From.example.com>\n" +
+               "Delivered-To: To@example.stream\n" +
+               "Received: from examplehost (static-123-234-12-23.example.co.uk [123.234.12.23])" +
+                   $"\tby fakemail.stream (OpenSMTPD) with ESMTPSA id 22e6eb31 (TLSv1.2:ECDHE-RSA-AES256-GCM-SHA384:256:NO) auth=yes user={smtpUsername};" +
+                   $"\t{receivedTimestamp}\n" +
+               "MIME-Version: 1.0\n" +
+               "From: From@From.example.com\n" +
+               "To: To@example.stream, To@example2.stream\n" +
+               $"Date: {dateTimestamp}\n" +
+               "Subject: Subject\n" +
+               "Content-Type: multipart/mixed;\n" +
+               " boundary=--boundary_0_49d7d9ea-01d1-4f5c-91a5-19930730ea52\n" +
+               "\n" +
+               "\n" +
+               "----boundary_0_49d7d9ea-01d1-4f5c-91a5-19930730ea52\n" +
+               "Content-Type: text/plain; charset=us-ascii\n" +
+               "Content-Transfer-Encoding: quoted-printable\n" +
+               "\n" +
+               "Body\n" +
+               "----boundary_0_49d7d9ea-01d1-4f5c-91a5-19930730ea52\n" +
+               "Content-Type: application/octet-stream; name=a.txt\n" +
+               "Content-Transfer-Encoding: base64\n" +
+               "Content-Disposition: attachment\n" +
+               "\n" +
+               "aGVsbG8=\n" +
+               "----boundary_0_49d7d9ea-01d1-4f5c-91a5-19930730ea52--\n" +
+               "\n";
+
+            var response = await _fakemailApi.CreateEmailAsync(new CreateEmailRequest
+            {
+                UserId = userId,
+                MimeMessage = Encoding.UTF8.GetBytes(raw)
+            });
+
+            if (response.Success)
+            {
+                return Ok();
+            }
+
+            throw new Exception("Failed to inject test email");
+        }
+
+        [HttpGet]
+        [Route("user/{userId}/email/{emailId}")]
+        public async Task<IActionResult> UserEmailGet(Guid userId, Guid emailId)
+        {
+            var resp = await _fakemailApi.GetEmailAsync(new GetEmailRequest {
+                UserId = userId,
+                EmailId = emailId
+            });
+
+            if (resp.Success)
+            {
+                return File(resp.Bytes, MediaTypeNames.Application.Octet, $"{emailId}.eml");
+            }
+
+            throw new Exception("Failed to get email");
+        }
+
+        [HttpGet]
+        [Route("user/{userId}/email/{emailId}/delete")]
+        public async Task<IActionResult> UserEmailDelete(Guid userId, Guid emailId)
+        {
+            var resp = await _fakemailApi.DeleteEmailAsync(new DeleteEmailRequest
+            {
+                UserId = userId,
+                EmailId = emailId
+            });
+
+            if (resp.Success)
+            {
+                return Ok();
+            }
+
+            throw new Exception("Failed to delete email");
         }
 
         private async Task<UserModel> GetUserModel(Guid userId, int sequenceNumber)

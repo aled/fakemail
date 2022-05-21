@@ -21,7 +21,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "wiki", "wiki", "{408ADE05-0
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "deploy", "deploy", "{5D753FB6-A051-4E01-B3DB-7283CEC9CDD5}"
 	ProjectSection(SolutionItems) = preProject
-		deploy\fakemailsmtpserver.service = deploy\fakemailsmtpserver.service
 		deploy\hosts = deploy\hosts
 		deploy\nginx.yaml = deploy\nginx.yaml
 		deploy\smtpserver-debug.yaml = deploy\smtpserver-debug.yaml

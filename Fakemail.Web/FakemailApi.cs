@@ -1,7 +1,6 @@
-﻿
-using Fakemail.ApiModels;
+﻿using Microsoft.Extensions.Options;
 
-using Microsoft.Extensions.Options;
+using Fakemail.ApiModels;
 
 namespace Fakemail.Web
 {
@@ -26,6 +25,15 @@ namespace Fakemail.Web
             CallAsync<CreateUserRequest, CreateUserResponse>(request, "user/create");
 
         public Task<ListEmailsResponse> ListEmailsAsync(ListEmailsRequest request) =>
-            CallAsync<ListEmailsRequest, ListEmailsResponse>(request, "mail/list");        
+            CallAsync<ListEmailsRequest, ListEmailsResponse>(request, "mail/list");
+
+        public Task<GetEmailResponse> GetEmailAsync(GetEmailRequest request) =>
+            CallAsync<GetEmailRequest, GetEmailResponse>(request, "mail/get");
+
+        public Task<DeleteEmailResponse> DeleteEmailAsync(DeleteEmailRequest request) =>
+            CallAsync<DeleteEmailRequest, DeleteEmailResponse>(request, "mail/delete");
+
+        public Task<CreateEmailResponse> CreateEmailAsync(CreateEmailRequest request) =>
+            CallAsync<CreateEmailRequest, CreateEmailResponse>(request, "mail/create");
     }
 }

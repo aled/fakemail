@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Fakemail.ApiModels
 {
-    public class ListEmailsRequest
+    public class ListEmailsRequest : IUserRequest
     {
         [Required]
         public Guid UserId { get; set; }

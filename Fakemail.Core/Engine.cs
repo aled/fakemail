@@ -59,7 +59,7 @@ namespace Fakemail.Core
                 // Validate username, if present
                 if (request.Username == null)
                 {
-                    request.Username = "anon-" + userId.ToString();
+                    request.Username = $"anon-{userId}";
                 } 
                 else if (request.Username.Length < 6)
                 {
@@ -75,7 +75,7 @@ namespace Fakemail.Core
                 // Validate password
                 if (password == null)
                 {
-                    // If not specified, create an Unsecured account
+                    // No password, so will create an unsecured account. No validation necessary.
                 }
                 else if (password.Length < 10)
                 {
@@ -97,7 +97,6 @@ namespace Fakemail.Core
                         return response;
                     }
                 }
-
 
                 var smtpUsernameBytes = 4;
                 var smtpUsername = Utils.CreateId(smtpUsernameBytes).ToLower(); // SMTP auth fails if upper-case chars are used
@@ -215,18 +214,43 @@ namespace Fakemail.Core
             throw new Exception($"Failed to parse '{groupName}'");
         }
 
+        public async Task<CreateEmailResponse> CreateEmailAsync(CreateEmailRequest request, Guid authenticatedUserId)
+        {
+            using (var db = _dbFactory.CreateDbContext())
+            {
+                var user = await GetAuthenticatedOrUnsecuredUserAsync(db, request, authenticatedUserId);
+
+                if (user == null)
+                {
+                    return new CreateEmailResponse
+                    {
+                        Success = false,
+                        ErrorMessage = "Unauthorized"
+                    };
+                }
+            }
+
+            using (var stream = new MemoryStream(request.MimeMessage))
+            {
+                return await CreateEmailAsync(stream);
+            }
+        }
+
         /// <summary>
-        /// This method is used to insert newly delivered messages into the database
+        /// This method is used to insert new messages into the database that have been delivered via 
+        /// the SMTP server.
         /// </summary>
         /// <param name="messageStream"></param>
         /// <returns></returns>
-        public async Task<bool> CreateEmailAsync(Stream messageStream)
+        public async Task<CreateEmailResponse> CreateEmailAsync(Stream messageStream)
         {
             try
             {
+                // read the message into a memory buffer, so we can create the MimeMessage from it, and also
+                // access the underlying buffer to store the raw message in the database
                 var stream = new MemoryStream();
-                messageStream.CopyTo(stream);
-
+                await messageStream.CopyToAsync(stream);
+                
                 stream.Position = 0;
                 var m = MimeMessage.Load(stream);
 
@@ -318,11 +342,14 @@ namespace Fakemail.Core
 
                 using (var db = _dbFactory.CreateDbContext())
                 {
-                    var currentSequenceNumber = await db.Emails
+                    var smtpUser = await db.SmtpUsers
                         .Where(x => x.SmtpUsername == smtpUsername)
-                        .Select(x => (int?)x.SequenceNumber).MaxAsync() ?? 0;
+                        .SingleAsync();
+
+                    var currentSequenceNumber = smtpUser.CurrentEmailSequenceNumber;
 
                     email.SequenceNumber = currentSequenceNumber + 1;
+                    smtpUser.CurrentEmailSequenceNumber = currentSequenceNumber + 1;
 
                     await db.Emails.AddAsync(email);
                     if (attachments != null)
@@ -331,15 +358,24 @@ namespace Fakemail.Core
                     }
                     await db.SaveChangesAsync();
                 }
+
+                return new CreateEmailResponse
+                {
+                    Success = true,
+                    EmailId = emailId
+                };
             }
             catch (Exception e)
             {
                 _log.LogError(e.Message);
                 _log.LogError(e.StackTrace);
-                return false;
-            }
 
-            return true;
+                return new CreateEmailResponse
+                { 
+                    Success = false,
+                    ErrorMessage = "Failed to create email"
+                };
+            }
         }
 
         public async Task<ListUserResponse> ListUsersAsync(ListUserRequest request)
@@ -380,6 +416,40 @@ namespace Fakemail.Core
         }
 
         /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="db"></param>
+        /// <param name="authenticatedUserId"></param>
+        /// <param name="request"></param>
+        /// <returns></returns>
+        private async Task<User> GetAuthenticatedOrUnsecuredUserAsync(FakemailDbContext db, IUserRequest request, Guid authenticatedUserId)
+        {
+            var requestedUser = await db.Users.SingleOrDefaultAsync(x => x.UserId == request.UserId);
+
+            if (requestedUser != null)
+            {
+                // if requested user is unsecured, allow access
+                if (requestedUser.PasswordCrypt == string.Empty)
+                {
+                    return requestedUser;
+                }
+
+                // if requested user is secured, caller must be authenticated
+                else if (requestedUser.UserId == authenticatedUserId)
+                {
+                    return requestedUser;
+                }
+
+                // if requested user is different from authenticated user, authenticated user must be an admin
+                else if (await db.Users.AnyAsync(x => x.UserId == authenticatedUserId && x.IsAdmin))
+                {
+                    return requestedUser;
+                }
+            }
+            return null;
+        }
+
+        /// <summary>
         /// Unsecured users may list emails from only their own SMTP usernames.
         /// Secured users may list emails from only their own SMTP usernames.
         /// Admin users may list emails from any SMTP username.
@@ -411,17 +481,8 @@ namespace Fakemail.Core
 
             using (var db = _dbFactory.CreateDbContext())
             {
-                User user = null;
+                var user = await GetAuthenticatedOrUnsecuredUserAsync(db, request, authenticatedUserId);
 
-                if (authenticatedUserId == Guid.Empty)
-                {
-                    user = await db.Users.SingleOrDefaultAsync(x => x.UserId == request.UserId && x.PasswordCrypt == string.Empty);
-                }
-                else
-                {
-                    user = await db.Users.SingleOrDefaultAsync(x => x.UserId == authenticatedUserId);
-                }
-                
                 if (user == null)
                 {
                     response.ErrorMessage = "Unauthorized";
@@ -494,6 +555,80 @@ namespace Fakemail.Core
                 response.Success = true;
                 
                 return response;
+            }
+        }
+
+        public async Task<GetEmailResponse> GetEmailAsync(GetEmailRequest request, Guid authenticatedUserId)
+        {
+            using (var db = _dbFactory.CreateDbContext())
+            {
+                var user = await GetAuthenticatedOrUnsecuredUserAsync(db, request, authenticatedUserId);
+
+                if (user == null)
+                {
+                    return new GetEmailResponse
+                    {
+                        Success = false,
+                        ErrorMessage = "Unauthorized"
+                    };
+                }
+
+                var email = await db.Emails.Where(x => x.EmailId == request.EmailId && x.SmtpUser.UserId == user.UserId).FirstOrDefaultAsync();
+
+                if (email == null)
+                {
+                    return new GetEmailResponse
+                    {
+                        Success = false,
+                        ErrorMessage = "Not found"
+                    };
+                }
+
+                return new GetEmailResponse
+                {
+                    Success = true,
+                    Bytes = email.MimeMessage,
+                    Filename = $"email-{email.EmailId}.eml"
+                };
+            }
+        }
+
+        public async Task<DeleteEmailResponse> DeleteEmailAsync(DeleteEmailRequest request, Guid authenticatedUserId)
+        {
+            using (var db = _dbFactory.CreateDbContext())
+            {
+                var user = await GetAuthenticatedOrUnsecuredUserAsync(db, request, authenticatedUserId);
+
+                if (user == null)
+                {
+                    return new DeleteEmailResponse
+                    {
+                        Success = false,
+                        ErrorMessage = "Unauthorized"
+                    };
+                }
+
+                var emailIdToDelete = await db.Emails
+                    .Where(x => x.EmailId == request.EmailId && x.SmtpUser.UserId == user.UserId)
+                    .Select(x => x.EmailId)
+                    .FirstOrDefaultAsync();
+
+                if (emailIdToDelete == Guid.Empty)
+                {
+                    return new DeleteEmailResponse
+                    {
+                        Success = false,
+                        ErrorMessage = "Not found"
+                    };
+                }
+
+                db.Remove(new DataEmail { EmailId = emailIdToDelete });
+                await db.SaveChangesAsync();
+
+                return new DeleteEmailResponse
+                {
+                    Success = true
+                };
             }
         }
     } 

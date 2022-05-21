@@ -12,6 +12,7 @@ using Serilog;
 
 using Fakemail.Core;
 using Fakemail.Data.EntityFramework;
+using Fakemail.ApiModels;
 
 namespace Fakemail.Services
 {
@@ -164,18 +165,19 @@ namespace Fakemail.Services
                             _log.LogInformation($"Delivering: {fileInfo.Name}");
 
                             // Open in read/write mode to ensure it isn't still being written by the SMTP server.
-                            var success = false;
+                            CreateEmailResponse response = null;
                             using (var stream = new FileStream(fileInfo.FullName, FileMode.Open, FileAccess.ReadWrite))
                             {
-                                success = await _engine.CreateEmailAsync(stream);
+                                response = await _engine.CreateEmailAsync(stream);
                             }
                             
-                            if (success) 
+                            if (response.Success) 
                             {
                                 File.Delete(fileInfo.FullName);
                             }
                             else
                             {
+                                _log.LogError(response.ErrorMessage);
                                 try
                                 {
                                     File.Move(fileInfo.FullName, Path.Join(failedDirectoryInfo.FullName, fileInfo.Name));

@@ -10,7 +10,7 @@
 <p><span style="font-weight: 700">Welcome, Anonymous user.</span></p>
 <p>Here are your SMTP settings =>
 Host: <span class="sourcecode">fakemail.stream:587</span>
-Credentials: <button style="padding: 2px; margin: 8px" onclick="generate_onclick()">Generate...</button>
+Credentials: <button class="btn btn-secondary btn-sm" onclick="generate_onclick()">Generate...</button>
 </p>
 
 <table class="table">
@@ -22,15 +22,18 @@ Credentials: <button style="padding: 2px; margin: 8px" onclick="generate_onclick
             <th>Subject</th>
             <th>Body</th>
             <th>Attachments</th>
+            <th></th>
         </tr>
     </thead> 
-    <tbody></tbody>
+    <tbody>     
+    </tbody>
 </table>
 
 <div class="spinner-border" role="status"></div>
 <br />
 <span class="">Waiting for emails to arrive...</span>
-<script>
+
+<script type="text/javascript">
     function generate_onclick() {
         window.location.href = '/user/'
     }

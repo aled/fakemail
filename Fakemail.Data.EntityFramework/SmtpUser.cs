@@ -26,6 +26,8 @@ namespace Fakemail.Data.EntityFramework
         [Required]
         public string SmtpPasswordCrypt { get; set; }
 
+        public int CurrentEmailSequenceNumber { get; set; }
+
         public User User { get; set; }
 
         public List<Email> Emails {get; set;}

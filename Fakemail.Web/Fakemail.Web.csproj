@@ -16,4 +16,8 @@
     <ProjectReference Include="..\Fakemail.Core\Fakemail.Core.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="wwwroot\lib\bootstrap-icons\" />
+  </ItemGroup>
+
 </Project>

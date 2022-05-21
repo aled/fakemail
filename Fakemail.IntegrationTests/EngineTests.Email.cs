@@ -67,14 +67,15 @@ namespace Fakemail.IntegrationTests
             // Not sure this is correct. The sent body did not have any \r or \n characters, but the received one does, hence needs the Trim() to pass
             Assert.Equal("Body", message.TextBody.Trim());
 
-            var isSuccess = await _fixture.Engine.CreateEmailAsync(new MemoryStream(Encoding.UTF8.GetBytes(raw)));
+            var response = await _fixture.Engine.CreateEmailAsync(new MemoryStream(Encoding.UTF8.GetBytes(raw)));
 
-            Assert.True(isSuccess);
+            Assert.True(response.Success);
         }
 
         [Fact]
         public async Task ShouldParseMimeEncodedMessageWithAttachment()
-        {// Create a user and smtp credentials
+        {
+            // Create a user and smtp credentials
             var createUserResponse = await _fixture.Engine.CreateUserAsync(new ApiModels.CreateUserRequest
             {
                 Username = Utils.CreateId(),
@@ -142,9 +143,9 @@ namespace Fakemail.IntegrationTests
             Assert.Equal(Encoding.UTF8.GetBytes("hello"), message.Attachments.First().GetContentBytes());
 
             // Create the data model
-            var isSuccess = await _fixture.Engine.CreateEmailAsync(new MemoryStream(Encoding.UTF8.GetBytes(raw)));
+            var response = await _fixture.Engine.CreateEmailAsync(new MemoryStream(Encoding.UTF8.GetBytes(raw)));
 
-            Assert.True(isSuccess);
+            Assert.True(response.Success);
         }
     }
 }

@@ -16,11 +16,17 @@ namespace Fakemail.Core
         Task<CreateUserResponse> CreateUserAsync(CreateUserRequest request);
 
         Task<GetTokenResponse> GetTokenAsync(GetTokenRequest user);
-
-        Task<bool> CreateEmailAsync(Stream messageStream);
-
+       
         Task<ListUserResponse> ListUsersAsync(ListUserRequest request);
 
+        Task<CreateEmailResponse> CreateEmailAsync(Stream messageStream);
+
+        Task<CreateEmailResponse> CreateEmailAsync(CreateEmailRequest request, Guid authenticatedUserId);
+
         Task<ListEmailsResponse> ListEmailsAsync(ListEmailsRequest request, Guid authenticatedUserId);
+        
+        Task<GetEmailResponse> GetEmailAsync(GetEmailRequest request, Guid authenticatedUserId);
+        
+        Task<DeleteEmailResponse> DeleteEmailAsync(DeleteEmailRequest request, Guid authenticatedUserId);
     }
 }

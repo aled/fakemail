@@ -19,6 +19,8 @@ Username: <span class="sourcecode">@Model.SmtpCredentials.First().SmtpUsername</
 Password: <span class="sourcecode">@Model.SmtpCredentials.First().SmtpPassword</span>
 </p>
 
+<button class="btn btn-small btn-secondary" onclick="InjectTestEmail('@Model.UserId', '@Model.SmtpCredentials.First().SmtpUsername')">Inject test email now</button>
+
 <div id="_ReceivedEmailsTable">
     @await Html.PartialAsync("_ReceivedEmailsTable")
 </div>
@@ -27,28 +29,66 @@ Password: <span class="sourcecode">@Model.SmtpCredentials.First().SmtpPassword</
 <br />
 <span class="">Waiting for emails to arrive...</span>
 
+<iframe id="download_iframe" style="display:none;"></iframe>
+
 <script type="text/javascript">
     var sequenceNumber = 0;
 
     window.onload = (event) => {
         @if (Model.EmailSummaries.Any())
-    {
-       <text>sequenceNumber=@Model.EmailSummaries.Max(x => x.SequenceNumber);</text>
-    }
-        setTimeout(() => RefreshTable(), 10000);
+        {
+        <text>sequenceNumber=@Model.EmailSummaries.Max(x => x.SequenceNumber);</text>
+        }
+        setTimeout(() => UpdateTable(false), 10000);
     }
 
-    function RefreshTable() {
+    function UpdateTable(isOneOff) {
+        var nextUpdate = 60000;
+
         fetch("@Model.UserId/update/" + sequenceNumber, {
             method: 'GET'
-        }).then(response => response.text())
+        })
+        .then(response => response.text())
         .then(data => {
             if (data.length > 2) {
                 $('#_ReceivedEmailsTbody:first').prepend(data);
                 sequenceNumber = $('tr[sequenceNumber]:first').attr("sequenceNumber")
+                nextUpdate = 5000;
             }
+        });
+
+        if (!isOneOff) {
+            setTimeout(() => UpdateTable(false), nextUpdate);
+        }
+    }
+
+    function InjectTestEmail(userId, smtpUsername) {
+        var url = userId + '/smtpuser/' + smtpUsername + '/inject-test';
+        fetch(url, {
+            method: 'GET'
         })
-        setTimeout(() => RefreshTable(), 10000);
+        .then(response => UpdateTable(true));
+
+        // TODO: error handling
+    };
+    
+    function DownloadEmail(emailId) {
+        var url = '@Model.UserId/email/' + emailId;
+        document.getElementById('download_iframe').src = url;
+    };
+
+    function DeleteEmail(emailId) {
+        $(".tr[emailId='" + emailId + "']").remove();
+
+        var url = '@Model.UserId/email/' + emailId + "/delete";
+        fetch(url, {
+            method: 'GET'
+        })
+        .then(response => response.text())
+        .then(data => {
+            // TODO: display notification
+            $("tr[emailId='" + emailId + "']").remove();
+        });
     }
 </script>
 

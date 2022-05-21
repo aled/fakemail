@@ -2,7 +2,7 @@
 
 @foreach (var e in Model.EmailSummaries.Select(x => (ReceivedEmailSummaryModel)x).OrderByDescending(x => x.SequenceNumber))
 {
-<tr sequenceNumber=@e.SequenceNumber>
+<tr emailId=@e.EmailId sequenceNumber=@e.SequenceNumber>
     @{
     var timestamp = e.TimestampUtc.ToString("yyyy-MM-dd HH:mm:ss");
     var from = e.From;
@@ -16,6 +16,10 @@
     <td>@to</td>
     <td>@subject</td>
     <td>@body</td>
-    <td>@attachments</td>   
-</tr>    
+    <td>@attachments</td> 
+    <td>
+        <button onclick="DownloadEmail('@e.EmailId')" class="btn btn-secondary btn-sm bi bi-download"></button>
+        <button onclick="DeleteEmail('@e.EmailId')" class="btn btn-secondary btn-sm bi bi-trash-fill"></button>
+    </td>
+</tr>
 }
