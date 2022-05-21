@@ -1,3 +1,3 @@
 # fakemail
 
-[![GitHub Super-Linter](https://github.com/aled/fakemail/workflows/superlinter.yml/badge.svg)](https://github.com/marketplace/actions/super-linter)
+[![GitHub Super-Linter](https://github.com/aled/fakemail/actions/workflows/superlinter.yml/badge.svg)](https://github.com/marketplace/actions/super-linter)
