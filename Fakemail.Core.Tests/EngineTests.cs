@@ -70,7 +70,8 @@ namespace Fakemail.Core.Tests
             var password = new string('*', length);
 
             var response = await _fixture.Engine.CreateUserAsync(
-                new CreateUserRequest {
+                new CreateUserRequest 
+                {
                     Username = username,
                     Password = password
                 }
