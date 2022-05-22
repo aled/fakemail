@@ -44,7 +44,7 @@ jobs:
       id: extract_branch
       
     - name: Extract short SHA
-      run: echo "SHORT_SHA=`echo ${GITHUB_SHA} | cut -c1-8)`" >> $GITHUB_ENV
+      run: echo "SHORT_SHA=`echo ${GITHUB_SHA} | cut -c1-8`" >> $GITHUB_ENV
       
     - name: Publish Web
       run:  dotnet publish -p:PublishProfile=FolderProfile --configuration Release Fakemail.Web
