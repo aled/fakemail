@@ -2,7 +2,7 @@ name: dotnet test
 
 on:
   push:
-    branches: [master, dev, beta]
+    branches: [production, test, dev]
 
 env:
   DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
@@ -28,12 +28,6 @@ jobs:
 
     - name: Install dependencies
       run: dotnet restore
-
-    - uses: microsoft/variable-substitution@v1 
-      with:
-        files: '**/appsettings.json'
-      env:
-        Jwt.Secret: ${{ secrets.FAKEMAIL_API_JWT_SECRET }}
 
     - name: Build
       run: dotnet build --configuration Release --no-restore
@@ -84,3 +78,30 @@ jobs:
         name: test-results-${{ matrix.dotnet-version }}
         path: TestResults-${{ matrix.dotnet-version }}
       if: ${{ always() }}
+
+  deploy:
+    runs-on: ubuntu-22.04
+    steps:
+
+    - uses: microsoft/variable-substitution@v1 
+      with:
+        files: '**/appsettings.json'
+      env:
+        Jwt.Secret: ${{ secrets.FAKEMAIL_API_JWT_SECRET }}
+
+    - name: Set production deploy host
+      shell: bash
+      run: echo "##[set-output name=deploy_host;]$(echo fakemail.stream})"
+      id: select_deploy_host
+      if: ${{ steps.extract_branch.outputs.branch == 'dev'}}
+
+    - uses: actions/checkout@v2
+    - name: rsync deployment
+      uses: burnett01/rsync-deployments@5.2
+      with:
+        switches: -avzr --delete
+        path: Fakemail.Api/bin/Release/net6.0/publish/
+        remote_path: ${{ secrets.FAKEMAIL_DEPLOY_PATH }}/api/
+        remote_host: ${{ steps.select_deploy_host.deploy_host }}
+        remote_user: ${{ secrets.FAKEMAIL_DEPLOY_USER }}
+        remote_key: ${{ secrets.FAKEMAIL_DEPLOY_SSH_KEY }}
