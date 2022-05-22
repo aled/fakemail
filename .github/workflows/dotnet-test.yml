@@ -38,11 +38,17 @@ jobs:
     - name: Build
       run: dotnet build --configuration Release --no-restore
 
-    - name: upload Web build
+    - name: Upload Web build artifact
       uses: actions/upload-artifact@v3
       with:
-        name: Fakemail.Web/build.${{ matrix.os }}.dotnet-${{ matrix.dotnet-version }}.${{ github.head_ref }}.${{ github.sha }}
+        name: Fakemail.Web.${{ matrix.os }}.dotnet-${{ matrix.dotnet-version }}.${{ github.ref }}.${{ github.sha }}
         path: Fakemail.Web/bin/Release/net6.0
+
+    - name: Upload Services build artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: Fakemail.Services.${{ matrix.os }}.dotnet-${{ matrix.dotnet-version }}.${{ github.ref }}.${{ github.sha }}
+        path: Fakemail.Services/bin/Release/net6.0
 
     - name: Test
       run: dotnet test --configuration Release --filter FullyQualifiedName!~Fakemail.IntegrationTests --no-restore --verbosity normal --logger trx --results-directory "TestResults-${{ matrix.dotnet-version }}"
