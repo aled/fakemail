@@ -94,7 +94,7 @@ jobs:
         elif [[ $GITHUB_REF == 'refs/heads/production' ]]; then
             echo "DEPLOY_HOST=fakemail.stream" >> "$GITHUB_ENV"
         else
-            echo DEPLOY_HOST=" >> "$GITHUB_ENV"
+            echo DEPLOY_HOST='' >> "$GITHUB_ENV"
         fi
 
     - uses: actions/checkout@v2
