@@ -85,11 +85,17 @@ jobs:
       env:
         Jwt.Secret: ${{ secrets.FAKEMAIL_API_JWT_SECRET }}
 
-    - name: Set production deploy host
-      shell: bash
-      run: echo "##[set-output name=deploy_host;]$(echo fakemail.stream})"
-      id: select_deploy_host
-      if: ${{ steps.extract_branch.outputs.branch == 'dev'}}
+    - name: Set deploy host
+      run: |
+        if [[ $GITHUB_REF == 'refs/heads/dev' ]]; then
+            echo "DEPLOY_HOST=fakemail.stream" >> "$GITHUB_ENV"
+        elif [[ $GITHUB_REF == 'refs/heads/test' ]]; then
+            echo "DEPLOY_HOST=test.fakemail.stream" >> "$GITHUB_ENV"
+        elif [[ $GITHUB_REF == 'refs/heads/production' ]]; then
+            echo "DEPLOY_HOST=fakemail.stream" >> "$GITHUB_ENV"
+        else
+            echo DEPLOY_HOST=" >> "$GITHUB_ENV"
+        fi
 
     - uses: actions/checkout@v2
     - name: rsync deployment
@@ -98,6 +104,6 @@ jobs:
         switches: -avzr --delete
         path: Fakemail.Api/bin/Release/net6.0/publish/
         remote_path: ${{ secrets.FAKEMAIL_DEPLOY_PATH }}/api/
-        remote_host: ${{ steps.select_deploy_host.deploy_host }}
+        remote_host: ${{ env.DEPLOY_HOST }}
         remote_user: ${{ secrets.FAKEMAIL_DEPLOY_USER }}
         remote_key: ${{ secrets.FAKEMAIL_DEPLOY_SSH_KEY }}
