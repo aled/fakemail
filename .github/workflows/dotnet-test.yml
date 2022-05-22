@@ -79,10 +79,6 @@ jobs:
         path: TestResults-${{ matrix.dotnet-version }}
       if: ${{ always() }}
 
-  deploy:
-    runs-on: ubuntu-22.04
-    steps:
-
     - uses: microsoft/variable-substitution@v1 
       with:
         files: '**/appsettings.json'
