@@ -46,7 +46,7 @@ jobs:
     - name: Extract short SHA
       shell: bash
       run: echo "##[set-output name=short_sha;]$(echo ${GITHUB_SHA} | cut -c1-8)"
-      id: extract_branch
+      id: extract_short_sha
       
     - name: Publish Web
       run:  dotnet publish -p:PublishProfile=FolderProfile --configuration Release Fakemail.Web
@@ -60,19 +60,19 @@ jobs:
     - name: Upload Web build artifact
       uses: actions/upload-artifact@v3
       with:
-        name: Fakemail.Web.dotnet-${{ matrix.dotnet-version }}.${{ steps.extract_branch.outputs.branch }}.${{ steps.extract_branch.outputs.sort_sha }}
+        name: Fakemail.Web.dotnet-${{ matrix.dotnet-version }}.${{ steps.extract_branch.outputs.branch }}.${{ steps.extract_short_sha.outputs.short_sha }}
         path: Fakemail.Web/bin/Release/net6.0/publish
 
     - name: Upload Api build artifact
       uses: actions/upload-artifact@v3
       with:
-        name: Fakemail.Api.dotnet-${{ matrix.dotnet-version }}.${{ steps.extract_branch.outputs.branch }}.${{ steps.extract_branch.outputs.sort_sha }}
+        name: Fakemail.Api.dotnet-${{ matrix.dotnet-version }}.${{ steps.extract_branch.outputs.branch }}.${{ steps.extract_short_sha.outputs.short_sha }}
         path: Fakemail.Api/bin/Release/net6.0/publish
 
     - name: Upload Services build artifact
       uses: actions/upload-artifact@v3
       with:
-        name: Fakemail.Services.dotnet-${{ matrix.dotnet-version }}.${{ steps.extract_branch.outputs.branch }}.${{ steps.extract_branch.outputs.sort_sha }}
+        name: Fakemail.Services.dotnet-${{ matrix.dotnet-version }}.${{ steps.extract_branch.outputs.branch }}.${{ steps.extract_short_sha.outputs.short_sha }}
         path: Fakemail.Services/bin/Release/net6.0/publish
 
     - name: Test
