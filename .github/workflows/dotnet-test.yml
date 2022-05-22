@@ -38,16 +38,27 @@ jobs:
     - name: Build
       run: dotnet build --configuration Release --no-restore
 
+    - name: Extract branch name
+      shell: bash
+      run: echo "##[set-output name=branch;]$(echo ${GITHUB_REF#refs/heads/})"
+      id: extract_branch
+      
     - name: Upload Web build artifact
       uses: actions/upload-artifact@v3
       with:
-        name: Fakemail.Web.${{ matrix.os }}.dotnet-${{ matrix.dotnet-version }}.${{ github.ref }}.${{ github.sha }}
+        name: Fakemail.Web.${{ matrix.os }}.dotnet-${{ matrix.dotnet-version }}.${{ steps.extract_branch.outputs.branch  }}.${{ github.sha }}
         path: Fakemail.Web/bin/Release/net6.0
+
+    - name: Upload Api build artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: Fakemail.Api.${{ matrix.os }}.dotnet-${{ matrix.dotnet-version }}.${{ steps.extract_branch.outputs.branch  }}.${{ github.sha }}
+        path: Fakemail.Api/bin/Release/net6.0
 
     - name: Upload Services build artifact
       uses: actions/upload-artifact@v3
       with:
-        name: Fakemail.Services.${{ matrix.os }}.dotnet-${{ matrix.dotnet-version }}.${{ github.ref }}.${{ github.sha }}
+        name: Fakemail.Services.${{ matrix.os }}.dotnet-${{ matrix.dotnet-version }}.${{ steps.extract_branch.outputs.branch  }}.${{ github.sha }}
         path: Fakemail.Services/bin/Release/net6.0
 
     - name: Test
