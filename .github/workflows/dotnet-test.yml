@@ -31,7 +31,7 @@ jobs:
 
     - uses: microsoft/variable-substitution@v1 
       with:
-        files: 'appsettings.json'
+        files: '**/appsettings.json'
       env:
         Jwt.Secret: ${{ secrets.FAKEMAIL_JWT_API_SECRET }}
 
