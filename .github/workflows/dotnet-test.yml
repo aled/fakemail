@@ -17,7 +17,7 @@ jobs:
       matrix:
         os: [ubuntu-22.04, ubuntu-20.04]
         dotnet-version: ['6.0.x']
-
+        
     steps:
     - uses: actions/checkout@v3
 
@@ -29,8 +29,20 @@ jobs:
     - name: Install dependencies
       run: dotnet restore
 
+    - uses: microsoft/variable-substitution@v1 
+      with:
+        files: 'appsettings.json'
+      env:
+        Jwt.Secret: ${{ secrets.FAKEMAIL_JWT_API_SECRET }}
+
     - name: Build
       run: dotnet build --configuration Release --no-restore
+
+    - name: upload build
+      uses: action/upload-artifact@v3
+      with:
+        name: build.${{ matrix.os }}.dotnet-${{ matrix.dotnet-version }}
+        path: bin/Release
 
     - name: Test
       run: dotnet test --configuration Release --filter FullyQualifiedName!~Fakemail.IntegrationTests --no-restore --verbosity normal --logger trx --results-directory "TestResults-${{ matrix.dotnet-version }}"
