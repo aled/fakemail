@@ -33,33 +33,45 @@ jobs:
       with:
         files: '**/appsettings.json'
       env:
-        Jwt.Secret: ${{ secrets.FAKEMAIL_JWT_API_SECRET }}
+        Jwt.Secret: ${{ secrets.FAKEMAIL_API_JWT_SECRET }}
 
     - name: Build
       run: dotnet build --configuration Release --no-restore
-
+      
     - name: Extract branch name
       shell: bash
       run: echo "##[set-output name=branch;]$(echo ${GITHUB_REF#refs/heads/})"
       id: extract_branch
       
+    - name: Extract short SHA
+      run: echo "SHORT_SHA=`echo ${GITHUB_SHA} | cut -c1-8)`" >> $GITHUB_ENV
+      
+    - name: Publish Web
+      run:  dotnet publish -p:PublishProfile=FolderProfile --configuration Release Fakemail.Web
+
+    - name: Publish Api
+      run:  dotnet publish -p:PublishProfile=FolderProfile --configuration Release Fakemail.Api
+
+    - name: Publish Services
+      run:  dotnet publish -p:PublishProfile=FolderProfile --configuration Release Fakemail.Services
+
     - name: Upload Web build artifact
       uses: actions/upload-artifact@v3
       with:
-        name: Fakemail.Web.${{ matrix.os }}.dotnet-${{ matrix.dotnet-version }}.${{ steps.extract_branch.outputs.branch  }}.${{ github.sha }}
-        path: Fakemail.Web/bin/Release/net6.0
+        name: Fakemail.Web.${{ matrix.os }}.dotnet-${{ matrix.dotnet-version }}.${{ steps.extract_branch.outputs.branch  }}.${SHORT_SHA}
+        path: Fakemail.Web/bin/Release/net6.0/publish
 
     - name: Upload Api build artifact
       uses: actions/upload-artifact@v3
       with:
-        name: Fakemail.Api.${{ matrix.os }}.dotnet-${{ matrix.dotnet-version }}.${{ steps.extract_branch.outputs.branch  }}.${{ github.sha }}
-        path: Fakemail.Api/bin/Release/net6.0
+        name: Fakemail.Api.${{ matrix.os }}.dotnet-${{ matrix.dotnet-version }}.${{ steps.extract_branch.outputs.branch  }}.${SHORT_SHA}
+        path: Fakemail.Api/bin/Release/net6.0/publish
 
     - name: Upload Services build artifact
       uses: actions/upload-artifact@v3
       with:
-        name: Fakemail.Services.${{ matrix.os }}.dotnet-${{ matrix.dotnet-version }}.${{ steps.extract_branch.outputs.branch  }}.${{ github.sha }}
-        path: Fakemail.Services/bin/Release/net6.0
+        name: Fakemail.Services.${{ matrix.os }}.dotnet-${{ matrix.dotnet-version }}.${{ steps.extract_branch.outputs.branch  }}.${SHORT_SHA}
+        path: Fakemail.Services/bin/Release/net6.0/publish
 
     - name: Test
       run: dotnet test --configuration Release --filter FullyQualifiedName!~Fakemail.IntegrationTests --no-restore --verbosity normal --logger trx --results-directory "TestResults-${{ matrix.dotnet-version }}"
@@ -67,6 +79,6 @@ jobs:
     - name: Upload test results
       uses: actions/upload-artifact@v3
       with:
-        name: dotnet-results-${{ matrix.dotnet-version }}
+        name: test-results-${{ matrix.dotnet-version }}
         path: TestResults-${{ matrix.dotnet-version }}
       if: ${{ always() }}
