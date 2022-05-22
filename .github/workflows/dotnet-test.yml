@@ -39,7 +39,7 @@ jobs:
       run: dotnet build --configuration Release --no-restore
 
     - name: upload build
-      uses: action/upload-artifact@v3
+      uses: actions/upload-artifact@v3
       with:
         name: build.${{ matrix.os }}.dotnet-${{ matrix.dotnet-version }}
         path: bin/Release
