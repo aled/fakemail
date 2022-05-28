@@ -37,6 +37,14 @@
       group: fakemail
       mode: '0700'
 
+  - name: Create bin directory
+    file:
+      path: /home/fakemail/bin
+      state: directory
+      owner: fakemail
+      group: fakemail
+      mode: '0700'
+
   - name: Upload 'fakemail' ssh key
     copy:
       src: templates/smtpservers/home/fakemail/.ssh/authorized_keys
@@ -56,17 +64,17 @@
     copy:
       src: templates/smtpservers/home/fakemail/smtp-aliasing
       dest: /home/fakemail/smtp-aliasing
-      owner: root
-      group: root
-      mode: 0644
+      owner: fakemail
+      group: fakemail
+      mode: '0640'
 
   - name: Upload config - sqlite.conf
     copy:
       src: templates/smtpservers/home/fakemail/sqlite.conf
       dest: /home/fakemail/sqlite.conf
-      owner: root
-      group: root
-      mode: 0644
+      owner: fakemail
+      group: fakemail
+      mode: '0640'
 
   handlers:
   - name: restart opensmtpd

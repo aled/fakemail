@@ -147,4 +147,4 @@ jobs:
         host: ${{ env.DEPLOY_HOST }}
         username: ${{ secrets.FAKEMAIL_DEPLOY_USER }}
         key: ${{ secrets.FAKEMAIL_DEPLOY_SSH_KEY }}
-        script: /home/fakemail/deploy.sh fakemail-deployment.${{ steps.extract_branch.outputs.branch }}.${{ steps.extract_short_sha.outputs.short_sha }}.tgz
+        script: /home/fakemail/deploy.sh fakemail-deployment.${{ steps.extract_branch.outputs.branch }}.${{ steps.extract_short_sha.outputs.short_sha }}

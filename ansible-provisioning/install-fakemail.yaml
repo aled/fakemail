@@ -36,8 +36,10 @@
       name: fakemail-delivery-agent
       enabled: yes
 
-  - name: Create 'fakemail-deploy' user
-
   - name: Upload deploy script
-    copy:
-      src: templates/home/fakemail-deploy
+    template:
+      src: templates/fakemail/home/fakemail/deploy.sh.j2
+      dest: /home/fakemail/deploy.sh
+      owner: fakemail
+      group: fakemail
+      mode: '0700'

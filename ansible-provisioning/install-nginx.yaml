@@ -10,7 +10,7 @@
       notify: restart nginx
   
     - name: Copy site config template
-      ansible.builtin.template:
+      template:
         src: templates/webservers/etc/nginx/sites-available/fakemail.stream.j2
         dest: /etc/nginx/sites-available/{{ public_dns_name }}
         owner: root

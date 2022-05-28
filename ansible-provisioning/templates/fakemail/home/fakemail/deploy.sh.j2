@@ -1,0 +1,26 @@
+#!/bin/bash -x 
+set -e
+if [[ $1 =~ ^fakemail-deployment\.{{ auto_deploy_branch }}\.[a-f0-9]{8}$ ]]; then
+  cd /tmp
+  tar zxf $1.tgz
+  chown -R fakemail.fakemail $1
+  find $1 -type f -exec chmod 600 {} \;
+  find $1 -type d -exec chmod 700 {} \;
+  cd $1
+  cp -r common/* api
+  cp -r common/* web
+  cp -r common/* services
+  rm -rf common
+  systemctl stop fakemail-web
+  systemctl stop fakemail-api
+  systemctl stop fakemail-delivery-agent
+  rsync -a --delete . /home/fakemail/bin
+  systemctl start fakemail-web
+  systemctl start fakemail-api
+  systemctl start fakemail-delivery-agent
+  #rm /tmp/$1.tgz
+  rm -rf /tmp/$1
+else
+  echo "Invalid release package name: '$1'"
+  exit 1
+fi
