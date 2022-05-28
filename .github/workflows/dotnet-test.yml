@@ -45,12 +45,12 @@ jobs:
     - name: Test
       run: dotnet test --configuration Release --filter FullyQualifiedName!~Fakemail.IntegrationTests --no-restore --verbosity normal --logger trx --results-directory "TestResults-${{ matrix.dotnet-version }}"
  
-    - name: Upload test results
-      uses: actions/upload-artifact@v3
-      with:
-        name: test-results-${{ matrix.dotnet-version }}
-        path: TestResults-${{ matrix.dotnet-version }}
-      if: ${{ always() }}
+    #- name: Upload test results
+    #  uses: actions/upload-artifact@v3
+    #  with:
+    #    name: test-results-${{ matrix.dotnet-version }}
+    #    path: TestResults-${{ matrix.dotnet-version }}
+    #  if: ${{ always() }}
 
     - name: Dotnet publish
       run: |
@@ -101,11 +101,12 @@ jobs:
         tar -zcvf fakemail-deployment.${{ steps.extract_branch.outputs.branch }}.${{ steps.extract_short_sha.outputs.short_sha }}.tgz fakemail-deployment.${{ steps.extract_branch.outputs.branch }}.${{ steps.extract_short_sha.outputs.short_sha }}
 
     # Upload deployment artifact, but without secrets
-    - name: Upload deployment artifact
-      uses: actions/upload-artifact@v3
-      with:
-        name: fakemail-deployment.${{ steps.extract_branch.outputs.branch }}.${{ steps.extract_short_sha.outputs.short_sha }}
-        path: fakemail-deployment.${{ steps.extract_branch.outputs.branch }}.${{ steps.extract_short_sha.outputs.short_sha }}.tgz
+    # TODO: only upload production deployments
+    #- name: Upload deployment artifact
+    #  uses: actions/upload-artifact@v3
+    #  with:
+    #    name: fakemail-deployment.${{ steps.extract_branch.outputs.branch }}.${{ steps.extract_short_sha.outputs.short_sha }}
+    #    path: fakemail-deployment.${{ steps.extract_branch.outputs.branch }}.${{ steps.extract_short_sha.outputs.short_sha }}.tgz
 
     # Now recreate artifact with secrets
     - uses: microsoft/variable-substitution@v1 
