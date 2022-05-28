@@ -52,7 +52,7 @@
     # Because dev.fakemail.stream is not publiclly accessible, renew manually using
     #     # /usr/bin/certbot certonly --manual --preferred-challenges dns -d dev.fakemail.stream
     - name: get certificate
-      command: "/usr/bin/certbot -n --nginx -d {{ public_dns_name }}"
+      command: "/usr/bin/certbot -n --nginx --no-redirect -d {{ public_dns_name }}"
       args:
         creates: '/etc/letsencrypt/live/{{ public_dns_name }}'
       ignore_errors: true

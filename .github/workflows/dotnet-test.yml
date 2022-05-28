@@ -64,15 +64,14 @@ jobs:
     - name: Create deployment artifact
       run: |
         rm -rf fakemail-deployment
-        mkdir -p fakemail-deployment/common/runtimes/linux-x64
-        mkdir -p fakemail-deployment/common/runtimes/linux-arm64
+        mkdir -p fakemail-deployment/common/runtimes
         mkdir fakemail-deployment/api
         mkdir fakemail-deployment/web
         mkdir fakemail-deployment/services
 
         # delete the runtimes that are not used
-        mv Fakemail.Web/bin/Release/net6.0/publish/runtimes/linux-x64 fakemail-deployment/common/runtimes/linux-x64
-        mv Fakemail.Web/bin/Release/net6.0/publish/runtimes/linux-arm64 fakemail-deployment/common/runtimes/linux-arm64
+        mv Fakemail.Web/bin/Release/net6.0/publish/runtimes/linux-x64 fakemail-deployment/common/runtimes
+        mv Fakemail.Web/bin/Release/net6.0/publish/runtimes/linux-arm64 fakemail-deployment/common/runtimes
         rm -rf Fakemail.Web/bin/Release/net6.0/publish/runtimes
         rm -rf Fakemail.Api/bin/Release/net6.0/publish/runtimes
         rm -rf Fakemail.Services/bin/Release/net6.0/publish/runtimes

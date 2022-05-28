@@ -43,3 +43,11 @@
       owner: fakemail
       group: fakemail
       mode: '0700'
+  
+  - name: upload sudoers
+    copy:
+      src: templates/fakemail/etc/sudoers.d/fakemail-allow-systemctl
+      dest: /etc/sudoers.d/fakemail-allow-systemctl
+      owner: root
+      group: root
+      mode: '0440'

@@ -1,0 +1,3 @@
+fakemail ALL=(ALL) NOPASSWD: /usr/bin/systemctl stop fakemail-web, /usr/bin/systemctl start fakemail-web
+fakemail ALL=(ALL) NOPASSWD: /usr/bin/systemctl stop fakemail-api, /usr/bin/systemctl start fakemail-api
+fakemail ALL=(ALL) NOPASSWD: /usr/bin/systemctl stop fakemail-delivery-agent, /usr/bin/systemctl start fakemail-delivery-agent

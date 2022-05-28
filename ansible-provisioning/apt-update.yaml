@@ -5,4 +5,5 @@
     
     - name: update apt cache
       apt:
-        update-cache: true
+        update-cache: yes
+        upgrade: yes

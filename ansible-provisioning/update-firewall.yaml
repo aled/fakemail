@@ -1,0 +1,37 @@
+---
+
+# oracle cloud requires opening ports in iptables
+- hosts: oracle_cloud
+  become: true 
+  tasks:
+    
+    - name: Test if port 80 is opened in iptables
+      shell: iptables --list INPUT | grep ^ACCEPT.*tcp.*anywhere.*state\ NEW\ tcp\ dpt:http$
+      register: port_80_opened
+      ignore_errors: true
+
+    - name: Open port 80
+      shell: iptables -I INPUT 6 -m state --state NEW -p tcp --dport 80 -j ACCEPT
+      when: port_80_opened is failed
+
+    - name: Test if port 443 is opened in iptables
+      shell: iptables --list INPUT | grep ^ACCEPT.*tcp.*anywhere.*state\ NEW\ tcp\ dpt:https$
+      register: port_443_opened
+      ignore_errors: true
+
+    - name: Open port 443
+      shell: iptables -I INPUT 6 -m state --state NEW -p tcp --dport 443 -j ACCEPT
+      when: port_443_opened is failed
+
+    - name: Test if port 587 is opened in iptables
+      shell: iptables --list INPUT | grep ^ACCEPT.*tcp.*anywhere.*state\ NEW\ tcp\ dpt:submission$
+      register: port_587_opened
+      ignore_errors: true
+
+    - name: Open port 587
+      shell: iptables -I INPUT 6 -m state --state NEW -p tcp --dport 587 -j ACCEPT
+      when: port_587_opened is failed
+
+    - name: persist firewall rules
+      shell: netfilter-persistent save
+      when: port_587_opened is failed or port_443_opened is failed or port_80_opened is failed

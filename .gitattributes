@@ -1,0 +1,2 @@
+# sudoers file requires correct line ending, or it will break sudo
+fakemail-allow-systemctl text eol=lf

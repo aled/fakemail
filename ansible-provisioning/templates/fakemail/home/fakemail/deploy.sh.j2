@@ -11,13 +11,13 @@ if [[ $1 =~ ^fakemail-deployment\.{{ auto_deploy_branch }}\.[a-f0-9]{8}$ ]]; the
   cp -r common/* web
   cp -r common/* services
   rm -rf common
-  systemctl stop fakemail-web
-  systemctl stop fakemail-api
-  systemctl stop fakemail-delivery-agent
+  sudo /usr/bin/systemctl stop fakemail-web
+  sudo /usr/bin/systemctl stop fakemail-api
+  sudo /usr/bin/systemctl stop fakemail-delivery-agent
   rsync -a --delete . /home/fakemail/bin
-  systemctl start fakemail-web
-  systemctl start fakemail-api
-  systemctl start fakemail-delivery-agent
+  sudo /usr/bin/systemctl start fakemail-web
+  sudo /usr/bin/systemctl start fakemail-api
+  sudo /usr/bin/systemctl start fakemail-delivery-agent
   #rm /tmp/$1.tgz
   rm -rf /tmp/$1
 else
