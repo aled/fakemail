@@ -2,7 +2,7 @@
 - hosts: all
   become: true 
   tasks:
-  - name: Test if .net core runtime 3.1 is installed
+  - name: Test if asp.net core runtime 6.0 is installed
     shell: /usr/bin/dotnet --list-runtimes | grep Microsoft\.AspNetCore\.App\ 6\.0
     register: dotnet_found
     ignore_errors: true

@@ -29,6 +29,22 @@
       shell: /bin/bash
       group: fakemail
 
+  - name: Create .ssh directory
+    file:
+      path: /home/fakemail/.ssh
+      state: directory
+      owner: fakemail
+      group: fakemail
+      mode: '0700'
+
+  - name: Upload 'fakemail' ssh key
+    copy:
+      src: templates/smtpservers/home/fakemail/.ssh/authorized_keys
+      dest: /home/fakemail/.ssh/authorized_keys
+      owner: fakemail
+      group: fakemail
+      mode: '0600'
+
   - name: Add 'opensmtpd' user to 'fakemail' group
     user:
       name: opensmtpd

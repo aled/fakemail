@@ -1,20 +1,20 @@
 all:
   hosts:
-    #prod:
-    #  ansible_host: fakemail.stream
-    #  ansible_ssh_private_key_file: ~/.ssh/fakemail_rsa
-    #  public_dns_name: fakemail.stream
-    #  is_public: true
+    prod:
+      ansible_host: fakemail.stream
+      ansible_ssh_private_key_file: ~/.ssh/fakemail_admin_rsa
+      public_dns_name: fakemail.stream
+      is_public: true
      
     test:
       ansible_host: test.fakemail.stream
-      ansible_ssh_private_key_file: ~/.ssh/fakemail_rsa
+      ansible_ssh_private_key_file: ~/.ssh/fakemail_admin_rsa
       public_dns_name: test.fakemail.stream
       is_public: true
       
     dev:
        ansible_host: dev.fakemail.stream
-       ansible_ssh_private_key_file: ~/.ssh/fakemail_rsa
+       ansible_ssh_private_key_file: ~/.ssh/fakemail_admin_rsa
        public_dns_name: dev.fakemail.stream
        is_public: false
        
