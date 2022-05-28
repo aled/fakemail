@@ -4,6 +4,7 @@
     <TargetFramework>net6.0</TargetFramework>
     <Nullable>disable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
     <UserSecretsId>aspnet-Fakemail.Web-C991C834-9D04-4776-A7E3-231643FB2661</UserSecretsId>
   </PropertyGroup>
 
@@ -13,11 +14,11 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Fakemail.Core\Fakemail.Core.csproj" />
+    <Folder Include="wwwroot\lib\bootstrap-icons\" />
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="wwwroot\lib\bootstrap-icons\" />
+    <ProjectReference Include="..\Fakemail.Core\Fakemail.Core.csproj" />
   </ItemGroup>
 
 </Project>
