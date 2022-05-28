@@ -17,7 +17,7 @@ jobs:
       matrix:
         os: [ubuntu-22.04]
         dotnet-version: ['6.0.x']
-        
+
     steps:
     - uses: actions/checkout@v3
 
@@ -42,33 +42,6 @@ jobs:
       run: echo "##[set-output name=short_sha;]$(echo ${GITHUB_SHA} | cut -c1-8)"
       id: extract_short_sha
       
-    - name: Publish Web
-      run:  dotnet publish -p:PublishProfile=FolderProfile --configuration Release Fakemail.Web
-
-    - name: Publish Api
-      run:  dotnet publish -p:PublishProfile=FolderProfile --configuration Release Fakemail.Api
-
-    - name: Publish Services
-      run:  dotnet publish -p:PublishProfile=FolderProfile --configuration Release Fakemail.Services
-
-    - name: Upload Web build artifact
-      uses: actions/upload-artifact@v3
-      with:
-        name: Fakemail.Web.dotnet-${{ matrix.dotnet-version }}.${{ steps.extract_branch.outputs.branch }}.${{ steps.extract_short_sha.outputs.short_sha }}
-        path: Fakemail.Web/bin/Release/net6.0/publish
-
-    - name: Upload Api build artifact
-      uses: actions/upload-artifact@v3
-      with:
-        name: Fakemail.Api.dotnet-${{ matrix.dotnet-version }}.${{ steps.extract_branch.outputs.branch }}.${{ steps.extract_short_sha.outputs.short_sha }}
-        path: Fakemail.Api/bin/Release/net6.0/publish
-
-    - name: Upload Services build artifact
-      uses: actions/upload-artifact@v3
-      with:
-        name: Fakemail.Services.dotnet-${{ matrix.dotnet-version }}.${{ steps.extract_branch.outputs.branch }}.${{ steps.extract_short_sha.outputs.short_sha }}
-        path: Fakemail.Services/bin/Release/net6.0/publish
-
     - name: Test
       run: dotnet test --configuration Release --filter FullyQualifiedName!~Fakemail.IntegrationTests --no-restore --verbosity normal --logger trx --results-directory "TestResults-${{ matrix.dotnet-version }}"
  
@@ -79,11 +52,72 @@ jobs:
         path: TestResults-${{ matrix.dotnet-version }}
       if: ${{ always() }}
 
+    - name: Dotnet publish
+      run: |
+        rm -rf Fakemail.Web/bin/Release/net6.0/publish
+        rm -rf Fakemail.Api/bin/Release/net6.0/publish
+        rm -rf Fakemail.Services/bin/Release/net6.0/publish
+        dotnet publish -p:PublishProfile=FolderProfile --configuration Release -p:DebugType=None -p:DebugSymbols=false Fakemail.Web
+        dotnet publish -p:PublishProfile=FolderProfile --configuration Release -p:DebugType=None -p:DebugSymbols=false Fakemail.Api
+        dotnet publish -p:PublishProfile=FolderProfile --configuration Release -p:DebugType=None -p:DebugSymbols=false Fakemail.Services
+
+    - name: Create deployment artifact
+      run: |
+        rm -rf fakemail-deployment
+        mkdir -p fakemail-deployment/common/runtimes/linux-x64
+        mkdir -p fakemail-deployment/common/runtimes/linux-arm64
+        mkdir fakemail-deployment/api
+        mkdir fakemail-deployment/web
+        mkdir fakemail-deployment/services
+
+        # delete the runtimes that are not used
+        mv Fakemail.Web/bin/Release/net6.0/publish/runtimes/linux-x64 fakemail-deployment/common/runtimes/linux-x64
+        mv Fakemail.Web/bin/Release/net6.0/publish/runtimes/linux-arm64 fakemail-deployment/common/runtimes/linux-arm64
+        rm -rf Fakemail.Web/bin/Release/net6.0/publish/runtimes
+        rm -rf Fakemail.Api/bin/Release/net6.0/publish/runtimes
+        rm -rf Fakemail.Services/bin/Release/net6.0/publish/runtimes
+
+        # web specific files
+        mv Fakemail.Web/bin/Release/net6.0/publish/*.json fakemail-deployment/web
+        mv Fakemail.Web/bin/Release/net6.0/publish/*.config fakemail-deployment/web
+        mv Fakemail.Web/bin/Release/net6.0/publish/Fakemail.Web.* fakemail-deployment/web
+        mv Fakemail.Web/bin/Release/net6.0/publish/wwwroot fakemail-deployment/web
+
+        # api specific files
+        mv Fakemail.Api/bin/Release/net6.0/publish/*.json fakemail-deployment/api
+        mv Fakemail.Api/bin/Release/net6.0/publish/*.config fakemail-deployment/api
+        mv Fakemail.Api/bin/Release/net6.0/publish/Fakemail.Api.* fakemail-deployment/api
+        
+        # services specific files
+        mv Fakemail.Services/bin/Release/net6.0/publish/*.json fakemail-deployment/services
+        mv Fakemail.Services/bin/Release/net6.0/publish/Fakemail.Services.* fakemail-deployment/services
+
+        # everything else is common
+        mv Fakemail.Web/bin/Release/net6.0/publish/* fakemail-deployment/common
+        mv Fakemail.Api/bin/Release/net6.0/publish/* fakemail-deployment/common
+        mv Fakemail.Services/bin/Release/net6.0/publish/* fakemail-deployment/common
+
+        mv fakemail-deployment fakemail-deployment.${{ steps.extract_branch.outputs.branch }}.${{ steps.extract_short_sha.outputs.short_sha }}
+        tar -zcvf fakemail-deployment.${{ steps.extract_branch.outputs.branch }}.${{ steps.extract_short_sha.outputs.short_sha }}.tgz fakemail-deployment.${{ steps.extract_branch.outputs.branch }}.${{ steps.extract_short_sha.outputs.short_sha }}
+
+    # Upload deployment artifact, but without secrets
+    - name: Upload deployment artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: fakemail-deployment.${{ steps.extract_branch.outputs.branch }}.${{ steps.extract_short_sha.outputs.short_sha }}
+        path: fakemail-deployment.${{ steps.extract_branch.outputs.branch }}.${{ steps.extract_short_sha.outputs.short_sha }}.tgz
+
+    # Now recreate artifact with secrets
     - uses: microsoft/variable-substitution@v1 
       with:
         files: '**/appsettings.json'
       env:
         Jwt.Secret: ${{ secrets.FAKEMAIL_API_JWT_SECRET }}
+
+    - name: Create deployment artifact with secrets
+      run: |
+        rm -rf fakemail-deployment.${{ steps.extract_branch.outputs.branch }}.${{ steps.extract_short_sha.outputs.short_sha }}.tgz
+        tar -zcvf fakemail-deployment.${{ steps.extract_branch.outputs.branch }}.${{ steps.extract_short_sha.outputs.short_sha }}.tgz fakemail-deployment.${{ steps.extract_branch.outputs.branch }}.${{ steps.extract_short_sha.outputs.short_sha }}
 
     - name: Set deploy host
       run: |
@@ -97,13 +131,19 @@ jobs:
             echo DEPLOY_HOST='' >> "$GITHUB_ENV"
         fi
 
-    #- uses: actions/checkout@v2
-    #- name: rsync deployment
-    #  uses: burnett01/rsync-deployments@5.2
-    #  with:
-    #    switches: -avzr --delete
-    #    path: Fakemail.Api/bin/Release/net6.0/publish/
-    #    remote_path: ${{ secrets.FAKEMAIL_DEPLOY_PATH }}/api/
-    #    remote_host: ${{ env.DEPLOY_HOST }}
-    #    remote_user: ${{ secrets.FAKEMAIL_DEPLOY_USER }}
-    #    remote_key: ${{ secrets.FAKEMAIL_DEPLOY_SSH_KEY }}
+    - name: copy file via ssh
+      uses: appleboy/scp-action@master
+      with:
+        host: ${{ env.DEPLOY_HOST }}
+        username: ${{ secrets.FAKEMAIL_DEPLOY_USER }}
+        key: ${{ secrets.FAKEMAIL_DEPLOY_SSH_KEY }}
+        source: "fakemail-deployment.${{ steps.extract_branch.outputs.branch }}.${{ steps.extract_short_sha.outputs.short_sha }}.tgz"
+        target: "${{ secrets.FAKEMAIL_DEPLOY_PATH }}"
+
+    - name: run deploy command
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ env.DEPLOY_HOST }}
+        username: ${{ secrets.FAKEMAIL_DEPLOY_USER }}
+        key: ${{ secrets.FAKEMAIL_DEPLOY_SSH_KEY }}
+        script: /home/fakemail/deploy.sh fakemail-deployment.${{ steps.extract_branch.outputs.branch }}.${{ steps.extract_short_sha.outputs.short_sha }}.tgz
