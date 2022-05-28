@@ -2,10 +2,11 @@
 
 Immediate:
 - auto delete after 15 minutes
-- download as .EML file
-- use github secrets for JWT keys, SSH keys
-- ansible deployment
-- github actions
+- deploy to production from github
+- deploy to dev from github
+- don't deploy if somthing fails in github actions
+- add version number to UI
+- incrementing build number?
 
 Next version:
 - store emails and attachments using hash-of-content (or messageid) as the key
@@ -51,3 +52,7 @@ Done
 - change to not show all mails - have a unique id per user.
 - Responsive static website (bootstrap). Allow toggle of auto-refresh.
 - Asp.net website (blazor webassembly? svelte? react?)
+- download as .EML file
+- use github secrets for JWT keys, SSH keys
+- ansible deployment
+- github actions

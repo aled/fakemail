@@ -1,26 +1,26 @@
 all:
   hosts:
-    #prod:
-    #  ansible_host: fakemail.stream
-    #  ansible_ssh_private_key_file: ~/.ssh/fakemail_admin_rsa
-    #  public_dns_name: fakemail.stream
-    #  is_public: true
-    #  auto_deploy_branch: prod
-     
+    prod:
+      ansible_host: fakemail.stream
+      ansible_ssh_private_key_file: ~/.ssh/fakemail_admin_rsa
+      public_dns_name: fakemail.stream
+      is_public: true
+      auto_deploy_branch: production
+
     test:
       ansible_host: test.fakemail.stream
       ansible_ssh_private_key_file: ~/.ssh/fakemail_admin_rsa
       public_dns_name: test.fakemail.stream
       is_public: true
       auto_deploy_branch: test
-      
+
     dev:
        ansible_host: dev.fakemail.stream
        ansible_ssh_private_key_file: ~/.ssh/fakemail_admin_rsa
        public_dns_name: dev.fakemail.stream
        is_public: false
        auto_deploy_branch: dev
-       
+
   children:
     azure:
       hosts:
