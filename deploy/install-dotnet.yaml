@@ -1,0 +1,123 @@
+---
+- hosts: all
+  become: true 
+  tasks:
+  - name: Test if .net core runtime 3.1 is installed
+    shell: /usr/bin/dotnet --list-runtimes | grep Microsoft\.AspNetCore\.App\ 6\.0
+    register: dotnet_found
+    ignore_errors: true
+
+  # for x86, use the package manager.
+  # for arm, use the dotnet install script
+  - name: Download MS repository
+    get_url:
+      url: https://packages.microsoft.com/config/ubuntu/{{ ansible_distribution_version }}/packages-microsoft-prod.deb
+      dest: /tmp/packages-microsoft-prod.deb
+    when: dotnet_found is failed and ansible_architecture == 'x86_64'
+
+  - name: Install MS repository
+    apt: deb=/tmp/packages-microsoft-prod.deb
+    when: dotnet_found is failed and ansible_architecture == 'x86_64'
+
+  - name: Update apt cache
+    apt:
+      update_cache: yes
+    when: dotnet_found is failed and ansible_architecture == 'x86_64'
+    
+  - name: Ensure dependencies installed
+    apt: 
+      pkg: 
+        - aspnetcore-runtime-6.0
+      state: present
+    when: dotnet_found is failed and ansible_architecture == 'x86_64'
+
+  - name: Download dotnet install script
+    get_url:
+      url: https://dotnet.microsoft.com/download/dotnet/scripts/v1/dotnet-install.sh
+      dest: /tmp/dotnet-install.sh
+    when: dotnet_found is failed and ansible_architecture == 'aarch64'
+
+  - name: Run dotnet install script
+    shell: bash /tmp/dotnet-install.sh -c 6.0 --install-dir /usr/share/dotnet --runtime aspnetcore
+    when: dotnet_found is failed and ansible_architecture == 'aarch64'
+
+  - name: Install dotnet executable symbolic link
+    file:
+      src: /usr/share/dotnet/dotnet 
+      dest: /usr/bin/dotnet
+      state: link
+    when: dotnet_found is failed and ansible_architecture == 'aarch64'
+
+  - name: Ensure dependencies installed
+    apt: 
+      pkg: 
+        - iptables-persistent
+        - apt-transport-https
+        - rsync 
+      state: latest
+
+  #- name: Setup remote port forwarding 25 to 12025
+  #  iptables:
+  #    table: nat
+  #    chain: PREROUTING
+  #    protocol: tcp
+  #    jump: REDIRECT
+  #    destination_port: "25"
+  #    to_ports: "12025"
+  #    state: present
+
+  #- name: Setup local port forwarding 25 to 12025
+  #  iptables:
+  #    table: nat
+  #    chain: OUTPUT
+  #    out_interface: lo
+  #    protocol: tcp
+  #    jump: REDIRECT
+  #    destination_port: "25"
+  #    to_ports: "12025"
+  #    state: present
+
+  #- name: Setup remote port forwarding 465 to 12465
+  #  iptables:
+  #    table: nat
+  #    chain: PREROUTING
+  #    protocol: tcp
+  #    jump: REDIRECT
+  #    destination_port: "465"
+  #    to_ports: "12465"
+  #    state: present
+
+  #- name: Setup local port forwarding 465 to 12465
+  #  iptables:
+  #    table: nat
+  #    chain: OUTPUT
+  #    out_interface: lo
+  #    protocol: tcp
+  #    jump: REDIRECT
+  #    destination_port: "465"
+  #    to_ports: "12465"
+  #    state: present
+
+  #- name: Setup remote port forwarding 587 to 12587
+  #  iptables:
+  #    table: nat
+  #    chain: PREROUTING
+  #    protocol: tcp
+  #    jump: REDIRECT
+  #    destination_port: "587"
+  #    to_ports: "12587"
+  #    state: present
+
+  #- name: Setup local port forwarding 587 to 12587  
+  #  iptables:
+  #    table: nat
+  #    chain: OUTPUT
+  #    out_interface: lo
+  #    protocol: tcp
+  #    jump: REDIRECT
+  #    destination_port: "587"
+  #    to_ports: "12587"
+  #    state: present
+
+  #- name: Persist iptables rules
+  #  shell: 'iptables-save > /etc/iptables/rules.v4'

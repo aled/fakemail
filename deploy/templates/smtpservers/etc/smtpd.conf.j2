@@ -1,0 +1,11 @@
+table credentials sqlite:/home/fakemail/sqlite.conf
+table aliasing file:/home/fakemail/smtp-aliasing
+
+pki {{ public_dns_name }} cert "/etc/letsencrypt/live/{{ public_dns_name }}/fullchain.pem"
+pki {{ public_dns_name }} key "/etc/letsencrypt/live/{{ public_dns_name }}/privkey.pem"
+
+listen on 0.0.0.0 port 587 tls auth <credentials> received-auth hostname {{ public_dns_name }}
+
+action fakemail maildir "/home/fakemail/mail" virtual <aliasing>
+
+match auth from any for any action fakemail

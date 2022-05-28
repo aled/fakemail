@@ -7,25 +7,15 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 	ProjectSection(SolutionItems) = preProject
 		.gitignore = .gitignore
 		Directory.Build.props = Directory.Build.props
-		README.md = README.md
 	EndProjectSection
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "wiki", "wiki", "{408ADE05-0007-4896-803D-C1712AE2523B}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docs", "docs", "{408ADE05-0007-4896-803D-C1712AE2523B}"
 	ProjectSection(SolutionItems) = preProject
 		entity-framework.md = entity-framework.md
+		LICENSE.md = LICENSE.md
 		linux-commands.md = linux-commands.md
-		ssl.md = ssl.md
-		systemd.md = systemd.md
+		README.md = README.md
 		TODO.md = TODO.md
-	EndProjectSection
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "deploy", "deploy", "{5D753FB6-A051-4E01-B3DB-7283CEC9CDD5}"
-	ProjectSection(SolutionItems) = preProject
-		deploy\hosts = deploy\hosts
-		deploy\nginx.yaml = deploy\nginx.yaml
-		deploy\smtpserver-debug.yaml = deploy\smtpserver-debug.yaml
-		deploy\smtpserver-setup.yaml = deploy\smtpserver-setup.yaml
-		deploy\smtpserver.yaml = deploy\smtpserver.yaml
 	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Fakemail.Core", "Fakemail.Core\Fakemail.Core.csproj", "{316906F9-8759-4DCB-A26B-B94EDA7B2022}"
@@ -57,18 +47,6 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Fakemail.Core.Tests", "Fakemail.Core.Tests\Fakemail.Core.Tests.csproj", "{21128D8C-5790-4ED0-9E2A-C2FBC209737A}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Fakemail.Web", "Fakemail.Web\Fakemail.Web.csproj", "{95631389-191D-4251-B1ED-3C8F35CA0A5A}"
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "templates", "templates", "{93B86A4C-66E3-4255-9F73-50CC9874F0F9}"
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "etc", "etc", "{DC3DF0D0-5026-4C97-B028-B4985E0A86A3}"
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "nginx", "nginx", "{9C4C06CF-57F6-4724-96A4-49926D56257E}"
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "sites-available", "sites-available", "{7B57E3A5-B015-4F39-BECE-94CCC6544F74}"
-	ProjectSection(SolutionItems) = preProject
-		deploy\templates\webservers\etc\nginx\sites-available\beta.fakemail.stream = deploy\templates\webservers\etc\nginx\sites-available\beta.fakemail.stream
-		deploy\templates\webservers\etc\nginx\sites-available\fakemail.stream = deploy\templates\webservers\etc\nginx\sites-available\fakemail.stream
-	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -127,10 +105,6 @@ Global
 	GlobalSection(NestedProjects) = preSolution
 		{BE16B2F7-A0E9-465A-BD9B-3EA6D9993FEC} = {D8877F8F-F43C-4CCE-96B7-4426D2BBE573}
 		{218073D3-A07B-44A0-A503-94B517A9F4BA} = {BE16B2F7-A0E9-465A-BD9B-3EA6D9993FEC}
-		{93B86A4C-66E3-4255-9F73-50CC9874F0F9} = {5D753FB6-A051-4E01-B3DB-7283CEC9CDD5}
-		{DC3DF0D0-5026-4C97-B028-B4985E0A86A3} = {93B86A4C-66E3-4255-9F73-50CC9874F0F9}
-		{9C4C06CF-57F6-4724-96A4-49926D56257E} = {DC3DF0D0-5026-4C97-B028-B4985E0A86A3}
-		{7B57E3A5-B015-4F39-BECE-94CCC6544F74} = {9C4C06CF-57F6-4724-96A4-49926D56257E}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {19D75FDA-6A5B-4EF6-B40D-EB7E25C13DDC}

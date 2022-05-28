@@ -1,0 +1,59 @@
+---
+- hosts: smtpservers
+  become: true 
+  tasks:
+
+  - name: Install opensmtpd
+    apt:
+      pkg:
+        - opensmtpd
+        - opensmtpd-extras
+      state: latest
+
+  - name: Upload config - smtpd.conf
+    template:
+      src: templates/smtpservers/etc/smtpd.conf.j2
+      dest: /etc/smtpd.conf
+      owner: root
+      group: root
+      mode: '0644'
+
+  - name: Create 'fakemail' group
+    group:
+      name: fakemail
+      state: present
+
+  - name: Create 'fakemail' user
+    user:
+      name: fakemail
+      shell: /bin/bash
+      group: fakemail
+
+  - name: Add 'opensmtpd' user to 'fakemail' group
+    user:
+      name: opensmtpd
+      shell: /bin/bash
+      groups: fakemail
+      append: yes
+
+  - name: Upload config - smtp-aliasing
+    copy:
+      src: templates/smtpservers/home/fakemail/smtp-aliasing
+      dest: /home/fakemail/smtp-aliasing
+      owner: root
+      group: root
+      mode: 0644
+
+  - name: Upload config - sqlite.conf
+    copy:
+      src: templates/smtpservers/home/fakemail/sqlite.conf
+      dest: /home/fakemail/sqlite.conf
+      owner: root
+      group: root
+      mode: 0644
+
+  handlers:
+  - name: restart opensmtpd
+    service:
+      name=opensmtpd
+      state=restarted

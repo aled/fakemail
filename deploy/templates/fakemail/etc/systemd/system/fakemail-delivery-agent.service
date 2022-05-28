@@ -1,0 +1,15 @@
+[Unit]
+Description=Fakemail delivery agent
+
+[Service]
+WorkingDirectory=/home/fakemail/bin/services
+ExecStart=/usr/bin/dotnet Fakemail.Services.dll
+Restart=always
+RestartSec=30
+KillSignal=SIGINT
+User=fakemail
+Environment=ASPNETCORE_ENVIRONMENT=Production
+Environment=DOTNET_PRINT_TELEMETRY_MESSAGE=false
+
+[Install]
+WantedBy=multi-user.target

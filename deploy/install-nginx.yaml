@@ -1,0 +1,67 @@
+---
+- hosts: webservers
+  become: true 
+  tasks:
+ 
+    - name: install nginx
+      apt:
+        name: nginx
+        state: latest
+      notify: restart nginx
+  
+    - name: Copy site config template
+      ansible.builtin.template:
+        src: templates/webservers/etc/nginx/sites-available/fakemail.stream.j2
+        dest: /etc/nginx/sites-available/{{ public_dns_name }}
+        owner: root
+        group: root
+        mode: '0644'
+
+    - name: enable fakemail site config
+      file:
+        src: /etc/nginx/sites-available/{{ public_dns_name }}
+        dest: /etc/nginx/sites-enabled/{{ public_dns_name }}
+        state: link
+
+    - name: disable default site config
+      file:
+        path: /etc/nginx/sites-enabled/default
+        state: absent
+      notify:
+        - restart nginx
+
+    - name: install certbot
+      apt:
+        name: python3-certbot-nginx
+        state: latest
+
+    - name: register certbot
+      shell: |
+        certbot -n register --agree-tos --email aled@wibblr.com
+        touch /etc/letsencrypt/.registered
+      args:
+        creates: /etc/letsencrypt/.registered
+
+    - name: configure certbot renewal job
+      cron:
+        name: certbot-renewal
+        job: "/bin/bash -lc '/usr/local/bin/certbot --quiet renew'"
+        minute: "0"
+        hour: "7"
+
+    # Because dev.fakemail.stream is not publiclly accessible, renew manually using
+    #     # /usr/bin/certbot certonly --manual --preferred-challenges dns -d dev.fakemail.stream
+    - name: get certificate
+      command: "/usr/bin/certbot -n --nginx -d {{ public_dns_name }}"
+      args:
+        creates: '/etc/letsencrypt/live/{{ public_dns_name }}'
+      ignore_errors: true
+      when: is_public
+      tags:
+        - get-certificate
+
+  handlers:
+    - name: restart nginx
+      service:
+        name=nginx
+        state=restarted

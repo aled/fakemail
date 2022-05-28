@@ -1,0 +1,15 @@
+[Unit]
+Description=Fakemail api
+
+[Service]
+WorkingDirectory=/home/fakemail/bin/api
+ExecStart=/usr/bin/dotnet Fakemail.Api.dll
+Restart=always
+RestartSec=30
+KillSignal=SIGINT
+User=fakemail
+Environment=ASPNETCORE_ENVIRONMENT=Production
+Environment=DOTNET_PRINT_TELEMETRY_MESSAGE=false
+
+[Install]
+WantedBy=multi-user.target

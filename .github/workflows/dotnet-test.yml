@@ -97,13 +97,13 @@ jobs:
             echo DEPLOY_HOST='' >> "$GITHUB_ENV"
         fi
 
-    - uses: actions/checkout@v2
-    - name: rsync deployment
-      uses: burnett01/rsync-deployments@5.2
-      with:
-        switches: -avzr --delete
-        path: Fakemail.Api/bin/Release/net6.0/publish/
-        remote_path: ${{ secrets.FAKEMAIL_DEPLOY_PATH }}/api/
-        remote_host: ${{ env.DEPLOY_HOST }}
-        remote_user: ${{ secrets.FAKEMAIL_DEPLOY_USER }}
-        remote_key: ${{ secrets.FAKEMAIL_DEPLOY_SSH_KEY }}
+    #- uses: actions/checkout@v2
+    #- name: rsync deployment
+    #  uses: burnett01/rsync-deployments@5.2
+    #  with:
+    #    switches: -avzr --delete
+    #    path: Fakemail.Api/bin/Release/net6.0/publish/
+    #    remote_path: ${{ secrets.FAKEMAIL_DEPLOY_PATH }}/api/
+    #    remote_host: ${{ env.DEPLOY_HOST }}
+    #    remote_user: ${{ secrets.FAKEMAIL_DEPLOY_USER }}
+    #    remote_key: ${{ secrets.FAKEMAIL_DEPLOY_SSH_KEY }}

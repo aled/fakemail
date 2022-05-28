@@ -1,0 +1,43 @@
+---
+- hosts: fakemailservers
+  become: true 
+  tasks:
+
+  - name: Upload fakemail-web unit file
+    copy:
+      src: templates/fakemail/etc/systemd/system/fakemail-web.service
+      dest: /etc/systemd/system/fakemail-web.service
+      force: yes
+
+  - name: Enable fakemail-web
+    service:
+      name: fakemail-web
+      enabled: yes
+
+  - name: Upload fakemail-api unit file
+    copy:
+      src: templates/fakemail/etc/systemd/system/fakemail-api.service
+      dest: /etc/systemd/system/fakemail-api.service
+      force: yes
+
+  - name: Enable fakemail-api
+    service:
+      name: fakemail-api
+      enabled: yes
+
+  - name: Upload fakemail-delivery-agent unit file
+    copy:
+      src: templates/fakemail/etc/systemd/system/fakemail-delivery-agent.service
+      dest: /etc/systemd/system/fakemail-delivery-agent.service
+      force: yes
+
+  - name: Enable fakemail-delivery-agent
+    service:
+      name: fakemail-delivery-agent
+      enabled: yes
+
+  - name: Create 'fakemail-deploy' user
+
+  - name: Upload deploy script
+    copy:
+      src: templates/home/fakemail-deploy

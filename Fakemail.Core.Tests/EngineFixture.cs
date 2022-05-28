@@ -29,6 +29,7 @@ namespace Fakemail.Core.Tests
                  + "F5FDC0B32D57F567BE7E6F5A932B995F642:2\r\n";
         }
     }
+
     public class EngineFixture : IDisposable
     {
         private readonly string _dbFile = $"{Directory.GetCurrentDirectory()}{Path.DirectorySeparatorChar}fakemail-enginetests-{DateTime.Now.ToString("HHmmss")}-{Utils.CreateId()}.sqlite";

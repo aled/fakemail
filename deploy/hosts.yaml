@@ -1,0 +1,56 @@
+all:
+  hosts:
+    #prod:
+    #  ansible_host: fakemail.stream
+    #  ansible_ssh_private_key_file: ~/.ssh/fakemail_rsa
+    #  public_dns_name: fakemail.stream
+    #  is_public: true
+     
+    test:
+      ansible_host: test.fakemail.stream
+      ansible_ssh_private_key_file: ~/.ssh/fakemail_rsa
+      public_dns_name: test.fakemail.stream
+      is_public: true
+      
+    dev:
+       ansible_host: dev.fakemail.stream
+       ansible_ssh_private_key_file: ~/.ssh/fakemail_rsa
+       public_dns_name: dev.fakemail.stream
+       is_public: false
+       
+  children:
+    azure:
+      hosts:
+        prod:
+      vars:
+        ansible_user: azureuser
+
+    oracle_cloud:
+      hosts:
+        test:
+      vars:
+        ansible_user: ubuntu
+
+    local:
+      hosts:
+        dev:
+      vars:
+        ansible_user: root
+
+    webservers:
+      hosts:
+        prod:
+        test:
+        dev:
+
+    smtpservers:
+      hosts:
+        prod:
+        test:
+        dev:
+
+    fakemailservers:
+      hosts:
+        prod:
+        test:
+        dev:
