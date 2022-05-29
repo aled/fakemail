@@ -37,7 +37,7 @@ namespace Fakemail.Api.Controllers
         {
             var response = await _engine.CreateUserAsync(request);
 
-            return Ok(response);            
+            return Ok(response);
         }
 
         // POST api/user/token
