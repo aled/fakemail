@@ -46,12 +46,6 @@ namespace Fakemail.Core
         /// <returns></returns>
         public async Task<CreateUserResponse> CreateUserAsync(CreateUserRequest request)
         {
-            var response = new CreateUserResponse
-            {
-                Success = false,
-                ErrorMessage = "Error creating account"
-            };
-
             var userId = new Guid(RandomNumberGenerator.GetBytes(16));
             var password = request.Password;
             try
@@ -60,18 +54,21 @@ namespace Fakemail.Core
                 if (request.Username == null)
                 {
                     request.Username = $"anon-{userId}";
-                } 
+                }
                 else if (request.Username.Length < 6)
                 {
-                    response.ErrorMessage = "Username length must be at least 6 characters";
-                    return response;
+                    return new CreateUserResponse
+                    {
+                        ErrorMessage = "Username length must be at least 6 characters"
+                    };
                 }
                 else if (request.Username.Length > 40)
                 {
-                    response.ErrorMessage = "Username length must not be greater than 40 characters";
-                    return response;
+                    return new CreateUserResponse
+                    {
+                        ErrorMessage = "Username length must not be greater than 40 characters"
+                    };
                 }
-
                 // Validate password
                 if (password == null)
                 {
@@ -80,21 +77,27 @@ namespace Fakemail.Core
                 else if (password.Length < 10)
                 {
                     // Password must be at least 10 chars but maximum 40
-                    response.ErrorMessage = "Password length must be at least 10 characters";
-                    return response;
+                    return new CreateUserResponse
+                    {
+                        ErrorMessage = "Password length must be at least 10 characters"
+                    };
                 }
                 else if (password.Length > 40)
                 {
-                    response.ErrorMessage = "Password length must not be greater than 40 characters";
-                    return response;
+                    return new CreateUserResponse
+                    {
+                        ErrorMessage = "Password length must not be greater than 40 characters"
+                    };
                 }
                 else
                 {
                     // Password must not be in HaveIBeenPwned list of compromised passwords
                     if (await _pwnedPasswordApi.IsPwnedPasswordAsync(password))
                     {
-                        response.ErrorMessage = "Password was found in HaveIBeenPwned";
-                        return response;
+                        return new CreateUserResponse
+                        {
+                            ErrorMessage = "Password was found in HaveIBeenPwned"
+                        };
                     }
                 }
 
@@ -129,12 +132,15 @@ namespace Fakemail.Core
                     await db.SaveChangesAsync();
                 }
 
-                response.Success = true;
-                response.ErrorMessage = null;
-                response.UserId = userId;
-                response.Username = request.Username;
-                response.SmtpUsername = smtpUsername;
-                response.SmtpPassword = smtpPassword;
+                return new CreateUserResponse
+                {
+                    Success = true,
+                    ErrorMessage = null,
+                    UserId = userId,
+                    Username = request.Username,
+                    SmtpUsername = smtpUsername,
+                    SmtpPassword = smtpPassword
+                };
             }
             catch (DbUpdateException due)
             {
@@ -143,7 +149,10 @@ namespace Fakemail.Core
                     _log.LogError(se.Message);
                     if (se.SqliteErrorCode == 19)
                     {
-                        response.ErrorMessage = "User already exists";
+                        return new CreateUserResponse
+                        {
+                            ErrorMessage = "User already exists"
+                        };
                     }
                 }
                 else
@@ -153,15 +162,13 @@ namespace Fakemail.Core
             }
             catch (Exception ex)
             {
-                response.Success = false;
-                response.ErrorMessage = "Server error";
-                response.Username = null;
-                response.SmtpPassword = null;
-                response.SmtpUsername = null;
                 _log.LogError(ex.Message);
             }
-
-            return response;
+       
+            return new CreateUserResponse
+            {
+                ErrorMessage = "Server error",
+            };
         }
 
         /// <summary>

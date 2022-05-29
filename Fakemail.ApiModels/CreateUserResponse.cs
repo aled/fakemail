@@ -8,7 +8,7 @@ namespace Fakemail.ApiModels
 
         public string ErrorMessage { get; set; } = null;
         
-        public Guid UserId { get; set; } = Guid.Empty;
+        public Guid? UserId { get; set; } = null;
 
         public string Username { get; set; } = null;
         

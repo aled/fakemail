@@ -136,6 +136,7 @@ namespace Fakemail.Core.Tests
             response.Should().NotBeNull();
             response.Success.Should().BeFalse();
             response.ErrorMessage.Should().Be("Password was found in HaveIBeenPwned");
+            response.UserId.Should().Be(null);
         }
 
         [Fact]
@@ -201,7 +202,7 @@ namespace Fakemail.Core.Tests
 
             var authRequest = new GetTokenRequest
             {
-                UserId = response.UserId,
+                UserId = response.UserId ?? Guid.Empty,
                 Password = "WrongPassword!!!"
             };
 
@@ -227,7 +228,7 @@ namespace Fakemail.Core.Tests
 
             var authRequest = new GetTokenRequest
             {
-                UserId = response.UserId,
+                UserId = response.UserId ?? Guid.Empty,
                 Password = request.Password
             };
 
