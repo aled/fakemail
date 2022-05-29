@@ -31,6 +31,10 @@
       dest: /etc/systemd/system/fakemail-delivery-agent.service
       force: yes
 
+  - name: reload systemd
+    sudo: yes
+    command: systemctl daemon-reload
+
   - name: Enable fakemail-delivery-agent
     service:
       name: fakemail-delivery-agent
