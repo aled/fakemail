@@ -19,6 +19,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Fakemail.Core\Fakemail.Core.csproj" />
+    <ProjectReference Include="..\Fakemail.RateLimiter\Fakemail.RateLimiter.csproj" />
   </ItemGroup>
 
 </Project>

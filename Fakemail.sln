@@ -48,6 +48,10 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Fakemail.Core.Tests", "Fake
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Fakemail.Web", "Fakemail.Web\Fakemail.Web.csproj", "{95631389-191D-4251-B1ED-3C8F35CA0A5A}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Fakemail.RateLimiter", "Fakemail.RateLimiter\Fakemail.RateLimiter.csproj", "{B784426D-CCEB-4814-B2C0-7D2802408FAF}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Fakemail.RateLimiter.Tests", "Fakemail.RateLimiter.Tests\Fakemail.RateLimiter.Tests.csproj", "{0A17C237-734B-49C1-9E4D-E201C1347628}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -98,6 +102,14 @@ Global
 		{95631389-191D-4251-B1ED-3C8F35CA0A5A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{95631389-191D-4251-B1ED-3C8F35CA0A5A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{95631389-191D-4251-B1ED-3C8F35CA0A5A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B784426D-CCEB-4814-B2C0-7D2802408FAF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B784426D-CCEB-4814-B2C0-7D2802408FAF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B784426D-CCEB-4814-B2C0-7D2802408FAF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B784426D-CCEB-4814-B2C0-7D2802408FAF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0A17C237-734B-49C1-9E4D-E201C1347628}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0A17C237-734B-49C1-9E4D-E201C1347628}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0A17C237-734B-49C1-9E4D-E201C1347628}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0A17C237-734B-49C1-9E4D-E201C1347628}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
