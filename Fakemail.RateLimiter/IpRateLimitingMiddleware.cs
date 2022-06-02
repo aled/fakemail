@@ -20,7 +20,11 @@ namespace Fakemail.RateLimiter
 
         public async Task InvokeAsync(HttpContext context)
         {
-            var ipAddress = context.Connection.RemoteIpAddress;
+            // try getting the X-Real-IP header, else use the remote IP address
+            if (!IPAddress.TryParse(context.Request.Headers["X-Real-IP"], out var ipAddress))
+            {
+                ipAddress = context.Connection.RemoteIpAddress;
+            }
 
             _logger.LogInformation($"RateLimiting: checking {ipAddress}");
 
