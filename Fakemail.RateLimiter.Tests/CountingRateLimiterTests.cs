@@ -15,10 +15,10 @@ namespace Fakemail.RateLimiter.Tests
         {
             var initialTime = new DateTime(2000, 1, 1);
             var clock = new DummyClock(initialTime);
-            var rateLimiter = new CountingRateLimiter<string>(Options.Create(new CountingRateLimiterOptions 
-            { 
-                RateLimitDefinitions = new[] 
-                { 
+            var rateLimiter = new CountingRateLimiter<string>(Options.Create(new CountingRateLimiterOptions
+            {
+                RateLimitDefinitions = new[]
+                {
                     new CountingRateLimitDefinition { MaxRequests = 3, Period = TimeSpan.FromSeconds(1) },
                     new CountingRateLimitDefinition { MaxRequests = 30, Period = TimeSpan.FromSeconds(60) },
                     new CountingRateLimitDefinition { MaxRequests = 50, Period = TimeSpan.FromMinutes(15) }
