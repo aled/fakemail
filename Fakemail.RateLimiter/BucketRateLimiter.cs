@@ -72,7 +72,7 @@ namespace Fakemail.RateLimiter
 
                     // if the level plus the level of the new request would exceed the burst limit, then the request should be rate-limited
                     var candidateLevel = level + increment;
-                    
+
                     if (candidateLevel > _options.Burst)
                     {
                         isRateLimited = true;

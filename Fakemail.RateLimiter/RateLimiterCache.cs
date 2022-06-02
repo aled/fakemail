@@ -11,8 +11,8 @@ namespace Fakemail.RateLimiter
     /// </summary>
     /// <typeparam name="K">Type of the cache key</typeparam>
     /// <typeparam name="V">Type of the cache value</typeparam>
-    public class RateLimiterCache<K, V> 
-        where K : notnull 
+    public class RateLimiterCache<K, V>
+        where K : notnull
         where V : notnull
     {
         /// <summary>
@@ -74,14 +74,14 @@ namespace Fakemail.RateLimiter
                 }
             }
 
-            // Get current time, 
+            // Get current time,
             var now = _clock.UtcNow;
 
             // round to 100ms
             // This isn't necessary, but exercises the timestamp uniquifying code
             //var ticks = _clock.UtcNow.Ticks;
             //var now = new DateTime(ticks - ticks % 100000);
-            
+
             if (_previous == now)
             {
                 now = now.AddTicks(tickUniquifier);
@@ -111,7 +111,7 @@ namespace Fakemail.RateLimiter
         /// <param name="lastUpdatedTime">The last updated time of the cached item</param>
         /// <returns></returns>
         public bool TryGetValue(K key, out V value, out DateTime lastUpdatedTime)
-        { 
+        {
             if (_values.TryGetValue(key, out var item))
             {
                 value = item.value;

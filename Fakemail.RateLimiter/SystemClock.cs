@@ -5,7 +5,7 @@
         public DateTime UtcNow
         {
             get
-            { 
+            {
                 return DateTime.UtcNow;
             }
         }
