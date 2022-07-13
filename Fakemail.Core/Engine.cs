@@ -31,7 +31,7 @@ namespace Fakemail.Core
         private IJwtAuthentication _auth;
         private IPwnedPasswordApi _pwnedPasswordApi;
 
-        public Engine(IDbContextFactory<FakemailDbContext> dbFactory, ILogger<Engine> log, IJwtAuthentication auth, IPwnedPasswordApi pwnedPasswordApi )
+        public Engine(IDbContextFactory<FakemailDbContext> dbFactory, ILogger<Engine> log, IJwtAuthentication auth, IPwnedPasswordApi pwnedPasswordApi)
         {
             _dbFactory = dbFactory;
             _log = log;
