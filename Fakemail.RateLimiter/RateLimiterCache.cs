@@ -70,7 +70,8 @@ namespace Fakemail.RateLimiter
                     var (time, oldestKey) = _keysByUpdateTime.First();
                     _keysByUpdateTime.Remove(time);
                     _values.Remove(oldestKey);
-                    Console.WriteLine($"Evicted key {oldestKey}");
+                    
+                    //Console.WriteLine($"Evicted key {oldestKey}");
                 }
             }
 
