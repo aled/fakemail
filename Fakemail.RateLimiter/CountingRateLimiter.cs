@@ -71,7 +71,8 @@ namespace Fakemail.RateLimiter
                 {
                     Span<int> oldCounts = stackalloc int[] { oldValue.countA, oldValue.countB, oldValue.countC };
 
-                    for (int i = 0; i < newCounts.Length; i++)
+                    // Validation of RateLimitDefinitions ensures that the count is no more than 3.
+                    for (int i = 0; i < _options.RateLimitDefinitions.Count; i++)
                     {
                         isRateLimited |= Process(oldValue.lastUpdate, now, oldCounts.Slice(i, 1), newCounts.Slice(i, 1), _options.RateLimitDefinitions[i], ref retryAt);
                     }
