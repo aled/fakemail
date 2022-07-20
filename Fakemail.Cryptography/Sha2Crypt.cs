@@ -51,7 +51,7 @@ namespace Fakemail.Cryptography
         public static bool Validate(string key, string hash)
         {
             var lastHashIndex = hash.LastIndexOf("$");
-            
+
             if (lastHashIndex < 0)
                 return false;
 
@@ -138,9 +138,9 @@ namespace Fakemail.Cryptography
 
         private static string Crypt(byte[] keyBytes, int rounds, string saltString, bool roundsCustom, string algorithm)
         {
-            if (rounds < MIN_ROUNDS) 
+            if (rounds < MIN_ROUNDS)
                 rounds = MIN_ROUNDS;
-            
+
             if (rounds > MAX_ROUNDS) throw new ArgumentOutOfRangeException(nameof(rounds));
 
             if (saltString == null) throw new ArgumentNullException(nameof(saltString));
@@ -150,7 +150,6 @@ namespace Fakemail.Cryptography
             }
 
             if (keyBytes == null) throw new ArgumentNullException(nameof(keyBytes));
-
 
             int blocksize;
             string saltPrefix;
@@ -176,7 +175,7 @@ namespace Fakemail.Cryptography
             // 1. start digest A
             // Prepare for the real work.
             var ctx = HashAlgorithm.Create(algorithm);
-            
+
             // 2. the password string is added to digest A
             /*
              * Add the key string.
