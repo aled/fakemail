@@ -86,7 +86,7 @@ namespace Fakemail.Cryptography
             if (string.IsNullOrEmpty(salt))
             {
                 // For some reason, the salt is limited to 16 base-64 symbols.
-                // This limits the salt to 12 bytes.                
+                // This limits the salt to 12 bytes.
                 saltValue = CryptBase64.GetRandomSymbols(16);
             }
             else

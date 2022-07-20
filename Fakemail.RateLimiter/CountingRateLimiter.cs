@@ -31,7 +31,7 @@ namespace Fakemail.RateLimiter
         private RateLimiterCache<K, Counts> _cache;
         private CountingRateLimiterOptions _options;
         private readonly object _lock = new object();
-        
+
         public CountingRateLimiter(IOptions<CountingRateLimiterOptions> options) : this(options, new SystemClock())
         {
         }

@@ -12,12 +12,12 @@ namespace Fakemail.RateLimiter.Benchmarks
         {
             var summary = BenchmarkRunner.Run<Program>();
         }
-    
+
         private IRateLimiter<int> bucketRateLimiter = new BucketRateLimiter<int>(Options.Create(
-            new BucketRateLimiterOptions { 
-                Burst = 10000000, 
-                CacheSize = 20000, 
-                RequestsPerSecond = 10000000f 
+            new BucketRateLimiterOptions {
+                Burst = 10000000,
+                CacheSize = 20000,
+                RequestsPerSecond = 10000000f
             }));
 
         private IRateLimiter<int> countingRateLimiter = new CountingRateLimiter<int>(Options.Create(
@@ -55,7 +55,7 @@ namespace Fakemail.RateLimiter.Benchmarks
         /// This should be essentialy never rate limited
         /// </summary>
         [Benchmark]
-        public void CountingRateLimiter() 
+        public void CountingRateLimiter()
         {
             countingRateLimiter.IsRateLimited(current++, out var _);
         }
