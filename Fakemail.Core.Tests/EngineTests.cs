@@ -8,9 +8,30 @@ using MimeKit;
 
 using Fakemail.ApiModels;
 using Fakemail.Core;
+using System.Security.Cryptography;
 
 namespace Fakemail.Core.Tests
 {
+    // This is a separate test class, not just a method in EngineTests, because we need to 
+    // parameterize the EngineFixture. This is not supported in XUnit, so workaround that
+    // by subclassing the fixture class and putting this test in a new test class.
+    public class ShortJwtKeyTests : IClassFixture<ShortJwtKeyEngineFixture>
+    {
+        EngineFixture _fixture;
+
+        public ShortJwtKeyTests(ShortJwtKeyEngineFixture fixture)
+        {
+            _fixture = fixture;
+        }
+
+        [Fact]
+        public void CreateUser()
+        {
+            Action action = () => { var x = _fixture.Engine; return; };
+            action.Should().Throw<Exception>();
+        }
+    }
+
     public partial class EngineTests : IClassFixture<EngineFixture>
     {
         EngineFixture _fixture;

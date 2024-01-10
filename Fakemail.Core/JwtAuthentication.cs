@@ -16,6 +16,15 @@ namespace Fakemail.Core
 
         public JwtAuthentication(string secret, string validIssuer, int expiryMinutes)
         {
+            // The CreateToken() method will fail if the secret (converted to bytes) is smaller than 32 bytes.
+            //
+            // As our secret is ASCII encoded, we need more characters than this to get 32 bytes of
+            // randomness. To allow the secret to be specified as hex, require it to be at least 64 characters.
+            if (secret?.Length < 64)
+            {
+                throw new Exception("JWT secret must be at least 64 characters in length");
+            }
+
             _secret = secret;
             _validIssuer = validIssuer;
             _expiryMinutes = expiryMinutes;

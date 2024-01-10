@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Security.Cryptography;
 using System.Threading.Tasks;
 
 using Fakemail.Core;
@@ -30,16 +31,33 @@ namespace Fakemail.Core.Tests
         }
     }
 
+    public class ShortJwtKeyEngineFixture : EngineFixture
+    {
+        public override string JwtSigningKey => RandomNumberGenerator.GetHexString(63);
+    }
+
     public class EngineFixture : IDisposable
     {
         private readonly string _dbFile = $"{Directory.GetCurrentDirectory()}{Path.DirectorySeparatorChar}fakemail-enginetests-{DateTime.Now.ToString("HHmmss")}-{Utils.CreateId()}.sqlite";
-        private IHost host;
+        private IHost? host;
 
-        public IEngine Engine { get; set; }
+        private Lazy<IEngine> _engine;
+
+        public IEngine Engine => _engine.Value;
 
         public static readonly string ExamplePwnedPassword = "asdfasdfasdf";
 
+        // use a random jwt signing key, so tokens generated here will not be valid in production or anywhere else
+        public virtual string JwtSigningKey => RandomNumberGenerator.GetHexString(64);
+
         public EngineFixture()
+        {
+            // The engine is created lazily so that exceptions (e.g. due to invalid JWT key length) are
+            // not raised in internal XUnit classes.
+            _engine = new Lazy<IEngine>(() => CreateEngine());
+        }
+
+        private IEngine CreateEngine()
         {
             host = CreateHostBuilder(new string[] { })
              .Build();
@@ -50,7 +68,7 @@ namespace Fakemail.Core.Tests
                 db.Database.EnsureCreated();
             }
 
-            Engine = host.Services.GetRequiredService<IEngine>();
+            return host.Services.GetRequiredService<IEngine>();
         }
 
         private IHostBuilder CreateHostBuilder(string[] args)
@@ -59,9 +77,6 @@ namespace Fakemail.Core.Tests
                 .WriteTo.Console()
                 .CreateLogger();
 
-            // use a random jwt signing key, so tokens generated here will not be valid in production or anywhere else
-            var jwtSigningKey = Utils.CreateId(16);
-
             return Host.CreateDefaultBuilder()
                 .UseSerilog()
                 .ConfigureServices((hostContext, services) =>
@@ -69,7 +84,7 @@ namespace Fakemail.Core.Tests
                     services.AddDbContextFactory<FakemailDbContext>(options => options.UseSqlite($"Data Source={_dbFile}"));
                     services.AddSingleton(Log.Logger);
                     services.AddSingleton<IEngine, Engine>();
-                    services.AddSingleton<IJwtAuthentication>(new JwtAuthentication(jwtSigningKey, "", 10));
+                    services.AddSingleton<IJwtAuthentication>(new JwtAuthentication(JwtSigningKey, "", 10));
 
                     // Swap the commented line to use the real PwnedPassword Api in tests
                     services.AddSingleton<IPwnedPasswordApi, DummyPwnedPasswordApi>();
@@ -83,15 +98,18 @@ namespace Fakemail.Core.Tests
 
         public void Dispose()
         {
-            var log = host.Services.GetRequiredService<ILogger>();
-            log.Information("Disposing of EngineFixture");
-
-            using (var scope = host.Services.CreateScope())
+            if (host != null)
             {
-                var db = scope.ServiceProvider.GetRequiredService<FakemailDbContext>();
-                db.Database.EnsureDeleted();
+                var log = host.Services.GetRequiredService<ILogger>();
+                log.Information("Disposing of EngineFixture");
+
+                using (var scope = host.Services.CreateScope())
+                {
+                    var db = scope.ServiceProvider.GetRequiredService<FakemailDbContext>();
+                    db.Database.EnsureDeleted();
+                }
+                File.Delete(_dbFile);
             }
-            File.Delete(_dbFile);
         }
     }
 }
