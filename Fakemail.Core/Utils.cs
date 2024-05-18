@@ -28,7 +28,7 @@ namespace Fakemail.Core
 
         async Task<bool> IsPwnedPasswordAsync(string password)
         {
-            var algorithm = HashAlgorithm.Create("SHA1");
+            var algorithm = SHA1.Create();
             var hashBytes = algorithm.ComputeHash(Encoding.UTF8.GetBytes(password));
             var hash = new StringBuilder(32);
 
