@@ -60,7 +60,7 @@ namespace Fakemail.Core.Tests
                 .CreateLogger();
 
             // use a random jwt signing key, so tokens generated here will not be valid in production or anywhere else
-            var jwtSigningKey = Utils.CreateId(16);
+            var jwtSigningKey = Utils.CreateId(32);
 
             return Host.CreateDefaultBuilder()
                 .UseSerilog()
