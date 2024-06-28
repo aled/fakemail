@@ -11,15 +11,8 @@ using Fakemail.Core;
 
 namespace Fakemail.Core.Tests
 {
-    public partial class EngineTests : IClassFixture<EngineFixture>
+    public partial class EngineTests(EngineFixture fixture) : IClassFixture<EngineFixture>
     {
-        EngineFixture _fixture;
-
-        public EngineTests(EngineFixture fixture)
-        {
-            _fixture = fixture;
-        }
-
         [Theory]
         [InlineData(0)]
         [InlineData(5)]
@@ -28,7 +21,7 @@ namespace Fakemail.Core.Tests
             var username = new string('a', length);
             var password = Utils.CreateId();
 
-            var response = await _fixture.Engine.CreateUserAsync(
+            var response = await fixture.Engine.CreateUserAsync(
                 new CreateUserRequest
                 {
                     Username = username,
@@ -47,7 +40,7 @@ namespace Fakemail.Core.Tests
             var username = new string('a', 41);
             var password = Utils.CreateId();
 
-            var response = await _fixture.Engine.CreateUserAsync(
+            var response = await fixture.Engine.CreateUserAsync(
                 new CreateUserRequest
                 {
                     Username = username,
@@ -69,7 +62,7 @@ namespace Fakemail.Core.Tests
             var username = Utils.CreateId();
             var password = new string('*', length);
 
-            var response = await _fixture.Engine.CreateUserAsync(
+            var response = await fixture.Engine.CreateUserAsync(
                 new CreateUserRequest
                 {
                     Username = username,
@@ -87,7 +80,7 @@ namespace Fakemail.Core.Tests
         {
             var username = Utils.CreateId();
 
-            var response = await _fixture.Engine.CreateUserAsync(
+            var response = await fixture.Engine.CreateUserAsync(
                 new CreateUserRequest
                 {
                     Username = username,
@@ -108,7 +101,7 @@ namespace Fakemail.Core.Tests
             var username = Utils.CreateId();
             var password = (Utils.CreateId() + Utils.CreateId()).Substring(1, length);
 
-            var response = await _fixture.Engine.CreateUserAsync(
+            var response = await fixture.Engine.CreateUserAsync(
                 new CreateUserRequest
                 {
                     Username = username,
@@ -125,11 +118,11 @@ namespace Fakemail.Core.Tests
         {
             var username = Utils.CreateId();
 
-            var response = await _fixture.Engine.CreateUserAsync(
+            var response = await fixture.Engine.CreateUserAsync(
                 new CreateUserRequest
                 {
                     Username = username,
-                    Password = EngineFixture.ExamplePwnedPassword // the password is asdfasdfasdf
+                    Password = EngineFixture.ExamplePwnedPassword  // the password is asdfasdfasdf
                 }
             );
 
@@ -144,7 +137,7 @@ namespace Fakemail.Core.Tests
         {
             var username = Utils.CreateId();
 
-            var response = await _fixture.Engine.CreateUserAsync(
+            var response = await fixture.Engine.CreateUserAsync(
                 new CreateUserRequest
                 {
                     Username = username,
@@ -162,7 +155,7 @@ namespace Fakemail.Core.Tests
             var username = Utils.CreateId();
             var password = Utils.CreateId();
 
-            var response = await _fixture.Engine.CreateUserAsync(
+            var response = await fixture.Engine.CreateUserAsync(
                 new CreateUserRequest
                 {
                     Username = username,
@@ -173,7 +166,7 @@ namespace Fakemail.Core.Tests
             response.Should().NotBeNull();
             response.Success.Should().BeTrue();
 
-            response = await _fixture.Engine.CreateUserAsync(
+            response = await fixture.Engine.CreateUserAsync(
                new CreateUserRequest
                {
                    Username = username,
@@ -195,7 +188,7 @@ namespace Fakemail.Core.Tests
                 Password = Utils.CreateId()
             };
 
-            var response = await _fixture.Engine.CreateUserAsync(request);
+            var response = await fixture.Engine.CreateUserAsync(request);
 
             response.Should().NotBeNull();
             response.Success.Should().BeTrue();
@@ -206,7 +199,7 @@ namespace Fakemail.Core.Tests
                 Password = "WrongPassword!!!"
             };
 
-            var authResponse = await _fixture.Engine.GetTokenAsync(authRequest);
+            var authResponse = await fixture.Engine.GetTokenAsync(authRequest);
 
             authResponse.Success.Should().Be(false);
             authResponse.Token.Should().BeNull();
@@ -221,7 +214,7 @@ namespace Fakemail.Core.Tests
                 Password = Utils.CreateId()
             };
 
-            var response = await _fixture.Engine.CreateUserAsync(request);
+            var response = await fixture.Engine.CreateUserAsync(request);
 
             response.Should().NotBeNull();
             response.Success.Should().BeTrue();
@@ -232,7 +225,7 @@ namespace Fakemail.Core.Tests
                 Password = request.Password
             };
 
-            var authResponse = await _fixture.Engine.GetTokenAsync(authRequest);
+            var authResponse = await fixture.Engine.GetTokenAsync(authRequest);
 
             authResponse.Success.Should().Be(true);
             authResponse.Token.Should().NotBeNull();
@@ -247,7 +240,7 @@ namespace Fakemail.Core.Tests
                 Password = Utils.CreateId()
             };
 
-            var response = await _fixture.Engine.CreateUserAsync(request);
+            var response = await fixture.Engine.CreateUserAsync(request);
 
             response.Should().NotBeNull();
             response.Success.Should().BeTrue();
@@ -258,7 +251,7 @@ namespace Fakemail.Core.Tests
                 Password = request.Password
             };
 
-            var authResponse = await _fixture.Engine.GetTokenAsync(authRequest);
+            var authResponse = await fixture.Engine.GetTokenAsync(authRequest);
 
             authResponse.Success.Should().Be(false);
             authResponse.Token.Should().BeNull();
@@ -266,8 +259,8 @@ namespace Fakemail.Core.Tests
 
         private static MimeMessage GenerateEmail()
         {
-            var from = new InternetAddressList(new InternetAddress[] { new MailboxAddress("Fred Flintstone", "fred@flintstone.com") });
-            var to = new InternetAddressList(new InternetAddress[] { new MailboxAddress("Barney Rubble", "barney@rubble.com") });
+            var from = new InternetAddressList([new MailboxAddress("Fred Flintstone", "fred@flintstone.com")]);
+            var to = new InternetAddressList([new MailboxAddress("Barney Rubble", "barney@rubble.com")]);
             var body = new TextPart("plain")
             {
                 Text = "... dabba doo"

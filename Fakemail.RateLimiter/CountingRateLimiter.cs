@@ -27,10 +27,10 @@ namespace Fakemail.RateLimiter
             public int countC;
         }
 
-        private IClock _clock;
-        private RateLimiterCache<K, Counts> _cache;
-        private CountingRateLimiterOptions _options;
-        private readonly object _lock = new object();
+        private readonly IClock _clock;
+        private readonly RateLimiterCache<K, Counts> _cache;
+        private readonly CountingRateLimiterOptions _options;
+        private readonly object _lock = new();
 
         public CountingRateLimiter(IOptions<CountingRateLimiterOptions> options) : this(options, new SystemClock())
         {
@@ -45,9 +45,9 @@ namespace Fakemail.RateLimiter
             _cache = new RateLimiterCache<K, Counts>(_options.CacheSize, _clock);
         }
 
-        private DateTime Max(DateTime a, DateTime b) => a > b ? a : b;
+        private static DateTime Max(DateTime a, DateTime b) => a > b ? a : b;
 
-        private bool Process(DateTime lastUpdate, DateTime now, Span<int> oldCount, Span<int> newCount, CountingRateLimitDefinition definition, ref DateTime retryAt)
+        private static bool Process(DateTime lastUpdate, DateTime now, Span<int> oldCount, Span<int> newCount, CountingRateLimitDefinition definition, ref DateTime retryAt)
         {
             newCount[0] = 1;
 
@@ -56,7 +56,7 @@ namespace Fakemail.RateLimiter
 
             if (newCount[0] > definition.MaxRequests)
             {
-                retryAt = Max(retryAt, now.RoundDown(definition.Period) + definition.Period);
+                retryAt = CountingRateLimiter<K>.Max(retryAt, now.RoundDown(definition.Period) + definition.Period);
                 return true;
             }
             return false;
@@ -68,17 +68,17 @@ namespace Fakemail.RateLimiter
             var now = _clock.UtcNow;
             var retryAt = now;
 
-            Span<int> newCounts = stackalloc int[] { 1, 1, 1 };
+            Span<int> newCounts = [1, 1, 1];
             lock (_lock)
             {
                 if (_cache.TryGetValue(key, out var oldValue, out _))
                 {
-                    Span<int> oldCounts = stackalloc int[] { oldValue.countA, oldValue.countB, oldValue.countC };
+                    Span<int> oldCounts = [oldValue.countA, oldValue.countB, oldValue.countC];
 
                     // Validation of RateLimitDefinitions ensures that the count is no more than 3.
                     for (int i = 0; i < _options.RateLimitDefinitions.Count; i++)
                     {
-                        isRateLimited |= Process(oldValue.lastUpdate, now, oldCounts.Slice(i, 1), newCounts.Slice(i, 1), _options.RateLimitDefinitions[i], ref retryAt);
+                        isRateLimited |= CountingRateLimiter<K>.Process(oldValue.lastUpdate, now, oldCounts.Slice(i, 1), newCounts.Slice(i, 1), _options.RateLimitDefinitions[i], ref retryAt);
                     }
                 }
 

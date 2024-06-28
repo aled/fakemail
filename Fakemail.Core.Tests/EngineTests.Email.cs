@@ -15,7 +15,7 @@ namespace Fakemail.Core.Tests
         public async Task ShouldParseMimeEncodedMessage()
         {
             // Create a user and smtp credentials
-            var createUserResponse = await _fixture.Engine.CreateUserAsync(new ApiModels.CreateUserRequest
+            var createUserResponse = await fixture.Engine.CreateUserAsync(new ApiModels.CreateUserRequest
             {
                 Username = Utils.CreateId(),
                 Password = Utils.CreateId()
@@ -66,7 +66,7 @@ namespace Fakemail.Core.Tests
             // Not sure this is correct. The sent body did not have any \r or \n characters, but the received one does, hence needs the Trim() to pass
             Assert.Equal("Body", message.TextBody.Trim());
 
-            var response = await _fixture.Engine.CreateEmailAsync(new MemoryStream(Encoding.UTF8.GetBytes(raw)));
+            var response = await fixture.Engine.CreateEmailAsync(new MemoryStream(Encoding.UTF8.GetBytes(raw)));
 
             Assert.True(response.Success);
         }
@@ -75,7 +75,7 @@ namespace Fakemail.Core.Tests
         public async Task ShouldParseMimeEncodedMessageWithAttachment()
         {
             // Create a user and smtp credentials
-            var createUserResponse = await _fixture.Engine.CreateUserAsync(new ApiModels.CreateUserRequest
+            var createUserResponse = await fixture.Engine.CreateUserAsync(new ApiModels.CreateUserRequest
             {
                 Username = Utils.CreateId(),
                 Password = Utils.CreateId()
@@ -142,7 +142,7 @@ namespace Fakemail.Core.Tests
             Assert.Equal(Encoding.UTF8.GetBytes("hello"), message.Attachments.First().GetContentBytes());
 
             // Create the data model
-            var response = await _fixture.Engine.CreateEmailAsync(new MemoryStream(Encoding.UTF8.GetBytes(raw)));
+            var response = await fixture.Engine.CreateEmailAsync(new MemoryStream(Encoding.UTF8.GetBytes(raw)));
 
             Assert.True(response.Success);
         }

@@ -14,7 +14,8 @@ namespace Fakemail.RateLimiter
         private readonly BucketRateLimiterOptions _options;
         private readonly IClock _clock;
         private readonly RateLimiterCache<K, float> _cache;
-        private readonly object _lock = new object();
+        private readonly object _lock = new();
+        private double _secondsPerRequest;
 
         public BucketRateLimiter(IOptions<BucketRateLimiterOptions> options) : this(options, new SystemClock())
         {
@@ -27,6 +28,8 @@ namespace Fakemail.RateLimiter
             _options = options.Value;
             _clock = clock ?? new SystemClock();
             _cache = new RateLimiterCache<K, float>(_options.CacheSize, _clock);
+
+            _secondsPerRequest = 1f / _options.RequestsPerSecond;
         }
 
         /// <summary>
@@ -79,9 +82,8 @@ namespace Fakemail.RateLimiter
                         newLevel = level;
 
                         // calculate how long until the next request is allowed
-                        var secondsPerRequest = 1 / _options.RequestsPerSecond;
-                        var fractionOfIncrementToWait = (increment - _options.Burst + newLevel) / increment;
-                        retryAfter = TimeSpan.FromSeconds(fractionOfIncrementToWait * secondsPerRequest);
+                        var fractionOfIncrementToWait = (candidateLevel - _options.Burst) / increment;
+                        retryAfter = TimeSpan.FromSeconds(fractionOfIncrementToWait * _secondsPerRequest);
                     }
                     else
                     {

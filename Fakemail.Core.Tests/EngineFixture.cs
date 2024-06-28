@@ -30,10 +30,10 @@ namespace Fakemail.Core.Tests
         }
     }
 
-    public class EngineFixture : IDisposable
+    public sealed class EngineFixture : IDisposable
     {
-        private readonly string _dbFile = $"{Directory.GetCurrentDirectory()}{Path.DirectorySeparatorChar}fakemail-enginetests-{DateTime.Now.ToString("HHmmss")}-{Utils.CreateId()}.sqlite";
-        private IHost host;
+        private readonly string _dbFile = $"{Directory.GetCurrentDirectory()}{Path.DirectorySeparatorChar}fakemail-enginetests-{DateTime.Now:HHmmss}-{Utils.CreateId()}.sqlite";
+        private readonly IHost host;
 
         public IEngine Engine { get; set; }
 
@@ -41,7 +41,7 @@ namespace Fakemail.Core.Tests
 
         public EngineFixture()
         {
-            host = CreateHostBuilder(new string[] { })
+            host = CreateHostBuilder([])
              .Build();
 
             using (var scope = host.Services.CreateScope())
@@ -60,7 +60,7 @@ namespace Fakemail.Core.Tests
                 .CreateLogger();
 
             // use a random jwt signing key, so tokens generated here will not be valid in production or anywhere else
-            var jwtSigningKey = Utils.CreateId(32);
+            var jwtSigningKey = Utils.CreateId(16) + Utils.CreateId(16);
 
             return Host.CreateDefaultBuilder()
                 .UseSerilog()
@@ -72,8 +72,8 @@ namespace Fakemail.Core.Tests
                     services.AddSingleton<IJwtAuthentication>(new JwtAuthentication(jwtSigningKey, "", 10));
 
                     // Swap the commented line to use the real PwnedPassword Api in tests
-                    services.AddSingleton<IPwnedPasswordApi, DummyPwnedPasswordApi>();
-                    //services.AddHttpClient<IPwnedPasswordApi, PwnedPasswordApi>();
+                    //services.AddSingleton<IPwnedPasswordApi, DummyPwnedPasswordApi>();
+                    services.AddHttpClient<IPwnedPasswordApi, PwnedPasswordApi>();
                 })
                 .ConfigureHostConfiguration(configHost =>
                 {
