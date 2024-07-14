@@ -11,23 +11,27 @@ namespace Fakemail.IntegrationTests
 {
     public class SmtpTests
     {
-        private int _port = 587;
+        private readonly int _port = 587;
 
         [Fact]
         public async Task UnencryptedSmtpShouldBeRejected()
         {
-            var smtpClient = new SmtpClient("fakemail.stream", _port);
-            smtpClient.Credentials = new NetworkCredential
+            var smtpClient = new SmtpClient("fakemail.stream", _port)
             {
-                UserName = "user",
-                Password = "password"
+                Credentials = new NetworkCredential
+                {
+                    UserName = "user",
+                    Password = "password"
+                },
+                EnableSsl = false
             };
-            smtpClient.EnableSsl = false;
 
-            var email = new MailMessage();
-            email.Subject = "Subject";
-            email.Body = "Body";
-            email.From = new MailAddress("From@From");
+            var email = new MailMessage
+            {
+                Subject = "Subject",
+                Body = "Body",
+                From = new MailAddress("From@From")
+            };
             email.To.Add(new MailAddress("To@To"));
 
             var send = new Func<Task>(() => smtpClient.SendMailAsync(email));
@@ -40,19 +44,23 @@ namespace Fakemail.IntegrationTests
         {
             // Uncomment following line to accept invalid server certificate
             //ServicePointManager.ServerCertificateValidationCallback = (sender, certificate, chain, sslPolicyErrors) => true;
-            
-            var smtpClient = new SmtpClient("fakemail.stream", _port);
-            smtpClient.Credentials = new NetworkCredential
-            {
-                UserName = "1tpxdz",
-                Password = "9o77B2C7gEU"
-            };
-            smtpClient.EnableSsl = true;
 
-            var email = new MailMessage();
-            email.Subject = "Subject";
-            email.Body = "Body";
-            email.From = new MailAddress("From@From.example.com");
+            var smtpClient = new SmtpClient("fakemail.stream", _port)
+            {
+                Credentials = new NetworkCredential
+                {
+                    UserName = "1tpxdz",
+                    Password = "9o77B2C7gEU"
+                },
+                EnableSsl = true
+            };
+
+            var email = new MailMessage
+            {
+                Subject = "Subject",
+                Body = "Body",
+                From = new MailAddress("From@From.example.com")
+            };
             email.To.Add(new MailAddress("To@example1.stream"));           
             email.CC.Add(new MailAddress("To@example2.stream"));
             email.CC.Add(new MailAddress("To@example3.stream"));

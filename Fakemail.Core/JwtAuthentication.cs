@@ -29,9 +29,11 @@ namespace Fakemail.Core
 
         public string GetAuthenticationToken(Guid userId, bool isAdmin = false)
         {
-            var claims = new List<Claim>();
-            claims.Add(new Claim(ClaimTypes.Name, userId.ToString()));
-            claims.Add(new Claim(ClaimTypes.Role, "user"));
+            var claims = new List<Claim>
+            {
+                new(ClaimTypes.Name, userId.ToString()),
+                new(ClaimTypes.Role, "user")
+            };
 
             if (isAdmin)
             {

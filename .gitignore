@@ -29,3 +29,4 @@ msbuild.wrn
 
 .vs/
 *.sqlite
+fakemail-deployment/

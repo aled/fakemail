@@ -50,12 +50,12 @@ namespace Fakemail.Cryptography
         /// <returns></returns>
         public static bool Validate(string key, string hash)
         {
-            var lastHashIndex = hash.LastIndexOf("$");
+            var lastHashIndex = hash.LastIndexOf('$');
 
             if (lastHashIndex < 0)
                 return false;
 
-            var salt = hash.Substring(0, lastHashIndex);
+            var salt = hash[..lastHashIndex];
 
             if (hash.StartsWith(SHA256_PREFIX))
                 return hash == Sha256Crypt(key, salt);
@@ -107,7 +107,7 @@ namespace Fakemail.Cryptography
                 // the rounds field (e.g. rounds=1000) is optional
                 if (parts.Length > i && parts[i].StartsWith(ROUNDS_PREFIX))
                 {
-                    if (!int.TryParse(parts[i].Substring(ROUNDS_PREFIX.Length), out rounds))
+                    if (!int.TryParse(parts[i].AsSpan(ROUNDS_PREFIX.Length), out rounds))
                     {
                         throw new ArgumentException("Invalid value for Rounds", nameof(salt));
                     }
@@ -121,7 +121,7 @@ namespace Fakemail.Cryptography
                     saltValue = parts[i];
                     if (saltValue.Length > MAX_SALT_LEN)
                     {
-                        saltValue = saltValue.Substring(0, MAX_SALT_LEN);
+                        saltValue = saltValue[..MAX_SALT_LEN];
                     }
                     foreach (char c in parts[i])
                     {
@@ -142,15 +142,15 @@ namespace Fakemail.Cryptography
             if (rounds < MIN_ROUNDS)
                 rounds = MIN_ROUNDS;
 
-            if (rounds > MAX_ROUNDS) throw new ArgumentOutOfRangeException(nameof(rounds));
+            ArgumentOutOfRangeException.ThrowIfGreaterThan(rounds, MAX_ROUNDS);
 
-            if (saltString == null) throw new ArgumentNullException(nameof(saltString));
+            ArgumentNullException.ThrowIfNull(saltString);
             if (saltString.Length > MAX_SALT_LEN)
             {
-                saltString = saltString.Substring(0, MAX_SALT_LEN);
+                saltString = saltString[..MAX_SALT_LEN];
             }
 
-            if (keyBytes == null) throw new ArgumentNullException(nameof(keyBytes));
+            ArgumentNullException.ThrowIfNull(keyBytes);
 
             int blocksize;
             string saltPrefix;
@@ -465,10 +465,10 @@ namespace Fakemail.Cryptography
             {
                 buffer.Append(ROUNDS_PREFIX);
                 buffer.Append(rounds);
-                buffer.Append("$");
+                buffer.Append('$');
             }
             buffer.Append(saltString);
-            buffer.Append("$");
+            buffer.Append('$');
 
             // e) the base-64 encoded final C digest. The encoding used is as
             // follows:
@@ -495,42 +495,42 @@ namespace Fakemail.Cryptography
             // int buflen = salt_prefix.length() - 1 + ROUNDS_PREFIX.length() + 9 + 1 + salt_string.length() + 1 + 86 + 1;
             if (blocksize == 32)
             {
-                CryptBase64.b64from24bit(altResult[0], altResult[10], altResult[20], 4, buffer);
-                CryptBase64.b64from24bit(altResult[21], altResult[1], altResult[11], 4, buffer);
-                CryptBase64.b64from24bit(altResult[12], altResult[22], altResult[2], 4, buffer);
-                CryptBase64.b64from24bit(altResult[3], altResult[13], altResult[23], 4, buffer);
-                CryptBase64.b64from24bit(altResult[24], altResult[4], altResult[14], 4, buffer);
-                CryptBase64.b64from24bit(altResult[15], altResult[25], altResult[5], 4, buffer);
-                CryptBase64.b64from24bit(altResult[6], altResult[16], altResult[26], 4, buffer);
-                CryptBase64.b64from24bit(altResult[27], altResult[7], altResult[17], 4, buffer);
-                CryptBase64.b64from24bit(altResult[18], altResult[28], altResult[8], 4, buffer);
-                CryptBase64.b64from24bit(altResult[9], altResult[19], altResult[29], 4, buffer);
-                CryptBase64.b64from24bit((byte)0, altResult[31], altResult[30], 3, buffer);
+                CryptBase64.AppendBase64from24bit(altResult[0], altResult[10], altResult[20], 4, buffer);
+                CryptBase64.AppendBase64from24bit(altResult[21], altResult[1], altResult[11], 4, buffer);
+                CryptBase64.AppendBase64from24bit(altResult[12], altResult[22], altResult[2], 4, buffer);
+                CryptBase64.AppendBase64from24bit(altResult[3], altResult[13], altResult[23], 4, buffer);
+                CryptBase64.AppendBase64from24bit(altResult[24], altResult[4], altResult[14], 4, buffer);
+                CryptBase64.AppendBase64from24bit(altResult[15], altResult[25], altResult[5], 4, buffer);
+                CryptBase64.AppendBase64from24bit(altResult[6], altResult[16], altResult[26], 4, buffer);
+                CryptBase64.AppendBase64from24bit(altResult[27], altResult[7], altResult[17], 4, buffer);
+                CryptBase64.AppendBase64from24bit(altResult[18], altResult[28], altResult[8], 4, buffer);
+                CryptBase64.AppendBase64from24bit(altResult[9], altResult[19], altResult[29], 4, buffer);
+                CryptBase64.AppendBase64from24bit((byte)0, altResult[31], altResult[30], 3, buffer);
             }
             else
             {
-                CryptBase64.b64from24bit(altResult[0], altResult[21], altResult[42], 4, buffer);
-                CryptBase64.b64from24bit(altResult[22], altResult[43], altResult[1], 4, buffer);
-                CryptBase64.b64from24bit(altResult[44], altResult[2], altResult[23], 4, buffer);
-                CryptBase64.b64from24bit(altResult[3], altResult[24], altResult[45], 4, buffer);
-                CryptBase64.b64from24bit(altResult[25], altResult[46], altResult[4], 4, buffer);
-                CryptBase64.b64from24bit(altResult[47], altResult[5], altResult[26], 4, buffer);
-                CryptBase64.b64from24bit(altResult[6], altResult[27], altResult[48], 4, buffer);
-                CryptBase64.b64from24bit(altResult[28], altResult[49], altResult[7], 4, buffer);
-                CryptBase64.b64from24bit(altResult[50], altResult[8], altResult[29], 4, buffer);
-                CryptBase64.b64from24bit(altResult[9], altResult[30], altResult[51], 4, buffer);
-                CryptBase64.b64from24bit(altResult[31], altResult[52], altResult[10], 4, buffer);
-                CryptBase64.b64from24bit(altResult[53], altResult[11], altResult[32], 4, buffer);
-                CryptBase64.b64from24bit(altResult[12], altResult[33], altResult[54], 4, buffer);
-                CryptBase64.b64from24bit(altResult[34], altResult[55], altResult[13], 4, buffer);
-                CryptBase64.b64from24bit(altResult[56], altResult[14], altResult[35], 4, buffer);
-                CryptBase64.b64from24bit(altResult[15], altResult[36], altResult[57], 4, buffer);
-                CryptBase64.b64from24bit(altResult[37], altResult[58], altResult[16], 4, buffer);
-                CryptBase64.b64from24bit(altResult[59], altResult[17], altResult[38], 4, buffer);
-                CryptBase64.b64from24bit(altResult[18], altResult[39], altResult[60], 4, buffer);
-                CryptBase64.b64from24bit(altResult[40], altResult[61], altResult[19], 4, buffer);
-                CryptBase64.b64from24bit(altResult[62], altResult[20], altResult[41], 4, buffer);
-                CryptBase64.b64from24bit((byte)0, (byte)0, altResult[63], 2, buffer);
+                CryptBase64.AppendBase64from24bit(altResult[0], altResult[21], altResult[42], 4, buffer);
+                CryptBase64.AppendBase64from24bit(altResult[22], altResult[43], altResult[1], 4, buffer);
+                CryptBase64.AppendBase64from24bit(altResult[44], altResult[2], altResult[23], 4, buffer);
+                CryptBase64.AppendBase64from24bit(altResult[3], altResult[24], altResult[45], 4, buffer);
+                CryptBase64.AppendBase64from24bit(altResult[25], altResult[46], altResult[4], 4, buffer);
+                CryptBase64.AppendBase64from24bit(altResult[47], altResult[5], altResult[26], 4, buffer);
+                CryptBase64.AppendBase64from24bit(altResult[6], altResult[27], altResult[48], 4, buffer);
+                CryptBase64.AppendBase64from24bit(altResult[28], altResult[49], altResult[7], 4, buffer);
+                CryptBase64.AppendBase64from24bit(altResult[50], altResult[8], altResult[29], 4, buffer);
+                CryptBase64.AppendBase64from24bit(altResult[9], altResult[30], altResult[51], 4, buffer);
+                CryptBase64.AppendBase64from24bit(altResult[31], altResult[52], altResult[10], 4, buffer);
+                CryptBase64.AppendBase64from24bit(altResult[53], altResult[11], altResult[32], 4, buffer);
+                CryptBase64.AppendBase64from24bit(altResult[12], altResult[33], altResult[54], 4, buffer);
+                CryptBase64.AppendBase64from24bit(altResult[34], altResult[55], altResult[13], 4, buffer);
+                CryptBase64.AppendBase64from24bit(altResult[56], altResult[14], altResult[35], 4, buffer);
+                CryptBase64.AppendBase64from24bit(altResult[15], altResult[36], altResult[57], 4, buffer);
+                CryptBase64.AppendBase64from24bit(altResult[37], altResult[58], altResult[16], 4, buffer);
+                CryptBase64.AppendBase64from24bit(altResult[59], altResult[17], altResult[38], 4, buffer);
+                CryptBase64.AppendBase64from24bit(altResult[18], altResult[39], altResult[60], 4, buffer);
+                CryptBase64.AppendBase64from24bit(altResult[40], altResult[61], altResult[19], 4, buffer);
+                CryptBase64.AppendBase64from24bit(altResult[62], altResult[20], altResult[41], 4, buffer);
+                CryptBase64.AppendBase64from24bit((byte)0, (byte)0, altResult[63], 2, buffer);
             }
 
             // Clear the buffer for the intermediate result so that people attaching to processes or reading core dumps

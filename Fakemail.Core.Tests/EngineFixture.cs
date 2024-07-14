@@ -53,6 +53,7 @@ namespace Fakemail.Core.Tests
             Engine = host.Services.GetRequiredService<IEngine>();
         }
 
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Style", "IDE0060:Remove unused parameter")]
         private IHostBuilder CreateHostBuilder(string[] args)
         {
             Log.Logger = new LoggerConfiguration()

@@ -12,7 +12,7 @@ namespace Fakemail.Cryptography
     {
         static readonly char[] BASE64_SYMBOLS = "./0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz".ToCharArray();
 
-        public static void b64from24bit(byte b2, byte b1, byte b0, int outLen, StringBuilder builder)
+        public static void AppendBase64from24bit(byte b2, byte b1, byte b0, int outLen, StringBuilder builder)
         {
             int w = (b2 << 16) | (b1 << 8) | b0;
             

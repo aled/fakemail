@@ -256,16 +256,5 @@ namespace Fakemail.Core.Tests
             authResponse.Success.Should().Be(false);
             authResponse.Token.Should().BeNull();
         }
-
-        private static MimeMessage GenerateEmail()
-        {
-            var from = new InternetAddressList([new MailboxAddress("Fred Flintstone", "fred@flintstone.com")]);
-            var to = new InternetAddressList([new MailboxAddress("Barney Rubble", "barney@rubble.com")]);
-            var body = new TextPart("plain")
-            {
-                Text = "... dabba doo"
-            };
-            return new MimeMessage(from, to, "Yabba...", body);
-        }
     }
 }

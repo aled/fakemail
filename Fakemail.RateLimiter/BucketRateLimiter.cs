@@ -15,7 +15,7 @@ namespace Fakemail.RateLimiter
         private readonly IClock _clock;
         private readonly RateLimiterCache<K, float> _cache;
         private readonly object _lock = new();
-        private double _secondsPerRequest;
+        private readonly double _secondsPerRequest;
 
         public BucketRateLimiter(IOptions<BucketRateLimiterOptions> options) : this(options, new SystemClock())
         {

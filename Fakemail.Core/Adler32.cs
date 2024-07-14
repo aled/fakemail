@@ -2,11 +2,13 @@
 
 namespace Fakemail.Core
 {
-	/// <summary>
-	/// Copied from https://raw.githubusercontent.com/icsharpcode/SharpZipLib/master/src/ICSharpCode.SharpZipLib/Checksum/Adler32.cs
-	/// (MIT license)
-	/// </summary>
-	public sealed class Adler32
+    /// <summary>
+    /// Copied from https://raw.githubusercontent.com/icsharpcode/SharpZipLib/master/src/ICSharpCode.SharpZipLib/Checksum/Adler32.cs
+    /// (MIT license)
+    /// </summary>
+   
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Style", "IDE0054:Use compound assignment")]
+    public sealed class Adler32
 	{
 		#region Instance Fields
 
@@ -75,21 +77,18 @@ namespace Fakemail.Core
 		/// <param name="buffer">Contains the data to update the checksum with.</param>
 		public void Update(byte[] buffer)
 		{
-			if (buffer == null)
-			{
-				throw new ArgumentNullException(nameof(buffer));
-			}
+            ArgumentNullException.ThrowIfNull(buffer);
 
-			Update(new ArraySegment<byte>(buffer, 0, buffer.Length));
+            Update(new ArraySegment<byte>(buffer, 0, buffer.Length));
 		}
 
-		/// <summary>
-		/// Update Adler32 data checksum based on a portion of a block of data
-		/// </summary>
-		/// <param name = "segment">
-		/// The chunk of data to add
-		/// </param>
-		public void Update(ArraySegment<byte> segment)
+        /// <summary>
+        /// Update Adler32 data checksum based on a portion of a block of data
+        /// </summary>
+        /// <param name = "segment">
+        /// The chunk of data to add
+        /// </param>
+        public void Update(ArraySegment<byte> segment)
 		{
 			//(By Per Bothner)
 			uint s1 = checkValue & 0xFFFF;
