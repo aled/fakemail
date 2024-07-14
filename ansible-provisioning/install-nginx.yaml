@@ -49,7 +49,7 @@
         minute: "0"
         hour: "7"
 
-    # Because dev.fakemail.stream is not publiclly accessible, renew manually using
+    # Because dev.fakemail.stream is not publicly accessible, renew manually using
     #     # /usr/bin/certbot certonly --manual --preferred-challenges dns -d dev.fakemail.stream
     - name: get certificate
       command: "/usr/bin/certbot -n --nginx --redirect -d {{ public_dns_name }}"

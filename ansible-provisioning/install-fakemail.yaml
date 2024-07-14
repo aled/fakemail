@@ -32,7 +32,6 @@
       force: yes
 
   - name: reload systemd
-    sudo: yes
     command: systemctl daemon-reload
 
   - name: Enable fakemail-delivery-agent

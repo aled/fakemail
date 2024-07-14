@@ -6,7 +6,8 @@
   - name: Install opensmtpd
     apt:
       pkg:
-        - opensmtpd
+      #  Don't install openstmpd here; must be patched and installed manually
+      #  - opensmtpd
         - opensmtpd-extras
       state: latest
 

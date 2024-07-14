@@ -1,0 +1,2 @@
+PasswordAuthentication no
+ChallengeResponseAuthentication no

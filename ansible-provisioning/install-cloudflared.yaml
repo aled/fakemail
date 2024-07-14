@@ -1,0 +1,45 @@
+
+---
+
+# Add cloudflare gpg key
+- name: Ensure /usr/share/keyrings directory exists
+  hosts: all
+  become: yes
+  tasks:
+    - name: Create /usr/share/keyrings directory with mode 0755
+      ansible.builtin.file:
+        path: /usr/share/keyrings
+        state: directory
+        mode: '0755'
+      
+- name: Download Cloudflare GPG key and save it directly
+  hosts: all
+  become: yes
+  tasks:
+    - name: Download cloudflare-main.gpg and save it to /usr/share/keyrings
+      ansible.builtin.get_url:
+        url: https://pkg.cloudflare.com/cloudflare-main.gpg
+        dest: /usr/share/keyrings/cloudflare-main.gpg
+        mode: '0644'  
+
+# Add this repo to your apt repositories
+- name: Overwrite Cloudflare repository in apt sources
+  hosts: all
+  become: yes
+  tasks:
+    - name: Write Cloudflare repository to /etc/apt/sources.list.d/cloudflared.list
+      ansible.builtin.copy:
+        dest: /etc/apt/sources.list.d/cloudflared.list
+        content: |
+          deb [signed-by=/usr/share/keyrings/cloudflare-main.gpg] https://pkg.cloudflare.com/cloudflared bookworm main
+
+# install cloudflared
+- name: Update package lists and install cloudflared
+  hosts: all
+  become: yes
+  tasks:
+    - name: Install cloudflared
+      ansible.builtin.apt:
+        name: cloudflared
+        update_cache: yes
+

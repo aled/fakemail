@@ -15,7 +15,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-22.04]
+        os: [debian-12]
         dotnet-version: ['8.0.x']
 
     steps:
@@ -54,9 +54,9 @@ jobs:
 
     - name: Dotnet publish
       run: |
-        rm -rf Fakemail.Web/bin/Release/net6.0/publish
-        rm -rf Fakemail.Api/bin/Release/net6.0/publish
-        rm -rf Fakemail.Services/bin/Release/net6.0/publish
+        rm -rf Fakemail.Web/bin/Release/8.0/publish
+        rm -rf Fakemail.Api/bin/Release/net8.0/publish
+        rm -rf Fakemail.Services/bin/Release/net8.0/publish
         dotnet publish -p:PublishProfile=FolderProfile --configuration Release -p:DebugType=None -p:DebugSymbols=false Fakemail.Web
         dotnet publish -p:PublishProfile=FolderProfile --configuration Release -p:DebugType=None -p:DebugSymbols=false Fakemail.Api
         dotnet publish -p:PublishProfile=FolderProfile --configuration Release -p:DebugType=None -p:DebugSymbols=false Fakemail.Services
@@ -70,31 +70,31 @@ jobs:
         mkdir fakemail-deployment/services
 
         # delete the runtimes that are not used
-        mv Fakemail.Web/bin/Release/net6.0/publish/runtimes/linux-x64 fakemail-deployment/common/runtimes
-        mv Fakemail.Web/bin/Release/net6.0/publish/runtimes/linux-arm64 fakemail-deployment/common/runtimes
-        rm -rf Fakemail.Web/bin/Release/net6.0/publish/runtimes
-        rm -rf Fakemail.Api/bin/Release/net6.0/publish/runtimes
-        rm -rf Fakemail.Services/bin/Release/net6.0/publish/runtimes
+        mv Fakemail.Web/bin/Release/net8.0/publish/runtimes/linux-x64 fakemail-deployment/common/runtimes
+        mv Fakemail.Web/bin/Release/net8.0/publish/runtimes/linux-arm64 fakemail-deployment/common/runtimes
+        rm -rf Fakemail.Web/bin/Release/net8.0/publish/runtimes
+        rm -rf Fakemail.Api/bin/Release/net8.0/publish/runtimes
+        rm -rf Fakemail.Services/bin/Release/net8.0/publish/runtimes
 
         # web specific files
-        mv Fakemail.Web/bin/Release/net6.0/publish/*.json fakemail-deployment/web
-        mv Fakemail.Web/bin/Release/net6.0/publish/*.config fakemail-deployment/web
-        mv Fakemail.Web/bin/Release/net6.0/publish/Fakemail.Web.* fakemail-deployment/web
-        mv Fakemail.Web/bin/Release/net6.0/publish/wwwroot fakemail-deployment/web
+        mv Fakemail.Web/bin/Release/net8.0/publish/*.json fakemail-deployment/web
+        mv Fakemail.Web/bin/Release/net8.0/publish/*.config fakemail-deployment/web
+        mv Fakemail.Web/bin/Release/net8.0/publish/Fakemail.Web.* fakemail-deployment/web
+        mv Fakemail.Web/bin/Release/net8.0/publish/wwwroot fakemail-deployment/web
 
         # api specific files
-        mv Fakemail.Api/bin/Release/net6.0/publish/*.json fakemail-deployment/api
-        mv Fakemail.Api/bin/Release/net6.0/publish/*.config fakemail-deployment/api
-        mv Fakemail.Api/bin/Release/net6.0/publish/Fakemail.Api.* fakemail-deployment/api
+        mv Fakemail.Api/bin/Release/net8.0/publish/*.json fakemail-deployment/api
+        mv Fakemail.Api/bin/Release/net8.0/publish/*.config fakemail-deployment/api
+        mv Fakemail.Api/bin/Release/net8.0/publish/Fakemail.Api.* fakemail-deployment/api
         
         # services specific files
-        mv Fakemail.Services/bin/Release/net6.0/publish/*.json fakemail-deployment/services
-        mv Fakemail.Services/bin/Release/net6.0/publish/Fakemail.Services.* fakemail-deployment/services
+        mv Fakemail.Services/bin/Release/net8.0/publish/*.json fakemail-deployment/services
+        mv Fakemail.Services/bin/Release/net8.0/publish/Fakemail.Services.* fakemail-deployment/services
 
         # everything else is common
-        mv Fakemail.Web/bin/Release/net6.0/publish/* fakemail-deployment/common
-        mv Fakemail.Api/bin/Release/net6.0/publish/* fakemail-deployment/common
-        mv Fakemail.Services/bin/Release/net6.0/publish/* fakemail-deployment/common
+        mv Fakemail.Web/bin/Release/net8.0/publish/* fakemail-deployment/common
+        mv Fakemail.Api/bin/Release/net8.0/publish/* fakemail-deployment/common
+        mv Fakemail.Services/bin/Release/net8.0/publish/* fakemail-deployment/common
 
         mv fakemail-deployment fakemail-deployment.${{ steps.extract_branch.outputs.branch }}.${{ steps.extract_short_sha.outputs.short_sha }}
         tar -zcvf fakemail-deployment.${{ steps.extract_branch.outputs.branch }}.${{ steps.extract_short_sha.outputs.short_sha }}.tgz fakemail-deployment.${{ steps.extract_branch.outputs.branch }}.${{ steps.extract_short_sha.outputs.short_sha }}

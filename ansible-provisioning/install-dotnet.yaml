@@ -2,8 +2,8 @@
 - hosts: all
   become: true 
   tasks:
-  - name: Test if asp.net core runtime 6.0 is installed
-    shell: /usr/bin/dotnet --list-runtimes | grep Microsoft\.AspNetCore\.App\ 6\.0
+  - name: Test if asp.net core runtime 8.0 is installed
+    shell: /usr/bin/dotnet --list-runtimes | grep Microsoft\.AspNetCore\.App\ 8\.0
     register: dotnet_found
     ignore_errors: true
 
@@ -11,7 +11,7 @@
   # for arm, use the dotnet install script
   - name: Download MS repository
     get_url:
-      url: https://packages.microsoft.com/config/ubuntu/{{ ansible_distribution_version }}/packages-microsoft-prod.deb
+      url: https://packages.microsoft.com/config/debian/{{ ansible_distribution_version }}/packages-microsoft-prod.deb
       dest: /tmp/packages-microsoft-prod.deb
     when: dotnet_found is failed and ansible_architecture == 'x86_64'
 
@@ -27,7 +27,7 @@
   - name: Ensure dependencies installed
     apt: 
       pkg: 
-        - aspnetcore-runtime-6.0
+        - aspnetcore-runtime-8.0
       state: present
     when: dotnet_found is failed and ansible_architecture == 'x86_64'
 
@@ -38,7 +38,7 @@
     when: dotnet_found is failed and ansible_architecture == 'aarch64'
 
   - name: Run dotnet install script
-    shell: bash /tmp/dotnet-install.sh -c 6.0 --install-dir /usr/share/dotnet --runtime aspnetcore
+    shell: bash /tmp/dotnet-install.sh -c 8.0 --install-dir /usr/share/dotnet --runtime aspnetcore
     when: dotnet_found is failed and ansible_architecture == 'aarch64'
 
   - name: Install dotnet executable symbolic link

@@ -52,7 +52,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Fakemail.RateLimiter", "Fak
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Fakemail.RateLimiter.Tests", "Fakemail.RateLimiter.Tests\Fakemail.RateLimiter.Tests.csproj", "{0A17C237-734B-49C1-9E4D-E201C1347628}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Fakemail.RateLimiter.Benchmarks", "Fakemail.RateLimiter.Benchmarks\Fakemail.RateLimiter.Benchmarks.csproj", "{029BC741-08A4-40D5-B26A-CF94106322BF}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Fakemail.RateLimiter.Benchmarks", "Fakemail.RateLimiter.Benchmarks\Fakemail.RateLimiter.Benchmarks.csproj", "{029BC741-08A4-40D5-B26A-CF94106322BF}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

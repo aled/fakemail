@@ -1,0 +1,12 @@
+---
+
+- hosts: fakemailservers
+  become: true 
+  tasks:
+      - name: Disable SSH password logins
+        template:
+          src: templates/fakemail/etc/ssh/sshd_config.d/disable-password-login.conf
+          dest: /etc/ssh/sshd_config.d/disable-password-login.conf
+          owner: root
+          group: root
+          mode: '0644'

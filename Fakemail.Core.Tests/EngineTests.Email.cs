@@ -58,8 +58,8 @@ namespace Fakemail.Core.Tests
             Assert.Null(message.Headers["Content-Type"]);
             Assert.Null(message.Headers["Content-Transfer-Encoding"]);
 
-            Assert.Equal(new InternetAddressList(new[] { InternetAddress.Parse("From@From.example.com") }), message.From);
-            Assert.Equal(new InternetAddressList(new[] { InternetAddress.Parse("To@example.stream"), InternetAddress.Parse("To@example2.stream") }), message.To);
+            Assert.Equal(new InternetAddressList([InternetAddress.Parse("From@From.example.com")]), message.From);
+            Assert.Equal(new InternetAddressList([InternetAddress.Parse("To@example.stream"), InternetAddress.Parse("To@example2.stream")]), message.To);
 
             Assert.Equal("text/plain", message.Body.ContentType.MimeType);
 
@@ -130,8 +130,8 @@ namespace Fakemail.Core.Tests
             Assert.Null(message.Headers["Content-Type"]);
             Assert.Null(message.Headers["Content-Transfer-Encoding"]);
 
-            Assert.Equal(new InternetAddressList(new[] { InternetAddress.Parse("From@From.example.com") }), message.From);
-            Assert.Equal(new InternetAddressList(new[] { InternetAddress.Parse("To@example.stream"), InternetAddress.Parse("To@example2.stream") }), message.To);
+            Assert.Equal(new InternetAddressList([InternetAddress.Parse("From@From.example.com")]), message.From);
+            Assert.Equal(new InternetAddressList([InternetAddress.Parse("To@example.stream"), InternetAddress.Parse("To@example2.stream")]), message.To);
 
             Assert.Equal("multipart/mixed", message.Body.ContentType.MimeType);
 
