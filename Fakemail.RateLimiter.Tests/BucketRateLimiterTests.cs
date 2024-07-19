@@ -1,6 +1,7 @@
 using System;
 
 using Microsoft.Extensions.Options;
+using Microsoft.Extensions.Time.Testing;
 
 using Xunit;
 using FluentAssertions;
@@ -12,8 +13,8 @@ namespace Fakemail.RateLimiter.Tests
         [Fact]
         public void RateLimiterShouldWork()
         {
-            var clock = new DummyClock(new DateTime(2000, 1, 1));
-            var rateLimiter = new BucketRateLimiter<string>(Options.Create(new BucketRateLimiterOptions { Burst = 3, CacheSize = 2, RequestsPerSecond = 4f }), clock);
+            var timeProvider = new FakeTimeProvider(new DateTime(2000, 1, 1));
+            var rateLimiter = new BucketRateLimiter<string>(Options.Create(new BucketRateLimiterOptions { Burst = 3, CacheSize = 2, RequestsPerSecond = 4f }), timeProvider);
 
             rateLimiter.IsRateLimited("a").Should().Be((false, 0));
             rateLimiter.IsRateLimited("a").Should().Be((false, 0));
@@ -37,42 +38,42 @@ namespace Fakemail.RateLimiter.Tests
             rateLimiter.IsRateLimited("a").Should().Be((true, 250)); // Exceeded burst limit
 
             // item c should be allowed again after 250 ms, since the rate limit is 4 req/s
-            clock.Advance(TimeSpan.FromMilliseconds(249));
+            timeProvider.Advance(TimeSpan.FromMilliseconds(249));
             rateLimiter.IsRateLimited("c").Should().Be((true, 1));
-            clock.Advance(TimeSpan.FromMilliseconds(1));
+            timeProvider.Advance(TimeSpan.FromMilliseconds(1));
 
             // Fails due to rounding errors if we try to keep the clock on the 
             // exact boundary of where the rate limiting kicks in.
             // Advance the clock by 1ms to avoid these rounding errors. Nasty.
-            clock.Advance(TimeSpan.FromMilliseconds(1));
+            timeProvider.Advance(TimeSpan.FromMilliseconds(1));
 
             rateLimiter.IsRateLimited("c").Should().Be((false, 0));
             rateLimiter.IsRateLimited("c").Should().Be((true, 249));
 
             // Every 250 ms, we should be allowed one more request
-            clock.Advance(TimeSpan.FromMilliseconds(250));
+            timeProvider.Advance(TimeSpan.FromMilliseconds(250));
             rateLimiter.IsRateLimited("c").Should().Be((false, 0));
             rateLimiter.IsRateLimited("c").Should().Be((true, 249));
 
-            clock.Advance(TimeSpan.FromMilliseconds(250));
+            timeProvider.Advance(TimeSpan.FromMilliseconds(250));
             rateLimiter.IsRateLimited("c").Should().Be((false, 0));
             rateLimiter.IsRateLimited("c").Should().Be((true, 249));
 
             // Allow the burst level to reduce. By waiting 500ms we should be allowed to burst 2 requests.
-            clock.Advance(TimeSpan.FromMilliseconds(500));
+            timeProvider.Advance(TimeSpan.FromMilliseconds(500));
             rateLimiter.IsRateLimited("c").Should().Be((false, 0));
             rateLimiter.IsRateLimited("c").Should().Be((false, 0));
             rateLimiter.IsRateLimited("c").Should().Be((true, 249));
 
             // Allow the burst level to reduce. By waiting 750ms we should be allowed to burst 3 requests.
-            clock.Advance(TimeSpan.FromMilliseconds(750));
+            timeProvider.Advance(TimeSpan.FromMilliseconds(750));
             rateLimiter.IsRateLimited("c").Should().Be((false, 0));
             rateLimiter.IsRateLimited("c").Should().Be((false, 0));
             rateLimiter.IsRateLimited("c").Should().Be((false, 0));
             rateLimiter.IsRateLimited("c").Should().Be((true, 250));
 
             // Waiting longer does not allow to burst any more than 3 requests.
-            clock.Advance(TimeSpan.FromMilliseconds(1000));
+            timeProvider.Advance(TimeSpan.FromMilliseconds(1000));
             rateLimiter.IsRateLimited("c").Should().Be((false, 0));
             rateLimiter.IsRateLimited("c").Should().Be((false, 0));
             rateLimiter.IsRateLimited("c").Should().Be((false, 0));

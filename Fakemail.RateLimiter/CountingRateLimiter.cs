@@ -27,22 +27,22 @@ namespace Fakemail.RateLimiter
             public int countC;
         }
 
-        private readonly IClock _clock;
+        private readonly TimeProvider _timeProvider;
         private readonly RateLimiterCache<K, Counts> _cache;
         private readonly CountingRateLimiterOptions _options;
         private readonly object _lock = new();
 
-        public CountingRateLimiter(IOptions<CountingRateLimiterOptions> options) : this(options, new SystemClock())
+        public CountingRateLimiter(IOptions<CountingRateLimiterOptions> options) : this(options, TimeProvider.System)
         {
         }
 
-        public CountingRateLimiter(IOptions<CountingRateLimiterOptions> options, IClock clock)
+        public CountingRateLimiter(IOptions<CountingRateLimiterOptions> options, TimeProvider timeProvider)
         {
             CountingRateLimiterOptionsValidator.Validate(options.Value);
 
             _options = options.Value;
-            _clock = clock ?? new SystemClock();
-            _cache = new RateLimiterCache<K, Counts>(_options.CacheSize, _clock);
+            _timeProvider = timeProvider ?? TimeProvider.System;
+            _cache = new RateLimiterCache<K, Counts>(_options.CacheSize, _timeProvider);
         }
 
         private static DateTime Max(DateTime a, DateTime b) => a > b ? a : b;
@@ -65,7 +65,7 @@ namespace Fakemail.RateLimiter
         public bool IsRateLimited(K key, out TimeSpan retryAfter)
         {
             var isRateLimited = false;
-            var now = _clock.UtcNow;
+            var now = _timeProvider.GetUtcNow().DateTime;
             var retryAt = now;
 
             Span<int> newCounts = [1, 1, 1];

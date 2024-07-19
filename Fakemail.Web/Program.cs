@@ -10,7 +10,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllersWithViews();
 builder.Services.AddRazorPages();
 
-builder.Services.AddSingleton<IClock, SystemClock>();
+builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.Configure<FakemailApiOptions>(builder.Configuration.GetSection("Api"));
 builder.Services.Configure<CountingRateLimiterOptions>(builder.Configuration.GetSection("IpRateLimit"));
 

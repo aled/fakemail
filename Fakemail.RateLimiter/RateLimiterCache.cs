@@ -11,29 +11,25 @@ namespace Fakemail.RateLimiter
     /// </summary>
     /// <typeparam name="K">Type of the cache key</typeparam>
     /// <typeparam name="V">Type of the cache value</typeparam>
-    public class RateLimiterCache<K, V>
+    /// <param name="capacity">
+    /// Capacity of the cache
+    /// </param>
+    /// <param name="timeProvider">
+    /// Source of time. Abstracting this allows unit testing
+    /// </param>
+    public class RateLimiterCache<K, V>(int capacity, TimeProvider timeProvider)
         where K : notnull
         where V : notnull
     {
         /// <summary>
-        /// Capacity of the cache
-        /// </summary>
-        private int _capacity;
-
-        /// <summary>
         /// Main store of the cache items. Can be looked up by key.
         /// </summary>
-        private Dictionary<K, (V value, DateTime updateTime)> _values;
+        private readonly Dictionary<K, (V value, DateTime updateTime)> _values = new(capacity);
 
         /// <summary>
         /// Store the last-updated-timestamp of each cache entry in sorted order
         /// </summary>
-        private SortedDictionary<DateTime, K> _keysByUpdateTime;
-
-        /// <summary>
-        /// Source of time. Abstracting this allows unit testing
-        /// </summary>
-        private IClock _clock;
+        private readonly SortedDictionary<DateTime, K> _keysByUpdateTime = [];
 
         /// <summary>
         /// The last-updated-timestamp dictionary requires unique timestamps.
@@ -42,14 +38,6 @@ namespace Fakemail.RateLimiter
         /// </summary>
         private uint tickUniquifier = 0;
         private DateTime _previous;
-
-        public RateLimiterCache(int capacity, IClock clock)
-        {
-            _capacity = capacity;
-            _clock = clock;
-            _values = new Dictionary<K, (V, DateTime)>(capacity);
-            _keysByUpdateTime = new SortedDictionary<DateTime, K>();
-        }
 
         /// <summary>
         /// Set a value in the cache
@@ -64,7 +52,7 @@ namespace Fakemail.RateLimiter
             }
             else
             {
-                if (_values.Count >= _capacity)
+                if (_values.Count >= capacity)
                 {
                     // evict oldest entry
                     var (time, oldestKey) = _keysByUpdateTime.First();
@@ -76,11 +64,11 @@ namespace Fakemail.RateLimiter
             }
 
             // Get current time,
-            var now = _clock.UtcNow;
+            var now = timeProvider.GetUtcNow().DateTime;
 
             // round to 100ms
             // This isn't necessary, but exercises the timestamp uniquifying code
-            //var ticks = _clock.UtcNow.Ticks;
+            //var ticks = _timeProvider.UtcNow.Ticks;
             //var now = new DateTime(ticks - ticks % 100000);
 
             if (_previous == now)

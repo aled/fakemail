@@ -12,22 +12,22 @@ namespace Fakemail.RateLimiter
         where K : notnull, IComparable<K>
     {
         private readonly BucketRateLimiterOptions _options;
-        private readonly IClock _clock;
+        private readonly TimeProvider _timeProvider;
         private readonly RateLimiterCache<K, float> _cache;
         private readonly object _lock = new();
         private readonly double _secondsPerRequest;
 
-        public BucketRateLimiter(IOptions<BucketRateLimiterOptions> options) : this(options, new SystemClock())
+        public BucketRateLimiter(IOptions<BucketRateLimiterOptions> options) : this(options, TimeProvider.System)
         {
         }
 
-        public BucketRateLimiter(IOptions<BucketRateLimiterOptions> options, IClock clock)
+        public BucketRateLimiter(IOptions<BucketRateLimiterOptions> options, TimeProvider timeProvider)
         {
             BucketRateLimiterOptionsValidator.Validate(options.Value);
 
             _options = options.Value;
-            _clock = clock ?? new SystemClock();
-            _cache = new RateLimiterCache<K, float>(_options.CacheSize, _clock);
+            _timeProvider = timeProvider ?? TimeProvider.System;
+            _cache = new RateLimiterCache<K, float>(_options.CacheSize, _timeProvider);
 
             _secondsPerRequest = 1f / _options.RequestsPerSecond;
         }
@@ -42,7 +42,7 @@ namespace Fakemail.RateLimiter
         {
             retryAfter = TimeSpan.Zero;
             var isRateLimited = false;
-            var now = _clock.UtcNow;
+            var now = _timeProvider.GetUtcNow();
 
             // increment the level by 1 for each request.
             // TODO: allow different requests to have different increments

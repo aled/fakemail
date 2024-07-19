@@ -14,7 +14,7 @@ namespace Fakemail.Services
 {
     public class Cli
     {
-        public static async Task Main(string[] args)
+        public static async Task Main()
         {
             // Usage:
             //  Fakemail.DeliveryAgent -p seconds -f <fail directory> -n <new mail directory>
@@ -68,11 +68,6 @@ namespace Fakemail.Services
                 var db = scope.ServiceProvider.GetRequiredService<FakemailDbContext>();
                 db.Database.EnsureCreated();
             }
-
-            //var engine = host.Services.GetRequiredService<IEngine>();
-            //var log = host.Services.GetRequiredService<ILogger<DeliveryAgent>>();
-
-            //var log = host.Services.GetRequiredService<ILogger<CleanupService>>();
 
             var cancellationToken = new CancellationTokenSource().Token;
 
