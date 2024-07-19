@@ -9,14 +9,8 @@ namespace Fakemail.Api.Controllers
     [Route("api/user")]
     [Authorize]
     [ApiController]
-    public class UserController : ControllerBase
+    public class UserController(IEngine engine) : ControllerBase
     {
-        private readonly IEngine _engine;
-
-        public UserController(IEngine engine)
-        {
-            _engine = engine;
-        }
 
         // POST: api/user/list
         [Authorize(Roles="admin")]
@@ -24,7 +18,7 @@ namespace Fakemail.Api.Controllers
         [Route("list")]
         public async Task<IActionResult> ListUsers([FromBody] ListUserRequest request)
         {
-            var response = await _engine.ListUsersAsync(request);
+            var response = await engine.ListUsersAsync(request);
 
             return Ok(response);
         }
@@ -35,7 +29,7 @@ namespace Fakemail.Api.Controllers
         [Route("create")]
         public async Task<IActionResult> PostAsync([FromBody] CreateUserRequest request)
         {
-            var response = await _engine.CreateUserAsync(request);
+            var response = await engine.CreateUserAsync(request);
 
             return Ok(response);
         }
@@ -46,7 +40,7 @@ namespace Fakemail.Api.Controllers
         [Route("token")]
         public async Task<IActionResult> PostAsync([FromBody] GetTokenRequest request)
         {
-            var response = await _engine.GetTokenAsync(request);
+            var response = await engine.GetTokenAsync(request);
 
             if (response.Success)
             {

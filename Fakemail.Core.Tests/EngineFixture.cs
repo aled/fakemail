@@ -9,6 +9,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Time.Testing;
 
 using Serilog;
 
@@ -35,26 +36,21 @@ namespace Fakemail.Core.Tests
         private readonly string _dbFile = $"{Directory.GetCurrentDirectory()}{Path.DirectorySeparatorChar}fakemail-enginetests-{DateTime.Now:HHmmss}-{Utils.CreateId()}.sqlite";
         private readonly IHost host;
 
-        public IEngine Engine { get; set; }
+        public IEngine Engine => host.Services.GetRequiredService<IEngine>();
+
+        public FakeTimeProvider TimeProvider => (FakeTimeProvider)host.Services.GetRequiredService<TimeProvider>();
 
         public static readonly string ExamplePwnedPassword = "asdfasdfasdf";
 
         public EngineFixture()
         {
-            host = CreateHostBuilder([])
-             .Build();
-
-            using (var scope = host.Services.CreateScope())
-            {
-                var db = scope.ServiceProvider.GetRequiredService<FakemailDbContext>();
-                db.Database.EnsureCreated();
-            }
-
-            Engine = host.Services.GetRequiredService<IEngine>();
+            host = CreateHostBuilder().Build();
+            using var scope = host.Services.CreateScope();
+            var db = scope.ServiceProvider.GetRequiredService<FakemailDbContext>();
+            db.Database.EnsureCreated();
         }
 
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Style", "IDE0060:Remove unused parameter")]
-        private IHostBuilder CreateHostBuilder(string[] args)
+        private IHostBuilder CreateHostBuilder()
         {
             Log.Logger = new LoggerConfiguration()
                 .WriteTo.Console()
@@ -69,12 +65,13 @@ namespace Fakemail.Core.Tests
                 {
                     services.AddDbContextFactory<FakemailDbContext>(options => options.UseSqlite($"Data Source={_dbFile}"));
                     services.AddSingleton(Log.Logger);
+                    services.AddSingleton<TimeProvider, FakeTimeProvider>();
                     services.AddSingleton<IEngine, Engine>();
                     services.AddSingleton<IJwtAuthentication>(new JwtAuthentication(jwtSigningKey, "", 10));
 
                     // Swap the commented line to use the real PwnedPassword Api in tests
-                    //services.AddSingleton<IPwnedPasswordApi, DummyPwnedPasswordApi>();
-                    services.AddHttpClient<IPwnedPasswordApi, PwnedPasswordApi>();
+                    services.AddSingleton<IPwnedPasswordApi, DummyPwnedPasswordApi>();
+                    //services.AddHttpClient<IPwnedPasswordApi, PwnedPasswordApi>();
                 })
                 .ConfigureHostConfiguration(configHost =>
                 {

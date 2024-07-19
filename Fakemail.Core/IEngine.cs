@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Threading;
 using System.Threading.Tasks;
 
 using Fakemail.ApiModels;
@@ -28,5 +29,7 @@ namespace Fakemail.Core
         Task<GetEmailResponse> GetEmailAsync(GetEmailRequest request, Guid authenticatedUserId);
         
         Task<DeleteEmailResponse> DeleteEmailAsync(DeleteEmailRequest request, Guid authenticatedUserId);
+
+        Task<CleanupEmailsResponse> CleanupEmailsAsync(CleanupEmailsRequest request, CancellationToken cancellationToken);
     }
 }

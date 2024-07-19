@@ -16,7 +16,7 @@ namespace Fakemail.IntegrationTests
         [Fact]
         public async Task UnencryptedSmtpShouldBeRejected()
         {
-            var smtpClient = new SmtpClient("fakemail.stream", _port)
+            var smtpClient = new SmtpClient("mail-test.fakemail.stream", _port)
             {
                 Credentials = new NetworkCredential
                 {
@@ -45,12 +45,12 @@ namespace Fakemail.IntegrationTests
             // Uncomment following line to accept invalid server certificate
             //ServicePointManager.ServerCertificateValidationCallback = (sender, certificate, chain, sslPolicyErrors) => true;
 
-            var smtpClient = new SmtpClient("fakemail.stream", _port)
+            var smtpClient = new SmtpClient("test.fakemail.stream", _port)
             {
                 Credentials = new NetworkCredential
                 {
-                    UserName = "1tpxdz",
-                    Password = "9o77B2C7gEU"
+                    UserName = "0skzyr",
+                    Password = "kXj2pjGdjav"
                 },
                 EnableSsl = true
             };

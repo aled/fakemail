@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text.RegularExpressions;
+using System.Threading;
 using System.Threading.Tasks;
 
 using Microsoft.Data.Sqlite;
@@ -14,9 +15,7 @@ using MimeKit;
 
 using Fakemail.ApiModels;
 using Fakemail.Data.EntityFramework;
-
 using static Fakemail.Cryptography.Sha2Crypt;
-
 using DataAttachment = Fakemail.Data.EntityFramework.Attachment;
 using DataEmail = Fakemail.Data.EntityFramework.Email;
 using DataSmtpUser = Fakemail.Data.EntityFramework.SmtpUser;
@@ -26,7 +25,9 @@ namespace Fakemail.Core
 {
     public partial class Engine(
         IDbContextFactory<FakemailDbContext> dbFactory, 
-        ILogger<Engine> log, IJwtAuthentication auth, 
+        ILogger<Engine> log, 
+        IJwtAuthentication auth,
+        TimeProvider timeProvider,
         IPwnedPasswordApi pwnedPasswordApi) : IEngine
     {
         [GeneratedRegex(@"^from (?<ReceivedFromHost>.*) \((?<ReceivedFromDns>.*) \[(?<ReceivedFromIp>.*)\]\)\s+by (?<ReceivedByHost>.*) \((?<SmtpdName>.*)\) with (?<SmtpIdType>.*) id (?<SmtpId>.*) \((?<TlsInfo>TLS.*)\) auth=yes user=(?<SmtpUsername>[a-zA-Z0-9]+)(\s+for <(?<ReceivedFor>.*)>)?;\s(?<ReceivedWeekday>.*), (?<ReceivedDay>.*) (?<ReceivedMonth>.*) (?<ReceivedYear>.*) (?<ReceivedTime>.*) (?<ReceivedTimeOffset>.*) \((?<ReceivedTimezone>.*)\)$")]
@@ -618,6 +619,48 @@ namespace Fakemail.Core
             return new DeleteEmailResponse
             {
                 Success = true
+            };
+        }
+
+        public async Task<CleanupEmailsResponse> CleanupEmailsAsync(CleanupEmailsRequest request, CancellationToken cancellationToken)
+        {
+            var maxEmailAge = TimeSpan.FromSeconds(request.MaxEmailAgeSeconds);
+            var deleteEmailsEarlierThan = timeProvider.GetUtcNow().Subtract(maxEmailAge);
+
+            var batchSize = 1000;
+
+            using var db = dbFactory.CreateDbContext();
+            var emailsDeleted = 0;
+            var totalEmailsDeleted = 0;
+
+            // keep emails newer than the maxEmailAge; delete others
+            do
+            {
+                FormattableString sql = $"DELETE FROM Email WHERE ReceivedTimestampUtc < {deleteEmailsEarlierThan}";
+                emailsDeleted = await db.Database.ExecuteSqlAsync(sql, cancellationToken);
+                totalEmailsDeleted += emailsDeleted;
+            } while (emailsDeleted > 0);
+
+            // keep newest N emails per user; delete others
+            do
+            {
+                // TODO: This, but in EF with a single roundtrip. (Is it even possible?)
+                FormattableString sql = @$"WITH t1 AS (
+        SELECT emailId, ROW_NUMBER() OVER (PARTITION BY smtpUsername ORDER BY ReceivedTimestampUtc DESC, SequenceNumber DESC) AS row_number
+        FROM email),
+     t2 AS (
+        SELECT emailId FROM t1 WHERE row_number > {request.MaxEmailCount} LIMIT {batchSize})
+DELETE FROM email WHERE emailId IN (SELECT emailId FROM t2)";
+
+                emailsDeleted = await db.Database.ExecuteSqlAsync(sql, cancellationToken);
+
+                totalEmailsDeleted += emailsDeleted;
+            } while (emailsDeleted > 0);
+
+            return new CleanupEmailsResponse
+            {
+                Success = true,
+                TotalEmailsDeleted = totalEmailsDeleted
             };
         }
     } 

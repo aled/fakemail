@@ -30,6 +30,13 @@
       shell: /bin/bash
       group: fakemail
 
+  - name: Add group execute/write permission to fakemail home dir
+    ansible.builtin.file:
+      path: "/home/fakemail"
+      state: directory
+      mode: '0770'
+      recurse: no
+
   - name: Create .ssh directory
     file:
       path: /home/fakemail/.ssh
@@ -67,7 +74,7 @@
       dest: /home/fakemail/smtp-aliasing
       owner: fakemail
       group: fakemail
-      mode: '0640'
+      mode: '0660'
 
   - name: Upload config - sqlite.conf
     copy:
@@ -75,10 +82,18 @@
       dest: /home/fakemail/sqlite.conf
       owner: fakemail
       group: fakemail
-      mode: '0640'
+      mode: '0660'
 
   handlers:
   - name: restart opensmtpd
     service:
       name=opensmtpd
       state=restarted
+
+
+  - name: Change permissions for directories and files
+    ansible.builtin.file:
+      path: "/opt/this/is/just/an/example"
+      state: directory
+      mode: '0755'
+      recurse: yes

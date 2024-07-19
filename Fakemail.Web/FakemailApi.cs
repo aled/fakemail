@@ -4,20 +4,13 @@ using Fakemail.ApiModels;
 
 namespace Fakemail.Web
 {
-    public class FakemailApi : IFakemailApi
+    public class FakemailApi(HttpClient httpClient, IOptions<FakemailApiOptions> options) : IFakemailApi
     {
-        private HttpClient _httpClient;
-        private FakemailApiOptions _options;
-
-        public FakemailApi(HttpClient httpClient, IOptions<FakemailApiOptions> options)
-        {
-            _httpClient = httpClient;
-            _options = options.Value;
-        }
+        private readonly FakemailApiOptions _options = options.Value;
 
         private async Task<TResp> CallAsync<TReq, TResp>(TReq req, string path)
         {
-            var response = await _httpClient.PostAsJsonAsync($"{_options.BaseUri}{path}", req);
+            var response = await httpClient.PostAsJsonAsync($"{_options.BaseUri}{path}", req);
             return await response.Content.FromJsonAsync<TResp>();
         }
 

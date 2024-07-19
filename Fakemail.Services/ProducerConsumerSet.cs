@@ -6,8 +6,8 @@ namespace Fakemail.Services
 {
     public class ProducerConsumerSet<T> : IProducerConsumerCollection<T>
     {
-        private SortedSet<T> _items = new SortedSet<T>();
-        private object _lock = new object();
+        private readonly SortedSet<T> _items = [];
+        private readonly object _lock = new();
 
         public int Count
         { 
@@ -49,7 +49,7 @@ namespace Fakemail.Services
         {
             lock (_lock)
             {
-                return _items.ToArray();
+                return [.. _items];
             }
         }
 
@@ -67,13 +67,13 @@ namespace Fakemail.Services
         {
             lock (_lock)
             {
-                if (_items.Any())
+                if (_items.Count != 0)
                 {
                     item = _items.First();
                     _items.Remove(item);
                     return true;
                 }
-                item = default(T);
+                item = default;
                 return false;
             }
         }

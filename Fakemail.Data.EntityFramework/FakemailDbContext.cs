@@ -22,17 +22,12 @@ namespace Fakemail.Data.EntityFramework
         }
     }
 
-    public class FakemailDbContext : DbContext
+    /// <summary>
+    /// This constructor used by the DI container
+    /// </summary>
+    /// <param name="options"></param>
+    public class FakemailDbContext(DbContextOptions<FakemailDbContext> options) : DbContext(options)
     {
-        /// <summary>
-        /// This constructor used by the DI container
-        /// </summary>
-        /// <param name="options"></param>
-        public FakemailDbContext(DbContextOptions<FakemailDbContext> options)
-            : base(options)
-        {
-        }
-
         public DbSet<User> Users { get; set; }
 
         public DbSet<SmtpUser> SmtpUsers { get; set; }
@@ -71,13 +66,21 @@ namespace Fakemail.Data.EntityFramework
 
             // Seed data for SMTP Alias table - this is required by the smtp server in order to deliver mail, 
             // using the linux 'fakemail' account.
-            builder.Entity<SmtpAlias>().HasData(new SmtpAlias() { Account = "fakemail"});
+            builder.Entity<SmtpAlias>()
+                .HasData(new SmtpAlias() { Account = "fakemail"});
 
             builder.Entity<User>()
                 .HasIndex(u => u.Username)
                 .IsUnique();
 
-            builder.Entity<Email>().HasOne(x => x.SmtpUser).WithMany(x => x.Emails).HasForeignKey(x => x.SmtpUsername);
+            builder.Entity<Email>()
+                .HasOne(x => x.SmtpUser)
+                .WithMany(x => x.Emails)
+                .HasForeignKey(x => x.SmtpUsername);
+
+            // This index used in cleanup service
+            builder.Entity<Email>()
+                .HasIndex(x => x.ReceivedTimestampUtc);
         }
     }
 }

@@ -26,6 +26,7 @@ builder.Host.UseSerilog((ctx, loggerConfiguration) => loggerConfiguration.WriteT
 
 builder.Services.AddDbContextFactory<FakemailDbContext>(options => options.UseSqlite(connectionString));
 builder.Services.AddSingleton(Log.Logger);
+builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddSingleton<IEngine, Engine>();
 builder.Services.AddHttpClient<IPwnedPasswordApi, PwnedPasswordApi>()
     .AddPolicyHandler(HttpPolicyExtensions.HandleTransientHttpError()
