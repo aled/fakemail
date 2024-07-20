@@ -19,8 +19,8 @@ Username: <span class="sourcecode">@Model.SmtpCredentials.First().SmtpUsername</
 Password: <span class="sourcecode">@Model.SmtpCredentials.First().SmtpPassword</span>
 </p>
 
-<button class="btn btn-secondary btn-sm" onclick="InjectTestEmail('@Model.UserId', '@Model.SmtpCredentials.First().SmtpUsername')">Inject test email now</button>
-<button class="btn btn-secondary btn-sm" onclick="DeleteAllEmails('@Model.UserId', '@Model.SmtpCredentials.First().SmtpUsername')">Delete All</button>
+<button class="btn btn-secondary btn-sm" onclick="InjectTestEmail('@Model.UserId', '@Model.SmtpCredentials.First().SmtpUsername')">Inject test email</button>
+<button class="btn btn-secondary btn-sm" onclick="DeleteAllEmails('@Model.UserId', '@Model.SmtpCredentials.First().SmtpUsername')">Delete all</button>
 
 <div id="_EmailSummaryTable">
     @await Html.PartialAsync("_EmailSummaryTable")
