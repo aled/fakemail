@@ -18,7 +18,7 @@ namespace Fakemail.RateLimiter
                 ipAddress = context.Connection.RemoteIpAddress;
             }
 
-            logger.LogInformation("RateLimiting: checking {ipAddress}", ipAddress);
+            logger.LogInformation("RateLimiter: checking {ipAddress} for {url}", ipAddress, context.Request.Path);
 
             var ipAddressBytes = context.Connection.RemoteIpAddress.GetAddressBytes();
 
