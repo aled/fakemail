@@ -15,7 +15,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [debian-12]
+        os: [ubuntu-20.04]
         dotnet-version: ['8.0.x']
 
     steps:
