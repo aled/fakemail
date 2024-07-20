@@ -14,9 +14,9 @@
 
 <p><span style="font-weight: 700">Welcome, @Model.Username.</span></p>
 <p>Here are your SMTP settings =>
-Host: <span class="sourcecode">fakemail.stream:587</span>
-Username: <span class="sourcecode">@Model.SmtpCredentials.First().SmtpUsername</span>
-Password: <span class="sourcecode">@Model.SmtpCredentials.First().SmtpPassword</span>
+Host: <span class="sourcecode copyable-text" data-bs-toggle="tooltip" data-bs-placement="top" title="Copy to clipboard">fakemail.stream:587</span>
+Username: <span class="sourcecode copyable-text" data-bs-toggle="tooltip" data-bs-placement="top" title="Copy to clipboard">@Model.SmtpCredentials.First().SmtpUsername</span>
+Password: <span class="sourcecode copyable-text" data-bs-toggle="tooltip" data-bs-placement="top" title="Copy to clipboard">@Model.SmtpCredentials.First().SmtpPassword</span>
 </p>
 
 <button class="btn btn-secondary btn-sm" onclick="InjectTestEmail('@Model.UserId', '@Model.SmtpCredentials.First().SmtpUsername')">Inject test email</button>
@@ -32,7 +32,9 @@ Password: <span class="sourcecode">@Model.SmtpCredentials.First().SmtpPassword</
 
 <iframe id="download_iframe" style="display:none;"></iframe>
 
+@section Scripts {
 <script type="text/javascript">
+
     var sequenceNumber = 0;
 
     window.onload = (event) => {
@@ -113,6 +115,8 @@ Password: <span class="sourcecode">@Model.SmtpCredentials.First().SmtpPassword</
             $("tr[emailId='" + emailId + "']").remove();
         });
     }
+
 </script>
+}
 
 
