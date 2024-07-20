@@ -19,6 +19,14 @@ var builder = WebApplication.CreateBuilder(args);
 var connectionString = builder.Configuration.GetConnectionString("fakemail");
 
 var jwtSecret = builder.Configuration["Jwt:Secret"];
+
+// JWT secret must be at least 64 characters in length (this gives 256 bits of randomness when the characters
+// are hex digits)
+if (jwtSecret?.Length < 64)
+{
+    throw new Exception("JWT secret must be at least 64 characters");
+}
+
 var jwtValidIssuer = builder.Configuration["Jwt:ValidIssuer"];
 var jwtExpiryMinutes = Convert.ToInt32(builder.Configuration["Jwt:ExpiryMinutes"]);
 

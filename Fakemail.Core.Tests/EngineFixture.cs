@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Security.Cryptography;
 using System.Threading.Tasks;
 
 using Fakemail.Data.EntityFramework;
@@ -30,23 +31,47 @@ namespace Fakemail.Core.Tests
         }
     }
 
-    public sealed class EngineFixture : IDisposable
+    public class ShortJwtKeyEngineFixture : EngineFixture
+    {
+        public override string JwtSigningKey => RandomNumberGenerator.GetHexString(63);
+    }
+
+    public class EngineFixture : IDisposable
     {
         private readonly string _dbFile = $"{Directory.GetCurrentDirectory()}{Path.DirectorySeparatorChar}fakemail-enginetests-{DateTime.Now:HHmmss}-{Utils.CreateId()}.sqlite";
-        private readonly IHost host;
 
-        public IEngine Engine => host.Services.GetRequiredService<IEngine>();
+        private IHost? host;
 
-        public FakeTimeProvider TimeProvider => (FakeTimeProvider)host.Services.GetRequiredService<TimeProvider>();
+        private readonly Lazy<IEngine> _engine;
+
+        public IEngine Engine => _engine.Value;
+
+        public FakeTimeProvider TimeProvider => host?.Services.GetRequiredService<TimeProvider>() as FakeTimeProvider ?? throw new Exception();
 
         public static readonly string ExamplePwnedPassword = "asdfasdfasdf";
 
+        // use a random jwt signing key, so tokens generated here will not be valid in production or anywhere else
+        public virtual string JwtSigningKey => RandomNumberGenerator.GetHexString(64);
+
         public EngineFixture()
         {
-            host = CreateHostBuilder().Build();
-            using var scope = host.Services.CreateScope();
-            var db = scope.ServiceProvider.GetRequiredService<FakemailDbContext>();
-            db.Database.EnsureCreated();
+            // The engine is created lazily so that exceptions (e.g. due to invalid JWT key length) are
+            // not raised in internal XUnit classes.
+            _engine = new Lazy<IEngine>(CreateEngine);
+        }
+
+        private IEngine CreateEngine()
+        {
+            host = CreateHostBuilder()
+             .Build();
+
+            using (var scope = host.Services.CreateScope())
+            {
+                var db = scope.ServiceProvider.GetRequiredService<FakemailDbContext>();
+                db.Database.EnsureCreated();
+            }
+
+            return host.Services.GetRequiredService<IEngine>();
         }
 
         private IHostBuilder CreateHostBuilder()
@@ -54,9 +79,6 @@ namespace Fakemail.Core.Tests
             Log.Logger = new LoggerConfiguration()
                 .WriteTo.Console()
                 .CreateLogger();
-
-            // use a random jwt signing key, so tokens generated here will not be valid in production or anywhere else
-            var jwtSigningKey = Utils.CreateId(16) + Utils.CreateId(16);
 
             return Host.CreateDefaultBuilder()
                 .UseSerilog()
@@ -66,7 +88,7 @@ namespace Fakemail.Core.Tests
                     services.AddSingleton(Log.Logger);
                     services.AddSingleton<TimeProvider, FakeTimeProvider>();
                     services.AddSingleton<IEngine, Engine>();
-                    services.AddSingleton<IJwtAuthentication>(new JwtAuthentication(jwtSigningKey, "", 10));
+                    services.AddSingleton<IJwtAuthentication>(new JwtAuthentication(JwtSigningKey, "", 10));
 
                     // Swap the commented line to use the real PwnedPassword Api in tests
                     services.AddSingleton<IPwnedPasswordApi, DummyPwnedPasswordApi>();
@@ -80,15 +102,27 @@ namespace Fakemail.Core.Tests
 
         public void Dispose()
         {
-            var log = host.Services.GetRequiredService<ILogger>();
-            log.Information("Disposing of EngineFixture");
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
 
-            using (var scope = host.Services.CreateScope())
+        protected virtual void Dispose(bool disposing)
+        {
+            if (disposing)
             {
-                var db = scope.ServiceProvider.GetRequiredService<FakemailDbContext>();
-                db.Database.EnsureDeleted();
+                if (host != null)
+                {
+                    var log = host.Services.GetRequiredService<ILogger>();
+                    log.Information("Disposing of EngineFixture");
+
+                    using (var scope = host.Services.CreateScope())
+                    {
+                        var db = scope.ServiceProvider.GetRequiredService<FakemailDbContext>();
+                        db.Database.EnsureDeleted();
+                    }
+                    File.Delete(_dbFile);
+                }
             }
-            File.Delete(_dbFile);
         }
     }
 }

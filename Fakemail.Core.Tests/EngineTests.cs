@@ -12,6 +12,19 @@ using Xunit;
 
 namespace Fakemail.Core.Tests
 {
+    // This is a separate test class, not just a method in EngineTests, because we need to
+    // parameterize the EngineFixture. This is not supported in XUnit, so workaround that
+    // by subclassing the fixture class and putting this test in a new test class.
+    public class ShortJwtKeyTests(ShortJwtKeyEngineFixture fixture) : IClassFixture<ShortJwtKeyEngineFixture>
+    {
+        [Fact]
+        public void CreateUser()
+        {
+            Action action = () => { var x = fixture.Engine; return; };
+            action.Should().Throw<Exception>();
+        }
+    }
+
     public partial class EngineTests(EngineFixture fixture) : IClassFixture<EngineFixture>
     {
         [Theory]

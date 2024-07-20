@@ -10,19 +10,22 @@ namespace Fakemail.Core
 {
     public class JwtAuthentication : IJwtAuthentication
     {
-        private readonly byte[] _secretBytes;
+        private readonly string _secret;
         private readonly string _validIssuer;
         private readonly int _expiryMinutes;
 
         public JwtAuthentication(string secret, string validIssuer, int expiryMinutes)
         {
-            // secret must be at least 256 bits (32 bytes) otherwise the SymmetricSecurityKey constructor will throw an exception
-            if (secret == null || secret.Length < 32)
+            // The CreateToken() method will fail if the secret (converted to bytes) is smaller than 32 bytes.
+            //
+            // As our secret is ASCII encoded, we need more characters than this to get 32 bytes of
+            // randomness. To allow the secret to be specified as hex, require it to be at least 64 characters.
+            if (secret?.Length < 64)
             {
-                throw new Exception("Invalid JWT secret - must be at least 32 bytes");
+                throw new Exception("JWT secret must be at least 64 characters in length");
             }
 
-            _secretBytes = Encoding.ASCII.GetBytes(secret);
+            _secret = secret;
             _validIssuer = validIssuer;
             _expiryMinutes = expiryMinutes;
         }
@@ -41,7 +44,7 @@ namespace Fakemail.Core
             }
 
             var tokenHandler = new JwtSecurityTokenHandler();
-            var tokenKey = _secretBytes;
+            var tokenKey = Encoding.ASCII.GetBytes(_secret);
             var tokenDescriptor = new SecurityTokenDescriptor
             {
                 Issuer = _validIssuer,
