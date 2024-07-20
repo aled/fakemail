@@ -1,20 +1,19 @@
-﻿using System;
-using System.Collections.Concurrent;
+﻿using System.Collections.Concurrent;
+
+using Fakemail.ApiModels;
+using Fakemail.Core;
 
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
-using Fakemail.Core;
-using Fakemail.ApiModels;
-
 namespace Fakemail.Services
 {
     // To be run either as a standalone executable, or as a worker service within the API
     public class DeliveryAgent(
-        IEngine engine, 
-        ILogger<DeliveryAgent> log, 
-        IOptions<DeliveryAgentOptions> options) 
+        IEngine engine,
+        ILogger<DeliveryAgent> log,
+        IOptions<DeliveryAgentOptions> options)
         : BackgroundService
     {
         private readonly BlockingCollection<string> _queue = new(new ProducerConsumerSet<string>(), 2);
@@ -97,8 +96,8 @@ namespace Fakemail.Services
                             {
                                 response = await engine.CreateEmailAsync(stream);
                             }
-                            
-                            if (response.Success) 
+
+                            if (response.Success)
                             {
                                 File.Delete(fileInfo.FullName);
                             }
@@ -125,7 +124,6 @@ namespace Fakemail.Services
                         catch (Exception e)
                         {
                             log.LogError("Exception while delivering mail: {errorMessage}\n{stackTrace}", e.Message, e.StackTrace);
-
                         }
                     }
                 }

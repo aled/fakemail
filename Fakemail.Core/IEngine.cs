@@ -17,7 +17,7 @@ namespace Fakemail.Core
         Task<CreateUserResponse> CreateUserAsync(CreateUserRequest request);
 
         Task<GetTokenResponse> GetTokenAsync(GetTokenRequest user);
-       
+
         Task<ListUserResponse> ListUsersAsync(ListUserRequest request);
 
         Task<CreateEmailResponse> CreateEmailAsync(Stream messageStream);

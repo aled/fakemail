@@ -1,5 +1,4 @@
-﻿
-namespace Fakemail.RateLimiter
+﻿namespace Fakemail.RateLimiter
 {
     public interface IRateLimiter<K> where K : notnull, IComparable<K>
     {

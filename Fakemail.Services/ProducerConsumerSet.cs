@@ -10,7 +10,7 @@ namespace Fakemail.Services
         private readonly object _lock = new();
 
         public int Count
-        { 
+        {
             get
             {
                 lock (_lock)

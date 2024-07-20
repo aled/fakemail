@@ -1,6 +1,6 @@
-﻿using Microsoft.Extensions.Options;
+﻿using Fakemail.ApiModels;
 
-using Fakemail.ApiModels;
+using Microsoft.Extensions.Options;
 
 namespace Fakemail.Web
 {
@@ -19,7 +19,7 @@ namespace Fakemail.Web
 
         public Task<ListEmailsResponse> ListEmailsAsync(ListEmailsRequest request) =>
             CallAsync<ListEmailsRequest, ListEmailsResponse>(request, "mail/list");
-            
+
         public Task<ListEmailsBySequenceNumberResponse> ListEmailsBySequenceNumberAsync(ListEmailsBySequenceNumberRequest request) =>
             CallAsync<ListEmailsBySequenceNumberRequest, ListEmailsBySequenceNumberResponse>(request, "mail/listbysequencenumber");
 

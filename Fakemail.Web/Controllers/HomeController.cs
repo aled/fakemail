@@ -1,19 +1,14 @@
 ﻿using System.Diagnostics;
-using System.Net.Http.Headers;
 using System.Net.Mime;
 using System.Text;
 
 using Fakemail.ApiModels;
-using Fakemail.Data.EntityFramework;
 using Fakemail.Web.Models;
 
 using Microsoft.AspNetCore.Mvc;
 
-using MimeKit;
-
 namespace Fakemail.Web.Controllers
 {
-
     public class HomeController(ILogger<HomeController> logger, IFakemailApiClient fakemailApi) : Controller
     {
         public IActionResult Index()
@@ -96,7 +91,8 @@ namespace Fakemail.Web.Controllers
         [Route("user/{userId}/email/{emailId}")]
         public async Task<IActionResult> UserEmailGet(Guid userId, Guid emailId)
         {
-            var resp = await fakemailApi.GetEmailAsync(new GetEmailRequest {
+            var resp = await fakemailApi.GetEmailAsync(new GetEmailRequest
+            {
                 UserId = userId,
                 EmailId = emailId
             });

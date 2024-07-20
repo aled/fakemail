@@ -8,6 +8,7 @@ namespace Fakemail.Cryptography
     public static class HashAlgorithmExtensions
     {
         public static void Update(this HashAlgorithm algorithm, byte[] buf) => algorithm.TransformBlock(buf, 0, buf.Length, null, 0);
+
         public static void Update(this HashAlgorithm algorithm, byte[] buf, int offset, int len) => algorithm.TransformBlock(buf, offset, len, null, 0);
 
         public static byte[] Digest(this HashAlgorithm algorithm)

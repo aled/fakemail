@@ -2,7 +2,7 @@
 
 namespace Fakemail.RateLimiter.Tests
 {
-    static class Extensions
+    internal static class Extensions
     {
         public static (bool, long) IsRateLimited<K>(this IRateLimiter<K> r, K key)
             where K : notnull, IComparable<K>

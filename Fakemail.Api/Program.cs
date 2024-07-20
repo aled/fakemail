@@ -43,9 +43,9 @@ builder.Services.AddCors(options =>
         policy.WithOrigins("https://localhost:7150");
     });
 });
-      
+
 builder.Services.AddControllers().AddJsonOptions(options => options.JsonSerializerOptions.DefaultIgnoreCondition
-   = JsonIgnoreCondition.WhenWritingDefault 
+   = JsonIgnoreCondition.WhenWritingDefault
    | JsonIgnoreCondition.WhenWritingNull);
 
 builder.Services.AddAuthentication(x =>
@@ -104,7 +104,7 @@ builder.Services.AddSwaggerGen(options =>
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment()) 
+if (app.Environment.IsDevelopment())
 {
     app.UseDeveloperExceptionPage();
     app.UseSwagger();

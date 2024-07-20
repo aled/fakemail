@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace Fakemail.ApiModels
+﻿namespace Fakemail.ApiModels
 {
     public class CreateUserRequest
     {

@@ -1,11 +1,11 @@
-using System;
 using System.IO;
-using System.Text;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 
-using Xunit;
 using MimeKit;
+
+using Xunit;
 
 namespace Fakemail.Core.Tests
 {

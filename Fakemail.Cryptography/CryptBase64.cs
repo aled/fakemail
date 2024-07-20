@@ -8,14 +8,14 @@ namespace Fakemail.Cryptography
     /// Padding is not implemented differently from 'normal' base 64; the salt uses the symbols directly and the hash
     /// uses it's own padding mechanism.
     /// </summary>
-    class CryptBase64
+    internal class CryptBase64
     {
-        static readonly char[] BASE64_SYMBOLS = "./0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz".ToCharArray();
+        private static readonly char[] BASE64_SYMBOLS = "./0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz".ToCharArray();
 
         public static void AppendBase64from24bit(byte b2, byte b1, byte b0, int outLen, StringBuilder builder)
         {
             int w = (b2 << 16) | (b1 << 8) | b0;
-            
+
             int n = outLen;
             while (n-- > 0)
             {

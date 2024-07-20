@@ -1,10 +1,9 @@
-﻿using System;
+﻿using Fakemail.ApiModels;
+using Fakemail.Core;
+
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-
-using Fakemail.ApiModels;
-using Fakemail.Core;
 
 namespace Fakemail.Services
 {

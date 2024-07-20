@@ -6,8 +6,8 @@ using Microsoft.Extensions.Logging;
 namespace Fakemail.RateLimiter
 {
     public class IpRateLimitingMiddleware(
-        RequestDelegate next, 
-        ILogger<IpRateLimitingMiddleware> logger, 
+        RequestDelegate next,
+        ILogger<IpRateLimitingMiddleware> logger,
         IRateLimiter<uint> rateLimiter)
     {
         public async Task InvokeAsync(HttpContext context)

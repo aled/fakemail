@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Fakemail.Core;
+using Fakemail.Data.EntityFramework;
 
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -6,9 +7,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
 using Serilog;
-
-using Fakemail.Core;
-using Fakemail.Data.EntityFramework;
 
 namespace Fakemail.Services
 {
@@ -34,7 +32,7 @@ namespace Fakemail.Services
                 {
                     config.Sources.Clear();
                     config.AddJsonFile("appsettings.json", true);
-                    config.AddJsonFile($"appsettings.{hostContext.HostingEnvironment.EnvironmentName}.json", true);                    
+                    config.AddJsonFile($"appsettings.{hostContext.HostingEnvironment.EnvironmentName}.json", true);
                     configRoot = config.Build();
                 })
                 .UseSerilog()
@@ -73,6 +71,5 @@ namespace Fakemail.Services
 
             await host.RunAsync();
         }
-
     }
 }

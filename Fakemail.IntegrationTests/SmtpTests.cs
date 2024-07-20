@@ -1,9 +1,9 @@
 ﻿using System;
 using System.IO;
-using System.Threading.Tasks;
-using System.Text;
-using System.Net.Mail;
 using System.Net;
+using System.Net.Mail;
+using System.Text;
+using System.Threading.Tasks;
 
 using Xunit;
 
@@ -61,14 +61,14 @@ namespace Fakemail.IntegrationTests
                 Body = "Body",
                 From = new MailAddress("From@From.example.com")
             };
-            email.To.Add(new MailAddress("To@example1.stream"));           
+            email.To.Add(new MailAddress("To@example1.stream"));
             email.CC.Add(new MailAddress("To@example2.stream"));
             email.CC.Add(new MailAddress("To@example3.stream"));
             email.Bcc.Add(new MailAddress("To@example3.stream"));
             email.Bcc.Add(new MailAddress("To@example4.stream"));
             var content = new MemoryStream(Encoding.UTF8.GetBytes("hello"));
             var attachment = new Attachment(content, "a.txt");
-            
+
             email.Attachments.Add(attachment);
             await smtpClient.SendMailAsync(email);
         }

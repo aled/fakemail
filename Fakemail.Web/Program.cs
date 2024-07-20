@@ -1,4 +1,3 @@
-using Fakemail.Core;
 using Fakemail.RateLimiter;
 using Fakemail.Web;
 

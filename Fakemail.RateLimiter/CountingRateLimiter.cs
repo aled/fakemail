@@ -1,10 +1,8 @@
-﻿using System;
-
-using Microsoft.Extensions.Options;
+﻿using Microsoft.Extensions.Options;
 
 namespace Fakemail.RateLimiter
 {
-    static class Extensions
+    internal static class Extensions
     {
         public static DateTime RoundDown(this DateTime dt, TimeSpan period)
         {
@@ -19,7 +17,7 @@ namespace Fakemail.RateLimiter
         /// Use a fixed struct (no references) to reduce memory usage
         /// TODO: use smaller datatypes if necessary
         /// </summary>
-        struct Counts
+        private struct Counts
         {
             public DateTime lastUpdate;
             public int countA;

@@ -1,8 +1,8 @@
-﻿using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
-
-using Fakemail.ApiModels;
+﻿using Fakemail.ApiModels;
 using Fakemail.Core;
+
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 
 namespace Fakemail.Api.Controllers
 {
@@ -11,9 +11,8 @@ namespace Fakemail.Api.Controllers
     [ApiController]
     public class UserController(IEngine engine) : ControllerBase
     {
-
         // POST: api/user/list
-        [Authorize(Roles="admin")]
+        [Authorize(Roles = "admin")]
         [HttpPost]
         [Route("list")]
         public async Task<IActionResult> ListUsers([FromBody] ListUserRequest request)

@@ -1,16 +1,14 @@
 using System;
+using System.IO;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-using Xunit;
+using Fakemail.ApiModels;
+
 using FluentAssertions;
 
-using Fakemail.ApiModels;
-using System.IO;
-using System.Text;
-using MimeKit;
-using System.Collections.Generic;
-using Microsoft.Extensions.Time.Testing;
+using Xunit;
 
 namespace Fakemail.Core.Tests
 {
@@ -303,7 +301,7 @@ namespace Fakemail.Core.Tests
 
             response.Should().NotBeNull();
             response.ErrorMessage.Should().BeNull();
-            
+
             return (response.UserId!.Value, response.SmtpUsername);
         }
 

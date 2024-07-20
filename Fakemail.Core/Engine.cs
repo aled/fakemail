@@ -7,15 +7,17 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 
+using Fakemail.ApiModels;
+using Fakemail.Data.EntityFramework;
+
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
 using MimeKit;
 
-using Fakemail.ApiModels;
-using Fakemail.Data.EntityFramework;
 using static Fakemail.Cryptography.Sha2Crypt;
+
 using DataAttachment = Fakemail.Data.EntityFramework.Attachment;
 using DataEmail = Fakemail.Data.EntityFramework.Email;
 using DataSmtpUser = Fakemail.Data.EntityFramework.SmtpUser;
@@ -24,15 +26,15 @@ using DataUser = Fakemail.Data.EntityFramework.User;
 namespace Fakemail.Core
 {
     public partial class Engine(
-        IDbContextFactory<FakemailDbContext> dbFactory, 
-        ILogger<Engine> log, 
+        IDbContextFactory<FakemailDbContext> dbFactory,
+        ILogger<Engine> log,
         IJwtAuthentication auth,
         TimeProvider timeProvider,
         IPwnedPasswordApi pwnedPasswordApi) : IEngine
     {
         [GeneratedRegex(@"^from (?<ReceivedFromHost>.*) \((?<ReceivedFromDns>.*) \[(?<ReceivedFromIp>.*)\]\)\s+by (?<ReceivedByHost>.*) \((?<SmtpdName>.*)\) with (?<SmtpIdType>.*) id (?<SmtpId>.*) \((?<TlsInfo>TLS.*)\) auth=yes user=(?<SmtpUsername>[a-zA-Z0-9]+)(\s+for <(?<ReceivedFor>.*)>)?;\s(?<ReceivedWeekday>.*), (?<ReceivedDay>.*) (?<ReceivedMonth>.*) (?<ReceivedYear>.*) (?<ReceivedTime>.*) (?<ReceivedTimeOffset>.*) \((?<ReceivedTimezone>.*)\)$")]
         private static partial Regex ReceivedHeaderRegex();
-        
+
         /// <summary>
         /// Create a user
         /// </summary>
@@ -149,7 +151,6 @@ namespace Fakemail.Core
                         };
                     }
                     log.LogError("Failed to update database: {message}", se.Message);
-
                 }
                 else
                 {
@@ -160,7 +161,7 @@ namespace Fakemail.Core
             {
                 log.LogError("Exception: {message}", ex.Message);
             }
-       
+
             return new CreateUserResponse
             {
                 ErrorMessage = "Server error",
@@ -237,7 +238,7 @@ namespace Fakemail.Core
         }
 
         /// <summary>
-        /// This method is used to insert new messages into the database that have been delivered via 
+        /// This method is used to insert new messages into the database that have been delivered via
         /// the SMTP server.
         /// </summary>
         /// <param name="messageStream"></param>
@@ -250,7 +251,7 @@ namespace Fakemail.Core
                 // access the underlying buffer to store the raw message in the database
                 var stream = new MemoryStream();
                 await messageStream.CopyToAsync(stream);
-                
+
                 stream.Position = 0;
                 var m = MimeMessage.Load(stream);
 
@@ -366,7 +367,7 @@ namespace Fakemail.Core
                 log.LogError("Exception in CreateMailAsync: {message}\n{stacktrace}", e.Message, e.StackTrace);
 
                 return new CreateEmailResponse
-                { 
+                {
                     Success = false,
                     ErrorMessage = "Failed to create email"
                 };
@@ -409,7 +410,7 @@ namespace Fakemail.Core
         }
 
         /// <summary>
-        /// 
+        ///
         /// </summary>
         /// <param name="db"></param>
         /// <param name="authenticatedUserId"></param>
@@ -747,5 +748,5 @@ DELETE FROM email WHERE emailId IN (SELECT emailId FROM t2)";
                 TotalEmailsDeleted = totalEmailsDeleted
             };
         }
-    } 
+    }
 }

@@ -1,10 +1,11 @@
 using System;
 
+using FluentAssertions;
+
 using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Time.Testing;
 
 using Xunit;
-using FluentAssertions;
 
 namespace Fakemail.RateLimiter.Tests
 {
@@ -42,7 +43,7 @@ namespace Fakemail.RateLimiter.Tests
             rateLimiter.IsRateLimited("c").Should().Be((true, 1));
             timeProvider.Advance(TimeSpan.FromMilliseconds(1));
 
-            // Fails due to rounding errors if we try to keep the clock on the 
+            // Fails due to rounding errors if we try to keep the clock on the
             // exact boundary of where the rate limiting kicks in.
             // Advance the clock by 1ms to avoid these rounding errors. Nasty.
             timeProvider.Advance(TimeSpan.FromMilliseconds(1));

@@ -1,8 +1,7 @@
-﻿using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
-
-using Fakemail.ApiModels;
+﻿using Fakemail.ApiModels;
 using Fakemail.Core;
+
+using Microsoft.AspNetCore.Mvc;
 
 namespace Fakemail.Api.Controllers
 {

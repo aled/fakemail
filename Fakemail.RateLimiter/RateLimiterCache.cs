@@ -1,13 +1,11 @@
-﻿using System;
-
-namespace Fakemail.RateLimiter
+﻿namespace Fakemail.RateLimiter
 {
     /// <summary>
     /// Memory cache with a well-defined eviction policy.
-    /// 
+    ///
     /// The cache has a hard capacity limit, with the least-recently-updated item evicted when necessary
-    /// 
-    /// There is no expiry of items, they will simply be evicted when newer ones are stored. 
+    ///
+    /// There is no expiry of items, they will simply be evicted when newer ones are stored.
     /// </summary>
     /// <typeparam name="K">Type of the cache key</typeparam>
     /// <typeparam name="V">Type of the cache value</typeparam>
@@ -33,10 +31,11 @@ namespace Fakemail.RateLimiter
 
         /// <summary>
         /// The last-updated-timestamp dictionary requires unique timestamps.
-        /// To force uniqueness, increment the timestamp by as many ticks as 
+        /// To force uniqueness, increment the timestamp by as many ticks as
         /// necessary. This retains the 'least-recently-updated' eviction policy.
         /// </summary>
         private uint tickUniquifier = 0;
+
         private DateTime _previous;
 
         /// <summary>

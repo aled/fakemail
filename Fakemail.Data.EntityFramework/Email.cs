@@ -6,10 +6,10 @@ namespace Fakemail.Data.EntityFramework
 {
     /// <summary>
     /// This represents an email that has been delivered to a mailbox.
-    /// 
-    /// This is different to an email that has been sent, as there is one delivery 
+    ///
+    /// This is different to an email that has been sent, as there is one delivery
     /// for each unique To, CC, or BCC address.
-    /// 
+    ///
     /// To obtain the sent email, need to aggregate delivered emails by all fields
     /// except DeliveredTo (BCC is all recipients not included in To or CC)
     /// </summary>
@@ -47,7 +47,7 @@ namespace Fakemail.Data.EntityFramework
         [Required]
         public string Subject { get; set; }
 
-        // Parse the content of the Received header into more granular properties        
+        // Parse the content of the Received header into more granular properties
         [Required]
         public string ReceivedFromHost { get; set; }
 
@@ -77,10 +77,9 @@ namespace Fakemail.Data.EntityFramework
         /// </summary>
         [Required]
         public string BodySummary { get; set; }
-        
+
         [Required]
         public int BodyChecksum { get; set; }
-
 
         public List<Attachment> Attachments { get; set; }
         public string SmtpUsername { get; set; }

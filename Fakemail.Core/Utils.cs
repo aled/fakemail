@@ -1,15 +1,8 @@
 ﻿using System;
-using System.Drawing;
 using System.Net.Http;
-using System.Numerics;
-using System.Runtime.CompilerServices;
-using System.Runtime.Intrinsics;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
-using Newtonsoft.Json.Linq;
-using Org.BouncyCastle.Security;
-using Org.BouncyCastle.Utilities;
 
 namespace Fakemail.Core
 {
@@ -34,7 +27,7 @@ namespace Fakemail.Core
     }
 
     public static class Utils
-    {        
+    {
         /// <summary>
         /// Create a base-62 string representing 16 bytes.
         /// The returned string will be 22 base-62 characters
@@ -55,7 +48,7 @@ namespace Fakemail.Core
 
         /// <summary>
         /// Create a base-62 string representing an arbritrary number of bytes.
-        /// The returned string will be longer than the number of bytes; 
+        /// The returned string will be longer than the number of bytes;
         /// e.g. 16 bytes will become 22 base-62 characters
         /// </summary>
         /// <param name="size"></param>

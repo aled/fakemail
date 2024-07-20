@@ -8,7 +8,7 @@ namespace Fakemail.RateLimiter
     /// The level of requests in the bucket naturally leaks out over time at the requests-per-second rate.
     /// </summary>
     /// <typeparam name="K">Type of the key used for rate limiting</typeparam>
-    public class BucketRateLimiter<K> : IRateLimiter<K> 
+    public class BucketRateLimiter<K> : IRateLimiter<K>
         where K : notnull, IComparable<K>
     {
         private readonly BucketRateLimiterOptions _options;

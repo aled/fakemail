@@ -1,11 +1,11 @@
 using System;
 
+using FluentAssertions;
+
 using Microsoft.Extensions.Options;
+using Microsoft.Extensions.Time.Testing;
 
 using Xunit;
-using FluentAssertions;
-using System.Linq;
-using Microsoft.Extensions.Time.Testing;
 
 namespace Fakemail.RateLimiter.Tests
 {

@@ -1,6 +1,4 @@
-﻿using System;
-using System.Diagnostics.Metrics;
-using BenchmarkDotNet.Attributes;
+﻿using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Running;
 
 using Microsoft.Extensions.Options;
@@ -16,7 +14,8 @@ namespace Fakemail.RateLimiter.Benchmarks
 
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Performance", "CA1859:Use concrete types when possible for improved performance")]
         private readonly IRateLimiter<int> bucketRateLimiter = new BucketRateLimiter<int>(Options.Create(
-            new BucketRateLimiterOptions {
+            new BucketRateLimiterOptions
+            {
                 Burst = 10000000,
                 CacheSize = 20000,
                 RequestsPerSecond = 10000000f

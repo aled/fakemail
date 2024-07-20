@@ -1,14 +1,13 @@
-﻿using System;
-using System.Security.Cryptography;
+﻿using System.Security.Cryptography;
 using System.Text;
 
 namespace Fakemail.Cryptography
 {
     /// <summary>
     /// C# implementation of the unix crypt() algorithm from https://akkadia.org/drepper/SHA-crypt.txt
-    ///  
+    ///
     /// Implemented for SHA-512 and SHA-256
-    /// 
+    ///
     /// This allows a custom password database to be interoperable between C# and unix
     /// </summary>
     public static class Sha2Crypt
@@ -67,7 +66,7 @@ namespace Fakemail.Cryptography
 
         /// <summary>
         /// Implement the Sha512Crypt algorithm
-        /// This is mostly a translation of the Java version from Apache commmons codec (sha2crypt.java), 
+        /// This is mostly a translation of the Java version from Apache commmons codec (sha2crypt.java),
         /// which is itself a translation of the original C version
         /// </summary>
         /// <param name="algorithm">SHA256 or SHA512</param>
@@ -138,7 +137,6 @@ namespace Fakemail.Cryptography
 
         private static string Crypt(byte[] keyBytes, int rounds, string saltString, bool roundsCustom, string algorithm)
         {
-
             if (rounds < MIN_ROUNDS)
                 rounds = MIN_ROUNDS;
 

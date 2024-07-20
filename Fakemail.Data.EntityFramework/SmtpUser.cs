@@ -4,7 +4,6 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Fakemail.Data.EntityFramework
 {
-
     public class SmtpUser : BaseEntity
     {
         [Required]
@@ -30,6 +29,6 @@ namespace Fakemail.Data.EntityFramework
 
         public User User { get; set; }
 
-        public List<Email> Emails {get; set;}
+        public List<Email> Emails { get; set; }
     }
 }

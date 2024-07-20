@@ -1,6 +1,4 @@
-﻿using System.Linq;
-using System;
-using System.Reflection.Emit;
+﻿using System;
 
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
@@ -57,17 +55,17 @@ namespace Fakemail.Data.EntityFramework
         }
 
         protected override void OnModelCreating(ModelBuilder builder)
-{
+        {
             //This will singularize all table names
             foreach (IMutableEntityType entityType in builder.Model.GetEntityTypes())
             {
                 entityType.SetTableName(entityType.GetDefaultTableName());
             }
 
-            // Seed data for SMTP Alias table - this is required by the smtp server in order to deliver mail, 
+            // Seed data for SMTP Alias table - this is required by the smtp server in order to deliver mail,
             // using the linux 'fakemail' account.
             builder.Entity<SmtpAlias>()
-                .HasData(new SmtpAlias() { Account = "fakemail"});
+                .HasData(new SmtpAlias() { Account = "fakemail" });
 
             builder.Entity<User>()
                 .HasIndex(u => u.Username)
