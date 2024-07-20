@@ -30,11 +30,11 @@
       shell: /bin/bash
       group: fakemail
 
-  - name: Add group execute/write permission to fakemail home dir
+  - name: Add group execute permission to fakemail home dir
     ansible.builtin.file:
       path: "/home/fakemail"
       state: directory
-      mode: '0770'
+      mode: '0750'
       recurse: no
 
   - name: Create .ssh directory
