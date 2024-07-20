@@ -17,17 +17,14 @@ namespace Fakemail.Core.Tests
 {
     public class DummyPwnedPasswordApi : IPwnedPasswordApi
     {
-        public async Task<string> RangeAsync(string prefix)
+        public Task<string> RangeAsync(string prefix)
         {
-            // Prevent warning about async method lacking await operators
-            await Task.Yield();
-
             // The hash for 'asdfasdfasdf' is 79437F5EDDA13F9C0669B978DD7A9066DD2059F1
             // Return this one (and a couple of others), to make that password trigger the
             // PwnedPassword check
-            return "F56E4F3B8721E983BA9C23C260EBF4AA526:1\r\n"
+            return Task.FromResult("F56E4F3B8721E983BA9C23C260EBF4AA526:1\r\n"
                  + "F5EDDA13F9C0669B978DD7A9066DD2059F1:7322\r\n"
-                 + "F5FDC0B32D57F567BE7E6F5A932B995F642:2\r\n";
+                 + "F5FDC0B32D57F567BE7E6F5A932B995F642:2\r\n");
         }
     }
 
