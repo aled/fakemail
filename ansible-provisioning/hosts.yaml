@@ -1,14 +1,14 @@
 all:
   hosts:
     prod:
-      ansible_host: fakemail-prod
+      ansible_host: fakemail.stream
       ansible_ssh_private_key_file: ~/.ssh/fakemail_admin_ed25519
       public_dns_name: fakemail.stream
       is_public: true
       auto_deploy_branch: production
 
     test:
-      ansible_host: fakemail-test
+      ansible_host: test.fakemail.stream
       ansible_ssh_private_key_file: ~/.ssh/fakemail_admin_ed25519
       public_dns_name: test.fakemail.stream
       is_public: true
