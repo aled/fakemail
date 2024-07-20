@@ -4,9 +4,9 @@ using Fakemail.ApiModels;
 
 namespace Fakemail.Web
 {
-    public class FakemailApi(HttpClient httpClient, IOptions<FakemailApiOptions> options) : IFakemailApi
+    public class FakemailApiClient(HttpClient httpClient, IOptions<FakemailApiClientOptions> options) : IFakemailApiClient
     {
-        private readonly FakemailApiOptions _options = options.Value;
+        private readonly FakemailApiClientOptions _options = options.Value;
 
         private async Task<TResp> CallAsync<TReq, TResp>(TReq req, string path)
         {
@@ -19,12 +19,18 @@ namespace Fakemail.Web
 
         public Task<ListEmailsResponse> ListEmailsAsync(ListEmailsRequest request) =>
             CallAsync<ListEmailsRequest, ListEmailsResponse>(request, "mail/list");
+            
+        public Task<ListEmailsBySequenceNumberResponse> ListEmailsBySequenceNumberAsync(ListEmailsBySequenceNumberRequest request) =>
+            CallAsync<ListEmailsBySequenceNumberRequest, ListEmailsBySequenceNumberResponse>(request, "mail/listbysequencenumber");
 
         public Task<GetEmailResponse> GetEmailAsync(GetEmailRequest request) =>
             CallAsync<GetEmailRequest, GetEmailResponse>(request, "mail/get");
 
         public Task<DeleteEmailResponse> DeleteEmailAsync(DeleteEmailRequest request) =>
             CallAsync<DeleteEmailRequest, DeleteEmailResponse>(request, "mail/delete");
+
+        public Task<DeleteAllEmailsResponse> DeleteAllEmailsAsync(DeleteAllEmailsRequest request) =>
+            CallAsync<DeleteAllEmailsRequest, DeleteAllEmailsResponse>(request, "mail/deleteall");
 
         public Task<CreateEmailResponse> CreateEmailAsync(CreateEmailRequest request) =>
             CallAsync<CreateEmailRequest, CreateEmailResponse>(request, "mail/create");

@@ -21,9 +21,9 @@
             <th></th>
         </tr>
     </thead>
-    <tbody id='_ReceivedEmailsTbody'>
+    <tbody id='_EmailSummaryTableBody'>
 
-    @await Html.PartialAsync("_ReceivedEmailRows")      
+    @await Html.PartialAsync("_EmailSummaryRows", new EmailSummaryListModel { EmailSummaries = Model.EmailSummaries} )      
 
     </tbody>    
 </table>

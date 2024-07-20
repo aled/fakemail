@@ -4,6 +4,7 @@ using System.Net.Mime;
 using System.Text;
 
 using Fakemail.ApiModels;
+using Fakemail.Data.EntityFramework;
 using Fakemail.Web.Models;
 
 using Microsoft.AspNetCore.Mvc;
@@ -13,17 +14,8 @@ using MimeKit;
 namespace Fakemail.Web.Controllers
 {
 
-    public class HomeController : Controller
+    public class HomeController(ILogger<HomeController> logger, IFakemailApiClient fakemailApi) : Controller
     {
-        private readonly ILogger<HomeController> _logger;
-        private readonly IFakemailApi _fakemailApi;
-
-        public HomeController(ILogger<HomeController> logger, IFakemailApi fakemailApi)
-        {
-            _logger = logger;
-            _fakemailApi = fakemailApi;
-        }
-
         public IActionResult Index()
         {
             return View();
@@ -33,15 +25,15 @@ namespace Fakemail.Web.Controllers
         [Route("user")]
         public async Task<IActionResult> UserCreate()
         {
-            var resp = await _fakemailApi.CreateUserAsync(new CreateUserRequest());
+            var resp = await fakemailApi.CreateUserAsync(new CreateUserRequest());
             return Redirect($"/user/{resp.UserId}");
         }
 
         [HttpGet]
-        [Route("user/{userId}/update/{sequenceNumber}")]
-        public async Task<IActionResult> UserUpdate(Guid userId, int sequenceNumber)
+        [Route("user/{userId}/smtpuser/{smtpUsername}/update/{sequenceNumber}")]
+        public async Task<IActionResult> UserUpdate(Guid userId, string smtpUsername, int sequenceNumber)
         {
-            return PartialView("_ReceivedEmailRows", await GetUserModel(userId, sequenceNumber));
+            return PartialView("_EmailSummaryRows", await GetReceivedEmailUpdatesModel(userId, smtpUsername, sequenceNumber));
         }
 
         [HttpGet]
@@ -86,7 +78,7 @@ namespace Fakemail.Web.Controllers
                "----boundary_0_49d7d9ea-01d1-4f5c-91a5-19930730ea52--\n" +
                "\n";
 
-            var response = await _fakemailApi.CreateEmailAsync(new CreateEmailRequest
+            var response = await fakemailApi.CreateEmailAsync(new CreateEmailRequest
             {
                 UserId = userId,
                 MimeMessage = Encoding.UTF8.GetBytes(raw)
@@ -104,7 +96,7 @@ namespace Fakemail.Web.Controllers
         [Route("user/{userId}/email/{emailId}")]
         public async Task<IActionResult> UserEmailGet(Guid userId, Guid emailId)
         {
-            var resp = await _fakemailApi.GetEmailAsync(new GetEmailRequest {
+            var resp = await fakemailApi.GetEmailAsync(new GetEmailRequest {
                 UserId = userId,
                 EmailId = emailId
             });
@@ -117,11 +109,11 @@ namespace Fakemail.Web.Controllers
             throw new Exception("Failed to get email");
         }
 
-        [HttpGet]
-        [Route("user/{userId}/email/{emailId}/delete")]
+        [HttpDelete]
+        [Route("user/{userId}/email/{emailId}")]
         public async Task<IActionResult> UserEmailDelete(Guid userId, Guid emailId)
         {
-            var resp = await _fakemailApi.DeleteEmailAsync(new DeleteEmailRequest
+            var resp = await fakemailApi.DeleteEmailAsync(new DeleteEmailRequest
             {
                 UserId = userId,
                 EmailId = emailId
@@ -135,9 +127,53 @@ namespace Fakemail.Web.Controllers
             throw new Exception("Failed to delete email");
         }
 
+        [HttpDelete]
+        [Route("user/{userId}/smtpuser/{smtpUsername}/email/*")]
+        public async Task<IActionResult> UserEmailDeleteAll(Guid userId, string smtpUsername)
+        {
+            var resp = await fakemailApi.DeleteAllEmailsAsync(new DeleteAllEmailsRequest { UserId = userId, SmtpUsername = smtpUsername });
+
+            if (resp.Success)
+            {
+                return Ok();
+            }
+
+            throw new Exception("Failed to delete emails");
+        }
+
+        private async Task<EmailSummaryListModel> GetReceivedEmailUpdatesModel(Guid userId, string smtpUsername, int currentSequenceNumber)
+        {
+            var resp = await fakemailApi.ListEmailsBySequenceNumberAsync(new ListEmailsBySequenceNumberRequest { UserId = userId, SmtpUsername = smtpUsername, MinSequenceNumber = currentSequenceNumber + 1 });
+
+            if (resp.Success)
+            {
+                return new EmailSummaryListModel()
+                {
+                    EmailSummaries = resp.Emails
+                        .Select(x => (EmailSummaryModel)new ReceivedEmailSummaryModel
+                        {
+                            EmailId = x.EmailId,
+                            SequenceNumber = x.SequenceNumber,
+                            TimestampUtc = x.TimestampUtc,
+                            From = x.From,
+                            DeliveredTo = x.DeliveredTo,
+                            Subject = x.Subject,
+                            Body = x.BodySummary,
+                            Attachments = x.Attachments.Select(a => new AttachmentModel
+                            {
+                                AttachmentId = a.AttachmentId,
+                                Name = a.Name
+                            }).ToList()
+                        }).ToList()
+                };
+            }
+
+            throw new Exception("Error retrieving email summary list model");
+        }
+
         private async Task<UserModel> GetUserModel(Guid userId, int sequenceNumber)
         {
-            var resp = await _fakemailApi.ListEmailsAsync(new ListEmailsRequest { UserId = userId, Page = 1, PageSize = 100 });
+            var resp = await fakemailApi.ListEmailsAsync(new ListEmailsRequest { UserId = userId, Page = 1, PageSize = 100 });
 
             if (resp.Success)
             {

@@ -20,9 +20,10 @@ Password: <span class="sourcecode">@Model.SmtpCredentials.First().SmtpPassword</
 </p>
 
 <button class="btn btn-secondary btn-sm" onclick="InjectTestEmail('@Model.UserId', '@Model.SmtpCredentials.First().SmtpUsername')">Inject test email now</button>
+<button class="btn btn-secondary btn-sm" onclick="DeleteAllEmails('@Model.UserId', '@Model.SmtpCredentials.First().SmtpUsername')">Delete All</button>
 
-<div id="_ReceivedEmailsTable">
-    @await Html.PartialAsync("_ReceivedEmailsTable")
+<div id="_EmailSummaryTable">
+    @await Html.PartialAsync("_EmailSummaryTable")
 </div>
 
 <div class="spinner-border" role="status"></div>
@@ -45,7 +46,7 @@ Password: <span class="sourcecode">@Model.SmtpCredentials.First().SmtpPassword</
     function UpdateTable(isOneOff) {
         var nextUpdate = 60000;
 
-        fetch("@Model.UserId/update/" + sequenceNumber, {
+        fetch("@Model.UserId/smtpuser/@Model.SmtpCredentials.First().SmtpUsername/update/" + sequenceNumber, {
             method: 'GET'
         })
         .then(response => {
@@ -57,7 +58,7 @@ Password: <span class="sourcecode">@Model.SmtpCredentials.First().SmtpPassword</
         })
         .then(data => {
             if (data.length > 2) {
-                $('#_ReceivedEmailsTbody:first').prepend(data);
+                $('#_EmailSummaryTableBody:first').prepend(data);
                 sequenceNumber = $('tr[sequenceNumber]:first').attr("sequenceNumber")
                 nextUpdate = 5000;
             }
@@ -80,6 +81,19 @@ Password: <span class="sourcecode">@Model.SmtpCredentials.First().SmtpPassword</
 
         // TODO: error handling
     };
+
+    function DeleteAllEmails(userId, smtpUsername) {
+        var url = userId + '/smtpuser/' + smtpUsername + '/email/*';
+        fetch(url, {
+            method: 'DELETE'
+        })
+        .then(response => { 
+            sequenceNumber = 0;
+            $('#_EmailSummaryTableBody').empty();
+        });
+
+        // TODO: error handling
+    };
     
     function DownloadEmail(emailId) {
         var url = '@Model.UserId/email/' + emailId;
@@ -89,9 +103,9 @@ Password: <span class="sourcecode">@Model.SmtpCredentials.First().SmtpPassword</
     function DeleteEmail(emailId) {
         $(".tr[emailId='" + emailId + "']").remove();
 
-        var url = '@Model.UserId/email/' + emailId + "/delete";
+        var url = '@Model.UserId/email/' + emailId;
         fetch(url, {
-            method: 'GET'
+            method: 'DELETE'
         })
         .then(response => response.text())
         .then(data => {

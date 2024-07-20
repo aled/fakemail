@@ -1,0 +1,7 @@
+﻿@model Fakemail.Web.Models.EmailSummaryListModel
+
+@foreach (var e in Model.EmailSummaries.OrderByDescending(x => x.TimestampUtc).ThenByDescending(x => x.SequenceNumber))
+{
+    @await Html.PartialAsync("_EmailSummaryRow", e)
+}
+

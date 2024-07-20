@@ -442,6 +442,54 @@ namespace Fakemail.Core
             return null;
         }
 
+        public async Task<ListEmailsBySequenceNumberResponse> ListEmailsBySequenceNumberAsync(ListEmailsBySequenceNumberRequest request, Guid authenticatedUserId)
+        {
+            var response = new ListEmailsBySequenceNumberResponse
+            {
+                Success = false,
+            };
+
+            using var db = dbFactory.CreateDbContext();
+            var user = await GetAuthenticatedOrUnsecuredUserAsync(db, request, authenticatedUserId);
+
+            if (user == null)
+            {
+                response.ErrorMessage = "Unauthorized";
+                return response;
+            }
+
+            response.Success = true;
+
+            response.Emails = await db.Emails
+                .Where(e => e.SmtpUsername == request.SmtpUsername)
+                .Where(e => e.SequenceNumber >= request.MinSequenceNumber)
+                .OrderByDescending(e => e.ReceivedTimestampUtc)
+                .ThenByDescending(e => e.SequenceNumber)
+                .Take(request.LimitEmailCount)
+                .Select(e => new EmailSummary
+                {
+                    EmailId = e.EmailId,
+                    SequenceNumber = e.SequenceNumber,
+                    SmtpUsername = e.SmtpUsername,
+                    TimestampUtc = e.ReceivedTimestampUtc,
+                    From = e.From,
+                    Subject = e.Subject,
+                    DeliveredTo = e.DeliveredTo,
+                    BodySummary = e.BodySummary,
+                    Attachments = (from a in db.Attachments
+                                   where a.EmailId == e.EmailId
+                                   select new AttachmentSummary
+                                   {
+                                       AttachmentId = a.AttachmentId,
+                                       Name = a.Filename
+                                   }).ToList()
+                }).ToListAsync();
+
+            response.Username = user.Username;
+
+            return response;
+        }
+
         /// <summary>
         /// Unsecured users may list emails from only their own SMTP usernames.
         /// Secured users may list emails from only their own SMTP usernames.
@@ -519,7 +567,8 @@ namespace Fakemail.Core
 
             response.Emails = await emails
                 .OrderByDescending(e => e.ReceivedTimestampUtc)
-                .ThenByDescending(e => e.EmailId)
+                .ThenByDescending(e => e.SequenceNumber)
+                .ThenBy(e => e.EmailId)
                 .Skip((request.Page - 1) * request.PageSize)
                 .Take(request.PageSize)
                 .Select(e => new EmailSummary
@@ -619,6 +668,41 @@ namespace Fakemail.Core
             return new DeleteEmailResponse
             {
                 Success = true
+            };
+        }
+
+        public async Task<DeleteAllEmailsResponse> DeleteAllEmailsAsync(DeleteAllEmailsRequest request, Guid authenticatedUserId)
+        {
+            using var db = dbFactory.CreateDbContext();
+            var user = await GetAuthenticatedOrUnsecuredUserAsync(db, request, authenticatedUserId);
+
+            if (user == null)
+            {
+                return new DeleteAllEmailsResponse
+                {
+                    Success = false,
+                    ErrorMessage = "Unauthorized"
+                };
+            }
+
+            var smtpUsername = db.SmtpUsers
+                .Where(x => x.UserId == user.UserId)
+                .Where(x => x.SmtpUsername == request.SmtpUsername)
+                .Select(x => x.SmtpUsername)
+                .FirstOrDefault();
+
+            int count = 0;
+            if (smtpUsername != null)
+            {
+                count = await db.Emails
+                    .Where(e => e.SmtpUsername == smtpUsername)
+                    .ExecuteDeleteAsync();
+            }
+
+            return new DeleteAllEmailsResponse
+            {
+                Success = true,
+                EmailDeletedCount = count
             };
         }
 

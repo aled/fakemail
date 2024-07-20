@@ -30,6 +30,16 @@ namespace Fakemail.Api.Controllers
             return Ok(response);
         }
 
+        // POST: api/mail/deleteall
+        [HttpPost]
+        [Route("deleteall")]
+        public async Task<IActionResult> DeleteAllEmails([FromBody] DeleteAllEmailsRequest request)
+        {
+            _ = Guid.TryParse(HttpContext.User.Identity.Name, out var authenticatedUserId);
+            var response = await engine.DeleteAllEmailsAsync(request, authenticatedUserId);
+            return Ok(response);
+        }
+
         // POST: api/mail/list
         [HttpPost]
         [Route("list")]
@@ -37,6 +47,16 @@ namespace Fakemail.Api.Controllers
         {
             _ = Guid.TryParse(HttpContext.User.Identity.Name, out var authenticatedUserId);
             var response = await engine.ListEmailsAsync(request, authenticatedUserId);
+            return Ok(response);
+        }
+
+        // POST: api/mail/listbysequencenumber
+        [HttpPost]
+        [Route("listBySequenceNumber")]
+        public async Task<IActionResult> ListEmailsBySequenceNumber([FromBody] ListEmailsBySequenceNumberRequest request)
+        {
+            _ = Guid.TryParse(HttpContext.User.Identity.Name, out var authenticatedUserId);
+            var response = await engine.ListEmailsBySequenceNumberAsync(request, authenticatedUserId);
             return Ok(response);
         }
 

@@ -1,6 +1,6 @@
 ﻿namespace Fakemail.Web
 {
-    public class FakemailApiOptions
+    public class FakemailApiClientOptions
     {
         public string BaseUri { get; set; }
     }

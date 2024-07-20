@@ -1,0 +1,34 @@
+﻿@model Fakemail.Web.Models.EmailSummaryModel
+
+<tr emailId=@Model.EmailId sequenceNumber=@Model.SequenceNumber>
+    @{
+        var timestamp = Model.TimestampUtc.ToString("yyyy-MM-dd HH:mm:ss");
+        var from = Model.From;
+        var subject = Model.Subject;
+        var body = Model.Body;
+        var attachments = string.Join("; ", Model.Attachments.Select(x => x.Name));
+        var deliveredTo = (Model as ReceivedEmailSummaryModel)?.DeliveredTo;
+        var sentTo = (Model as SentEmailSummaryModel)?.To?.Aggregate((acc, item) => acc + "," + item);
+        var cc = (Model as SentEmailSummaryModel)?.CC?.Aggregate((acc, item) => acc + "," + item);
+        var bcc = (Model as SentEmailSummaryModel)?.BCC?.Aggregate((acc, item) => acc + "," + item);
+    }
+    <td>@timestamp</td>
+    <td>@from</td> 
+    @if (Model is ReceivedEmailSummaryModel)
+    {
+        <td>@deliveredTo</td>
+    }
+    else
+    {
+        <td>@sentTo</td>
+        <td>@cc</td>
+        <td>@bcc</td>
+    }
+    <td>@subject</td>
+    <td>@body</td>
+    <td>@attachments</td>
+    <td>
+        <button onclick="DownloadEmail('@Model.EmailId')" class="btn btn-secondary btn-sm bi bi-download"></button>
+        <button onclick="DeleteEmail('@Model.EmailId')" class="btn btn-secondary btn-sm bi bi-trash-fill"></button>
+    </td>
+</tr>

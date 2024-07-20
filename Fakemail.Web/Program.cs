@@ -11,10 +11,10 @@ builder.Services.AddControllersWithViews();
 builder.Services.AddRazorPages();
 
 builder.Services.AddSingleton(TimeProvider.System);
-builder.Services.Configure<FakemailApiOptions>(builder.Configuration.GetSection("Api"));
+builder.Services.Configure<FakemailApiClientOptions>(builder.Configuration.GetSection("Api"));
 builder.Services.Configure<CountingRateLimiterOptions>(builder.Configuration.GetSection("IpRateLimit"));
 
-builder.Services.AddHttpClient<IFakemailApi, FakemailApi>()
+builder.Services.AddHttpClient<IFakemailApiClient, FakemailApiClient>()
     .AddPolicyHandler(HttpPolicyExtensions.HandleTransientHttpError()
         .OrResult(msg => msg.StatusCode == System.Net.HttpStatusCode.NotFound)
         .WaitAndRetryAsync(3, retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt))));

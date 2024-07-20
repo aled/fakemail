@@ -25,10 +25,14 @@ namespace Fakemail.Core
         Task<CreateEmailResponse> CreateEmailAsync(CreateEmailRequest request, Guid authenticatedUserId);
 
         Task<ListEmailsResponse> ListEmailsAsync(ListEmailsRequest request, Guid authenticatedUserId);
-        
+
+        Task<ListEmailsBySequenceNumberResponse> ListEmailsBySequenceNumberAsync(ListEmailsBySequenceNumberRequest request, Guid authenticatedUserId);
+
         Task<GetEmailResponse> GetEmailAsync(GetEmailRequest request, Guid authenticatedUserId);
-        
+
         Task<DeleteEmailResponse> DeleteEmailAsync(DeleteEmailRequest request, Guid authenticatedUserId);
+
+        Task<DeleteAllEmailsResponse> DeleteAllEmailsAsync(DeleteAllEmailsRequest request, Guid authenticatedUserId);
 
         Task<CleanupEmailsResponse> CleanupEmailsAsync(CleanupEmailsRequest request, CancellationToken cancellationToken);
     }
