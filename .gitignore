@@ -30,3 +30,4 @@ msbuild.wrn
 .vs/
 *.sqlite
 fakemail-deployment/
+_NCrunch_Fakemail/
