@@ -11,7 +11,7 @@
   # for arm, use the dotnet install script
   - name: Download MS repository
     get_url:
-      url: https://packages.microsoft.com/config/debian/{{ ansible_distribution_version }}/packages-microsoft-prod.deb
+      url: https://packages.microsoft.com/config/ubuntu/{{ ansible_distribution_version }}/packages-microsoft-prod.deb
       dest: /tmp/packages-microsoft-prod.deb
     when: dotnet_found is failed and ansible_architecture == 'x86_64'
 

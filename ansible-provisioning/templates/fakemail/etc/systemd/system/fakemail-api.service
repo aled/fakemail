@@ -3,7 +3,7 @@ Description=Fakemail api
 
 [Service]
 WorkingDirectory=/home/fakemail/bin/api
-ExecStart=/usr/bin/dotnet Fakemail.Api.dll
+ExecStart=/usr/bin/dotnet Fakemail.Api.dll --urls http://localhost:5000
 Restart=always
 RestartSec=30
 KillSignal=SIGINT

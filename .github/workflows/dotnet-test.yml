@@ -43,7 +43,7 @@ jobs:
       id: extract_short_sha
       
     - name: Test
-      run: dotnet test --configuration Release --filter FullyQualifiedName!~Fakemail.IntegrationTests --no-restore --verbosity normal --logger trx --results-directory "TestResults-${{ matrix.dotnet-version }}"
+      run: dotnet test --configuration Release --filter 'FullyQualifiedName!~Fakemail.IntegrationTests' --no-restore --verbosity normal --logger trx --results-directory "TestResults-${{ matrix.dotnet-version }}"
  
     #- name: Upload test results
     #  uses: actions/upload-artifact@v3

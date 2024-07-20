@@ -29,14 +29,14 @@ all:
 
     oracle_cloud:
       hosts:
-        test:
+        prod:
       vars:
         ansible_user: ubuntu
 
     local:
       hosts:
+        test:
         dev:
-        prod:
       vars:
         ansible_user: root
 
