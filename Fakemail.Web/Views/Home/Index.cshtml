@@ -9,7 +9,7 @@
 
 <p><span style="font-weight: 700">Welcome, Anonymous user.</span></p>
 <p>Here are your SMTP settings =>
-Host: <span class="sourcecode">fakemail.stream:587</span>
+Host: <span class="sourcecode copyable-text" data-bs-toggle="tooltip" data-bs-placement="top" title="Copy to clipboard">fakemail.stream:587</span>
 Credentials: <button class="btn btn-secondary btn-sm" onclick="generate_onclick()">Generate...</button>
 </p>
 
@@ -33,8 +33,10 @@ Credentials: <button class="btn btn-secondary btn-sm" onclick="generate_onclick(
 <br />
 <span class="">Waiting for emails to arrive...</span>
 
+@section Scripts {
 <script type="text/javascript">
     function generate_onclick() {
         window.location.href = '/user/'
     }
 </script>
+}

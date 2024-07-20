@@ -21,6 +21,15 @@ body {
 .sourcecode {
     background-color: lightgrey;
     font-family: monospace;
-    padding: 2px;
+    padding: 3px;
+    border-radius: 4px;
     margin: 8px;
+}
+
+.copyable-text {
+    transition: box-shadow 0.3s ease-in-out; /* Smooth transition for the outline */
+}
+
+.copyable-text:hover {
+    box-shadow: 0 0 0 2px #607b7f; /* Blue outline */
 }
