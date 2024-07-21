@@ -3,20 +3,19 @@
 
 // Write your JavaScript code.
 
-var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
-var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-    return new bootstrap.Tooltip(tooltipTriggerEl)
-})
+var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+var tooltipList = tooltipTriggerList.map(function (element) {
+    return new bootstrap.Tooltip(element)
+});
 
 document.querySelectorAll('.copyable-text').forEach(item => {
     item.addEventListener('click', () => copyTextToClipboard(item));
 });
 
 function copyTextToClipboard(element) {
-    const el = document.createElement('textarea');
-    el.value = element.innerText;
-    document.body.appendChild(el);
-    el.select();
-    document.execCommand('copy');
-    document.body.removeChild(el);
-}
+    navigator.clipboard.writeText(element.innerText);
+    const tooltipInstance = bootstrap.Tooltip.getInstance(element);
+    if (tooltipInstance) {
+        tooltipInstance.hide();
+    }
+};

@@ -13,8 +13,11 @@
 <br />
 
 <p><span style="font-weight: 700">Welcome, @Model.Username.</span></p>
-<p>Here are your SMTP settings =>
-Host: <span class="sourcecode copyable-text" data-bs-toggle="tooltip" data-bs-placement="top" title="Copy to clipboard">fakemail.stream:587</span>
+
+<p>
+Host: <span class="sourcecode copyable-text" data-bs-toggle="tooltip" data-bs-placement="top" title="Copy to clipboard">fakemail.stream</span>
+Port: <span class="sourcecode copyable-text" data-bs-toggle="tooltip" data-bs-placement="top" title="Copy to clipboard">587</span>
+Security: <span class="sourcecode">TLS</span>
 Username: <span class="sourcecode copyable-text" data-bs-toggle="tooltip" data-bs-placement="top" title="Copy to clipboard">@Model.SmtpCredentials.First().SmtpUsername</span>
 Password: <span class="sourcecode copyable-text" data-bs-toggle="tooltip" data-bs-placement="top" title="Copy to clipboard">@Model.SmtpCredentials.First().SmtpPassword</span>
 </p>
