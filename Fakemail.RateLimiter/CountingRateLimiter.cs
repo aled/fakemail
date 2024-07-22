@@ -1,4 +1,7 @@
-﻿using Microsoft.Extensions.Options;
+﻿using System.Collections.Generic;
+using System.Text;
+
+using Microsoft.Extensions.Options;
 
 namespace Fakemail.RateLimiter
 {
@@ -60,12 +63,12 @@ namespace Fakemail.RateLimiter
             return false;
         }
 
-        public bool IsRateLimited(K key, out TimeSpan retryAfter)
+        public bool IsRateLimited(K key, out TimeSpan retryAfter, out string stats)
         {
             var isRateLimited = false;
             var now = _timeProvider.GetUtcNow().DateTime;
             var retryAt = now;
-
+        
             Span<int> newCounts = [1, 1, 1];
             lock (_lock)
             {
@@ -92,6 +95,18 @@ namespace Fakemail.RateLimiter
                 }
             }
             retryAfter = retryAt - now;
+
+            // Generate stats
+            var statsBuilder = new StringBuilder();
+            for (int i = 0; i < _options.RateLimitDefinitions.Count; i++)
+            {
+                var limit = _options.RateLimitDefinitions[i].MaxRequests;
+                var period = _options.RateLimitDefinitions[i].Period;
+                if (i > 0) statsBuilder.Append(';');
+                statsBuilder.Append($"{newCounts[i]}/{limit},{(int)period.TotalSeconds}s");
+            }
+            stats = statsBuilder.ToString();
+
             return isRateLimited;
         }
     }

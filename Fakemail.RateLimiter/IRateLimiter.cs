@@ -2,6 +2,6 @@
 {
     public interface IRateLimiter<K> where K : notnull, IComparable<K>
     {
-        bool IsRateLimited(K key, out TimeSpan retryAfter);
+        bool IsRateLimited(K key, out TimeSpan retryAfter, out string stats);
     }
 }

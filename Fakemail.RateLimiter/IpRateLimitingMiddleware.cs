@@ -18,24 +18,29 @@ namespace Fakemail.RateLimiter
                 ipAddress = context.Connection.RemoteIpAddress;
             }
 
-            logger.LogInformation("RateLimiter: checking {ipAddress} for {url}", ipAddress, context.Request.Path);
-
-            var ipAddressBytes = context.Connection.RemoteIpAddress.GetAddressBytes();
+            var ipAddressBytes = ipAddress.GetAddressBytes();
 
             if (BitConverter.IsLittleEndian)
                 Array.Reverse(ipAddressBytes);
 
             var ipAddressUint = BitConverter.ToUInt32(ipAddressBytes, 0);
 
-            if (rateLimiter.IsRateLimited(ipAddressUint, out var retryAfterTimespan))
+            if (rateLimiter.IsRateLimited(ipAddressUint, out var retryAfterTimespan, out var stats))
             {
                 var retryAfterSeconds = ((int)(1 + retryAfterTimespan.TotalSeconds)).ToString();
+
+                logger.LogInformation("RateLimiter: too many requests from {ipAddress}, retry after {retryAfterSeconds}s ({stats})", ipAddress, retryAfterSeconds, stats);
+
                 context.Response.StatusCode = (int)HttpStatusCode.TooManyRequests;
                 context.Response.ContentType = "text/plain";
                 context.Response.Headers["Retry-After"] = retryAfterSeconds;
                 await context.Response.WriteAsync($"Too many requests. Please try again after {retryAfterSeconds} second(s)");
                 return;
             }
+            else
+            {
+                logger.LogInformation("RateLimiter: allowed request from {ipAddress} ({stats})", ipAddress, stats);
+            }            
             await next(context);
         }
     }

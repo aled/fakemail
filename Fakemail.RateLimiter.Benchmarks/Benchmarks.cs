@@ -50,7 +50,7 @@ namespace Fakemail.RateLimiter.Benchmarks
         [Benchmark]
         public void BucketRateLimiter()
         {
-            bucketRateLimiter.IsRateLimited(current++, out var _);
+            bucketRateLimiter.IsRateLimited(current++, out var _, out var _);
         }
 
         /// <summary>
@@ -59,7 +59,7 @@ namespace Fakemail.RateLimiter.Benchmarks
         [Benchmark]
         public void CountingRateLimiter()
         {
-            countingRateLimiter.IsRateLimited(current++, out var _);
+            countingRateLimiter.IsRateLimited(current++, out var _, out var _);
         }
     }
 }
