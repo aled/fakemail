@@ -38,7 +38,7 @@ namespace Fakemail.RateLimiter
         /// <param name="key">Key for aggregating requests for the purpose of rate-limiting, e.g. IP address, username</param>
         /// <param name="retryAfter">The time to wait until a request will be allowed</param>
         /// <returns></returns>
-        public bool IsRateLimited(K key, out TimeSpan retryAfter)
+        public bool IsRateLimited(K key, out TimeSpan retryAfter, out string stats)
         {
             retryAfter = TimeSpan.Zero;
             var isRateLimited = false;
@@ -92,6 +92,7 @@ namespace Fakemail.RateLimiter
                 }
 
                 _cache.Set(key, (float)newLevel);
+                stats = $"{(float)newLevel}/{_options.Burst}";
                 return isRateLimited;
             }
         }
