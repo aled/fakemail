@@ -1,4 +1,5 @@
 ﻿using System.Collections.Concurrent;
+using System.Linq.Expressions;
 
 using Fakemail.ApiModels;
 using Fakemail.Core;
@@ -58,74 +59,82 @@ namespace Fakemail.Services
 
             while (!cancellationToken.IsCancellationRequested)
             {
-                // if we are due a poll, do it now, but only if the queue is empty. Only update the timestamp if it completes fully
-                // (it will stop if the queue gets full)
-                if (DateTime.UtcNow - pollTimestamp >= pollTimeSpan && _queue.Count == 0)
+                try
                 {
-                    log.LogTrace("Polling now...");
-                    var completedPoll = true;
-
-                    foreach (var file in directoryInfo.GetFiles())
+                    // if we are due a poll, do it now, but only if the queue is empty. Only update the timestamp if it completes fully
+                    // (it will stop if the queue gets full)
+                    if (DateTime.UtcNow - pollTimestamp >= pollTimeSpan && _queue.Count == 0)
                     {
-                        if (!_queue.TryAdd(file.Name))
+                        log.LogTrace("Polling now...");
+                        var completedPoll = true;
+
+                        foreach (var file in directoryInfo.GetFiles())
                         {
-                            log.LogTrace("Pausing poll - queue full");
-                            completedPoll = false;
-                            break;
+                            if (!_queue.TryAdd(file.Name))
+                            {
+                                log.LogTrace("Pausing poll - queue full");
+                                completedPoll = false;
+                                break;
+                            }
+                        }
+                        if (completedPoll)
+                        {
+                            log.LogTrace("Poll completed");
+                            pollTimestamp = DateTime.UtcNow;
                         }
                     }
-                    if (completedPoll)
+                    else
                     {
-                        log.LogTrace("Poll completed");
-                        pollTimestamp = DateTime.UtcNow;
+                        if (_queue.TryTake(out var filename, pollPeriodMillis, cancellationToken))
+                        {
+                            var fileInfo = new FileInfo(Path.Join(directoryInfo.FullName, filename));
+
+                            try
+                            {
+                                log.LogInformation("Delivering: {filename}", fileInfo.Name);
+
+                                // Open in read/write mode to ensure it isn't still being written by the SMTP server.
+                                CreateEmailResponse response = null;
+                                using (var stream = new FileStream(fileInfo.FullName, FileMode.Open, FileAccess.ReadWrite))
+                                {
+                                    response = await engine.CreateEmailAsync(stream);
+                                }
+
+                                if (response.Success)
+                                {
+                                    File.Delete(fileInfo.FullName);
+                                }
+                                else
+                                {
+                                    log.LogError("Error copying email to database: {errorMessage}", response.ErrorMessage);
+                                    try
+                                    {
+                                        File.Move(fileInfo.FullName, Path.Join(failedDirectoryInfo.FullName, fileInfo.Name));
+                                    }
+                                    catch (Exception e2)
+                                    {
+                                        log.LogError("Error moving email to failed directory: {errorMessage}", e2.Message);
+                                    }
+                                }
+                            }
+                            catch (IOException ioe)
+                            {
+                                // This is mainly for temporary issues (e.g. locked files), which should be retried.
+                                // There are potentially some permanent issues (e.g. permissions) which should not be retried.
+                                // TODO: Don't have infinite retries
+                                log.LogError("IOException while delivering mail: {errorMessage}\n{stackTrace}", ioe.Message, ioe.StackTrace);
+                            }
+                            catch (Exception e)
+                            {
+                                log.LogError("Exception while delivering mail: {errorMessage}\n{stackTrace}", e.Message, e.StackTrace);
+                            }
+                        }
                     }
                 }
-                else
+                catch (Exception e)
                 {
-                    if (_queue.TryTake(out var filename, pollPeriodMillis, cancellationToken))
-                    {
-                        var fileInfo = new FileInfo(Path.Join(directoryInfo.FullName, filename));
-
-                        try
-                        {
-                            log.LogInformation("Delivering: {filename}", fileInfo.Name);
-
-                            // Open in read/write mode to ensure it isn't still being written by the SMTP server.
-                            CreateEmailResponse response = null;
-                            using (var stream = new FileStream(fileInfo.FullName, FileMode.Open, FileAccess.ReadWrite))
-                            {
-                                response = await engine.CreateEmailAsync(stream);
-                            }
-
-                            if (response.Success)
-                            {
-                                File.Delete(fileInfo.FullName);
-                            }
-                            else
-                            {
-                                log.LogError("Error copying email to database: {errorMessage}", response.ErrorMessage);
-                                try
-                                {
-                                    File.Move(fileInfo.FullName, Path.Join(failedDirectoryInfo.FullName, fileInfo.Name));
-                                }
-                                catch (Exception e2)
-                                {
-                                    log.LogError("Error moving email to failed directory: {errorMessage}", e2.Message);
-                                }
-                            }
-                        }
-                        catch (IOException ioe)
-                        {
-                            // This is mainly for temporary issues (e.g. locked files), which should be retried.
-                            // There are potentially some permanent issues (e.g. permissions) which should not be retried.
-                            // TODO: Don't have infinite retries
-                            log.LogError("IOException while delivering mail: {errorMessage}\n{stackTrace}", ioe.Message, ioe.StackTrace);
-                        }
-                        catch (Exception e)
-                        {
-                            log.LogError("Exception while delivering mail: {errorMessage}\n{stackTrace}", e.Message, e.StackTrace);
-                        }
-                    }
+                    log.LogError("Exception in delivery agent: {errorMessage}\n{stackTrace}", e.Message, e.StackTrace);
+                    await Task.Delay(TimeSpan.FromSeconds(60), cancellationToken);
                 }
             }
 
