@@ -26,31 +26,39 @@ namespace Fakemail.Services
 
             while (!cancellationToken.IsCancellationRequested)
             {
-                log.LogDebug("Cleanup running");
-                var request = new CleanupEmailsRequest
+                try
                 {
-                    MaxEmailAgeSeconds = options.Value.MaxEmailAgeSeconds,
-                    MaxEmailCount = options.Value.MaxEmailCount
-                };
+                    log.LogDebug("Cleanup running");
+                    var request = new CleanupEmailsRequest
+                    {
+                        MaxEmailAgeSeconds = options.Value.MaxEmailAgeSeconds,
+                        MaxEmailCount = options.Value.MaxEmailCount
+                    };
 
-                var response = await engine.CleanupEmailsAsync(request, cancellationToken);
+                    var response = await engine.CleanupEmailsAsync(request, cancellationToken);
 
-                if (response.Success)
-                {
-                    log.LogInformation("Cleanup deleted {count} emails", response.TotalEmailsDeleted);
+                    if (response.Success)
+                    {
+                        log.LogInformation("Cleanup deleted {count} emails", response.TotalEmailsDeleted);
+                    }
+                    else
+                    {
+                        log.LogError("Cleanup failed {message}", response.ErrorMessage);
+                    }
+
+                    // Randomize the timing of the next run
+                    var waitTime = TimeSpan.FromSeconds(
+                        Random.Shared.Next(options.Value.PollSecondsMin, options.Value.PollSecondsMax + 1));
+
+                    log.LogDebug("Cleanup service waiting for {waitTime}s to run", waitTime.Seconds);
+
+                    await Task.Delay(waitTime, cancellationToken);
                 }
-                else
+                catch (Exception e)
                 {
-                    log.LogError("Cleanup failed {message}", response.ErrorMessage);
+                    log.LogError("Exception in cleanup service: {errorMessage}\n{stackTrace}", e.Message, e.StackTrace);
+                    await Task.Delay(TimeSpan.FromSeconds(60), cancellationToken);
                 }
-
-                // Randomize the timing of the next run
-                var waitTime = TimeSpan.FromSeconds(
-                    Random.Shared.Next(options.Value.PollSecondsMin, options.Value.PollSecondsMax + 1));
-
-                log.LogDebug("Cleanup service waiting for {waitTime}s to run", waitTime.Seconds);
-
-                await Task.Delay(waitTime, cancellationToken);
             }
         }
     }

@@ -89,11 +89,3 @@
     service:
       name=opensmtpd
       state=restarted
-
-
-  - name: Change permissions for directories and files
-    ansible.builtin.file:
-      path: "/opt/this/is/just/an/example"
-      state: directory
-      mode: '0755'
-      recurse: yes

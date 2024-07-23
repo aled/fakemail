@@ -40,7 +40,7 @@ namespace Fakemail.RateLimiter
             else
             {
                 logger.LogInformation("RateLimiter: allowed request from {ipAddress} ({stats})", ipAddress, stats);
-            }            
+            }
             await next(context);
         }
     }

@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Threading;
+using System.Threading.Tasks;
 
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
@@ -34,24 +36,34 @@ namespace Fakemail.Data.EntityFramework
 
         public DbSet<Attachment> Attachments { get; set; }
 
-        public override int SaveChanges()
+        public override Task<int> SaveChangesAsync(bool acceptAllChangesOnSuccess, CancellationToken cancellationToken = default)
+        {
+            UpdateBaseProperties();
+            return base.SaveChangesAsync(acceptAllChangesOnSuccess, cancellationToken);
+        }
+
+        public override int SaveChanges(bool acceptAllChangesOnSuccess)
+        {
+            UpdateBaseProperties();
+            return base.SaveChanges(acceptAllChangesOnSuccess);
+        }
+
+        private void UpdateBaseProperties()
         {
             var utcNow = DateTime.UtcNow;
 
-            foreach (var entry in ChangeTracker.Entries())
+            foreach (var entry in ChangeTracker.Entries<BaseEntity>())
             {
-                if (entry.Entity is BaseEntity baseEntity)
+                if (entry.State == EntityState.Added)
                 {
-                    if (entry.State == EntityState.Added)
-                    {
-                        baseEntity.CreatedTimestampUtc = utcNow;
-                    }
-
-                    baseEntity.UpdatedTimestampUtc = utcNow;
+                    entry.Entity.CreatedTimestampUtc = utcNow;
+                    entry.Entity.UpdatedTimestampUtc = utcNow;
+                }
+                else if (entry.State == EntityState.Modified)
+                {
+                    entry.Entity.UpdatedTimestampUtc = utcNow;
                 }
             }
-
-            return base.SaveChanges();
         }
 
         protected override void OnModelCreating(ModelBuilder builder)

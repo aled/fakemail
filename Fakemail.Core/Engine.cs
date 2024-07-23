@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data;
 using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
@@ -102,28 +103,30 @@ namespace Fakemail.Core
                 var smtpPassword = Utils.CreateId(8);
                 var passwordCrypt = password == null ? string.Empty : Sha256Crypt(password);
 
-                var dataUser = new DataUser
-                {
-                    UserId = userId,
-                    Username = request.Username,
-                    PasswordCrypt = passwordCrypt
-                };
-
-                var dataSmtpUser = new DataSmtpUser
-                {
-                    UserId = dataUser.UserId,
-                    SmtpUsername = smtpUsername,
-                    SmtpPassword = smtpPassword,
-                    SmtpPasswordCrypt = Sha256Crypt(smtpPassword)
-                };
-
                 using (var db = dbFactory.CreateDbContext())
                 {
+                    var dataUser = new DataUser
+                    {
+                        UserId = userId,
+                        Username = request.Username,
+                        PasswordCrypt = passwordCrypt
+                    };
+
+                    await db.Users.AddAsync(dataUser);
+
                     while (db.SmtpUsers.Any(u => u.SmtpUsername == smtpUsername))
                     {
-                        smtpUsername = Utils.CreateId(smtpUsernameBytes).ToLower(); // increase the length in case of collision
+                        smtpUsername = Utils.CreateId(smtpUsernameBytes).ToLower(); // SMTP auth fails if upper-case chars are used
                     }
-                    await db.Users.AddAsync(dataUser);
+
+                    var dataSmtpUser = new DataSmtpUser
+                    {
+                        UserId = dataUser.UserId,
+                        SmtpUsername = smtpUsername,
+                        SmtpPassword = smtpPassword,
+                        SmtpPasswordCrypt = Sha256Crypt(smtpPassword)
+                    };
+
                     await db.SmtpUsers.AddAsync(dataSmtpUser);
                     await db.SaveChangesAsync();
                 }
@@ -337,24 +340,26 @@ namespace Fakemail.Core
                     Attachments = attachments
                 };
 
-                using (var db = dbFactory.CreateDbContext())
+                using var db = dbFactory.CreateDbContext();
+                using var transaction = db.Database.BeginTransaction(IsolationLevel.ReadCommitted);
+
+                var smtpUser = await db.SmtpUsers
+                    .Where(x => x.SmtpUsername == smtpUsername)
+                    .SingleAsync();
+
+                var currentSequenceNumber = smtpUser.CurrentEmailSequenceNumber;
+
+                email.SequenceNumber = currentSequenceNumber + 1;
+                smtpUser.CurrentEmailSequenceNumber = email.SequenceNumber;
+                smtpUser.CurrentEmailReceivedTimestampUtc = email.ReceivedTimestampUtc;
+
+                await db.Emails.AddAsync(email);
+                if (attachments != null)
                 {
-                    var smtpUser = await db.SmtpUsers
-                        .Where(x => x.SmtpUsername == smtpUsername)
-                        .SingleAsync();
-
-                    var currentSequenceNumber = smtpUser.CurrentEmailSequenceNumber;
-
-                    email.SequenceNumber = currentSequenceNumber + 1;
-                    smtpUser.CurrentEmailSequenceNumber = currentSequenceNumber + 1;
-
-                    await db.Emails.AddAsync(email);
-                    if (attachments != null)
-                    {
-                        await db.Attachments.AddRangeAsync(attachments);
-                    }
-                    await db.SaveChangesAsync();
+                    await db.Attachments.AddRangeAsync(attachments);
                 }
+                await db.SaveChangesAsync();
+                await transaction.CommitAsync();
 
                 return new CreateEmailResponse
                 {
@@ -730,11 +735,8 @@ namespace Fakemail.Core
             do
             {
                 // TODO: This, but in EF with a single roundtrip. (Is it even possible?)
-                FormattableString sql = @$"WITH t1 AS (
-        SELECT emailId, ROW_NUMBER() OVER (PARTITION BY smtpUsername ORDER BY ReceivedTimestampUtc DESC, SequenceNumber DESC) AS row_number
-        FROM email),
-     t2 AS (
-        SELECT emailId FROM t1 WHERE row_number > {request.MaxEmailCount} LIMIT {batchSize})
+                FormattableString sql = @$"WITH t1 AS (SELECT emailId, ROW_NUMBER() OVER (PARTITION BY smtpUsername ORDER BY ReceivedTimestampUtc DESC, SequenceNumber DESC) AS row_number FROM email),
+     t2 AS (SELECT emailId FROM t1 WHERE row_number > {request.MaxEmailCount} LIMIT {batchSize})
 DELETE FROM email WHERE emailId IN (SELECT emailId FROM t2)";
 
                 emailsDeleted = await db.Database.ExecuteSqlAsync(sql, cancellationToken);

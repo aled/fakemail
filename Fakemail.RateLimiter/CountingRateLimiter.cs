@@ -1,5 +1,4 @@
-﻿using System.Collections.Generic;
-using System.Text;
+﻿using System.Text;
 
 using Microsoft.Extensions.Options;
 
@@ -68,7 +67,7 @@ namespace Fakemail.RateLimiter
             var isRateLimited = false;
             var now = _timeProvider.GetUtcNow().DateTime;
             var retryAt = now;
-        
+
             Span<int> newCounts = [1, 1, 1];
             lock (_lock)
             {
