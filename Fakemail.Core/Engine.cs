@@ -732,11 +732,8 @@ namespace Fakemail.Core
             do
             {
                 // TODO: This, but in EF with a single roundtrip. (Is it even possible?)
-                FormattableString sql = @$"WITH t1 AS (
-        SELECT emailId, ROW_NUMBER() OVER (PARTITION BY smtpUsername ORDER BY ReceivedTimestampUtc DESC, SequenceNumber DESC) AS row_number
-        FROM email),
-     t2 AS (
-        SELECT emailId FROM t1 WHERE row_number > {request.MaxEmailCount} LIMIT {batchSize})
+                FormattableString sql = @$"WITH t1 AS (SELECT emailId, ROW_NUMBER() OVER (PARTITION BY smtpUsername ORDER BY ReceivedTimestampUtc DESC, SequenceNumber DESC) AS row_number FROM email),
+     t2 AS (SELECT emailId FROM t1 WHERE row_number > {request.MaxEmailCount} LIMIT {batchSize})
 DELETE FROM email WHERE emailId IN (SELECT emailId FROM t2)";
 
                 emailsDeleted = await db.Database.ExecuteSqlAsync(sql, cancellationToken);
