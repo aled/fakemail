@@ -350,7 +350,8 @@ namespace Fakemail.Core
                 var currentSequenceNumber = smtpUser.CurrentEmailSequenceNumber;
 
                 email.SequenceNumber = currentSequenceNumber + 1;
-                smtpUser.CurrentEmailSequenceNumber = currentSequenceNumber + 1;
+                smtpUser.CurrentEmailSequenceNumber = email.SequenceNumber;
+                smtpUser.CurrentEmailReceivedTimestampUtc = email.ReceivedTimestampUtc;
 
                 await db.Emails.AddAsync(email);
                 if (attachments != null)

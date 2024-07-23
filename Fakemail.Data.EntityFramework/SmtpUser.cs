@@ -27,6 +27,8 @@ namespace Fakemail.Data.EntityFramework
 
         public int CurrentEmailSequenceNumber { get; set; }
 
+        public DateTime CurrentEmailReceivedTimestampUtc { get; set; }
+
         public User User { get; set; }
 
         public List<Email> Emails { get; set; }
