@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data;
 using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
@@ -339,24 +340,25 @@ namespace Fakemail.Core
                     Attachments = attachments
                 };
 
-                using (var db = dbFactory.CreateDbContext())
+                using var db = dbFactory.CreateDbContext();
+                using var transaction = db.Database.BeginTransaction(IsolationLevel.ReadCommitted);
+
+                var smtpUser = await db.SmtpUsers
+                    .Where(x => x.SmtpUsername == smtpUsername)
+                    .SingleAsync();
+
+                var currentSequenceNumber = smtpUser.CurrentEmailSequenceNumber;
+
+                email.SequenceNumber = currentSequenceNumber + 1;
+                smtpUser.CurrentEmailSequenceNumber = currentSequenceNumber + 1;
+
+                await db.Emails.AddAsync(email);
+                if (attachments != null)
                 {
-                    var smtpUser = await db.SmtpUsers
-                        .Where(x => x.SmtpUsername == smtpUsername)
-                        .SingleAsync();
-
-                    var currentSequenceNumber = smtpUser.CurrentEmailSequenceNumber;
-
-                    email.SequenceNumber = currentSequenceNumber + 1;
-                    smtpUser.CurrentEmailSequenceNumber = currentSequenceNumber + 1;
-
-                    await db.Emails.AddAsync(email);
-                    if (attachments != null)
-                    {
-                        await db.Attachments.AddRangeAsync(attachments);
-                    }
-                    await db.SaveChangesAsync();
+                    await db.Attachments.AddRangeAsync(attachments);
                 }
+                await db.SaveChangesAsync();
+                await transaction.CommitAsync();
 
                 return new CreateEmailResponse
                 {
