@@ -102,28 +102,30 @@ namespace Fakemail.Core
                 var smtpPassword = Utils.CreateId(8);
                 var passwordCrypt = password == null ? string.Empty : Sha256Crypt(password);
 
-                var dataUser = new DataUser
-                {
-                    UserId = userId,
-                    Username = request.Username,
-                    PasswordCrypt = passwordCrypt
-                };
-
-                var dataSmtpUser = new DataSmtpUser
-                {
-                    UserId = dataUser.UserId,
-                    SmtpUsername = smtpUsername,
-                    SmtpPassword = smtpPassword,
-                    SmtpPasswordCrypt = Sha256Crypt(smtpPassword)
-                };
-
                 using (var db = dbFactory.CreateDbContext())
                 {
+                    var dataUser = new DataUser
+                    {
+                        UserId = userId,
+                        Username = request.Username,
+                        PasswordCrypt = passwordCrypt
+                    };
+
+                    await db.Users.AddAsync(dataUser);
+
                     while (db.SmtpUsers.Any(u => u.SmtpUsername == smtpUsername))
                     {
-                        smtpUsername = Utils.CreateId(smtpUsernameBytes).ToLower(); // increase the length in case of collision
+                        smtpUsername = Utils.CreateId(smtpUsernameBytes).ToLower(); // SMTP auth fails if upper-case chars are used
                     }
-                    await db.Users.AddAsync(dataUser);
+
+                    var dataSmtpUser = new DataSmtpUser
+                    {
+                        UserId = dataUser.UserId,
+                        SmtpUsername = smtpUsername,
+                        SmtpPassword = smtpPassword,
+                        SmtpPasswordCrypt = Sha256Crypt(smtpPassword)
+                    };
+
                     await db.SmtpUsers.AddAsync(dataSmtpUser);
                     await db.SaveChangesAsync();
                 }
