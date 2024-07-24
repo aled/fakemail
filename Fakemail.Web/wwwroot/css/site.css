@@ -1,16 +1,16 @@
 html {
-  font-size: 14px;
+    font-size: 14px;
 }
 
 @media (min-width: 768px) {
-  html {
-    font-size: 16px;
-  }
+    html {
+        font-size: 16px;
+    }
 }
 
 html {
-  position: relative;
-  min-height: 100%;
+    position: relative;
+    min-height: 100%;
 }
 
 body {
@@ -30,6 +30,6 @@ body {
     transition: box-shadow 0.3s ease-in-out; /* Smooth transition for the outline */
 }
 
-.copyable-text:hover {
-    box-shadow: 0 0 0 2px #607b7f; /* Blue outline */
-}
+    .copyable-text:hover {
+        box-shadow: 0 0 0 2px #607b7f; /* Blue outline */
+    }

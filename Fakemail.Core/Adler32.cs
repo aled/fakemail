@@ -6,7 +6,7 @@ namespace Fakemail.Core
     /// Copied from https://raw.githubusercontent.com/icsharpcode/SharpZipLib/master/src/ICSharpCode.SharpZipLib/Checksum/Adler32.cs
     /// (MIT license)
     /// </summary>
-   
+
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Style", "IDE0054:Use compound assignment")]
     public sealed class Adler32
 	{
