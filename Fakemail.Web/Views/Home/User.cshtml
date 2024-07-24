@@ -49,7 +49,7 @@ Password: <span class="sourcecode copyable-text" data-bs-toggle="tooltip" data-b
     }
 
     function UpdateTable(isOneOff) {
-        var nextUpdate = 60000;
+        var nextUpdate = 10000;
 
         fetch("@Model.UserId/smtpuser/@Model.SmtpCredentials.First().SmtpUsername/update/" + sequenceNumber, {
             method: 'GET'
