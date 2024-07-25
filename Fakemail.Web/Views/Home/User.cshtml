@@ -38,18 +38,19 @@ Password: <span class="sourcecode copyable-text" data-bs-toggle="tooltip" data-b
 @section Scripts {
 <script type="text/javascript">
 
-    var sequenceNumber = 0;
-
     window.onload = (event) => {
-        @if (Model.EmailSummaries.Any())
-        {
-        <text>sequenceNumber=@Model.EmailSummaries.Max(x => x.SequenceNumber);</text>
-        }
         setTimeout(() => UpdateTable(false), 10000);
     }
 
     function UpdateTable(isOneOff) {
         var nextUpdate = 10000;
+
+        var sequenceNumber = Math.max(
+            ...$('tr[sequenceNumber')
+                .map((i, el) => parseInt($(el).attr('sequenceNumber'), 10))
+                .get(), 
+            -1
+        );
 
         fetch("@Model.UserId/smtpuser/@Model.SmtpCredentials.First().SmtpUsername/update/" + sequenceNumber, {
             method: 'GET'
@@ -64,7 +65,6 @@ Password: <span class="sourcecode copyable-text" data-bs-toggle="tooltip" data-b
         .then(data => {
             if (data.length > 2) {
                 $('#_EmailSummaryTableBody:first').prepend(data);
-                sequenceNumber = $('tr[sequenceNumber]:first').attr("sequenceNumber")
                 nextUpdate = 5000;
             }
         })
@@ -92,8 +92,7 @@ Password: <span class="sourcecode copyable-text" data-bs-toggle="tooltip" data-b
         fetch(url, {
             method: 'DELETE'
         })
-        .then(response => { 
-            sequenceNumber = 0;
+        .then(response => {
             $('#_EmailSummaryTableBody').empty();
         });
 
