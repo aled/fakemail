@@ -34,6 +34,27 @@ Password: <span class="sourcecode copyable-text" data-bs-toggle="tooltip" data-b
 <br />
 <span class="">Waiting for emails to arrive...</span>
 
+<hr />
+
+<div class="alert alert-warning alert-dismissible fade show" role="alert">
+    <i class="bi bi-info-circle me-2"></i>
+    Download emails using curl.exe:
+<div class="sourcecode copyable-text" data-bs-toggle="tooltip" data-bs-placement="top" title="Copy to clipboard">
+<pre><span>curl.exe -X 'POST' \</span>
+<span>'@Model.ApiExternalBaseUri/mail/list' \</span>
+<span>-H 'Content-Type: application/json' \</span>
+<span>-d '{\"userId\": \"@Model.UserId\",\"page\":1,\"pageSize\":10}'</span></pre>
+    </div>
+    <div class="sourcecode copyable-text" data-bs-toggle="tooltip" data-bs-placement="top" title="Copy to clipboard">
+<pre><span>curl.exe -X 'POST' \</span>
+<span>'@Model.ApiExternalBaseUri/mail/get' \</span>
+<span>-H 'Content-Type: application/json' \</span>
+<span>-d '{\"userId\": \"@Model.UserId\",\"emailId\":\"[email id as returned from /mail/list]\"}'</span></pre>
+    </div>
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+
+</div>
+
 <iframe id="download_iframe" style="display:none;"></iframe>
 
 @section Scripts {

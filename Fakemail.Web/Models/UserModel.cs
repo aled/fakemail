@@ -10,6 +10,8 @@ namespace Fakemail.Web.Models
 
         public SmtpServerModel SmtpServer { get; set; }
 
+        public string ApiExternalBaseUri { get; set; }
+
         public EmailAggregationModel EmailAggregation { get; set; }
 
         public List<SmtpCredentialModel> SmtpCredentials { get; set; }

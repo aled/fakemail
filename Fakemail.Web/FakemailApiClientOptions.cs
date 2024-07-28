@@ -3,5 +3,7 @@
     public class FakemailApiClientOptions
     {
         public string BaseUri { get; set; }
+
+        public string ExternalBaseUri { get; set; }
     }
 }

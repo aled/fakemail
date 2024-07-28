@@ -16,6 +16,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docs", "docs", "{408ADE05-0
 		linux-commands.md = linux-commands.md
 		README.md = README.md
 		screenshot.png = screenshot.png
+		TODO.md = TODO.md
+		VM_SETUP.md = VM_SETUP.md
 	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Fakemail.Core", "Fakemail.Core\Fakemail.Core.csproj", "{316906F9-8759-4DCB-A26B-B94EDA7B2022}"

@@ -230,6 +230,7 @@ namespace Fakemail.Web.Controllers
                 {
                     UserId = userId,
                     Username = resp.Username,
+                    ApiExternalBaseUri = fakemailApi.ExternalBaseUri,
                     SmtpServer = await GetSmtpServerModelAsync(),
                     SmtpCredentials = resp.SmtpUsers.Select(u => new SmtpCredentialModel
                     {

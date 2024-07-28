@@ -13,7 +13,7 @@ document.querySelectorAll('.copyable-text').forEach(item => {
 });
 
 function copyTextToClipboard(element) {
-    navigator.clipboard.writeText(element.innerText);
+    navigator.clipboard.writeText(element.innerText.replace(/\\\r?\n/g, ""));
     const tooltipInstance = bootstrap.Tooltip.getInstance(element);
     if (tooltipInstance) {
         tooltipInstance.hide();
