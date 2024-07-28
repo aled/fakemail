@@ -2,12 +2,13 @@
 using Fakemail.Core;
 
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
 
 namespace Fakemail.Api.Controllers
 {
     [Route("api/mail")]
     [ApiController]
-    public class MailController(IEngine engine) : ControllerBase
+    public class MailController(IEngine engine, IOptions<SmtpServerOptions> smtpServerOptions) : ControllerBase
     {
         // POST: api/mail/get
         [HttpPost]
@@ -31,7 +32,7 @@ namespace Fakemail.Api.Controllers
 
         // POST: api/mail/deleteall
         [HttpPost]
-        [Route("deleteall")]
+        [Route("delete-all")]
         public async Task<IActionResult> DeleteAllEmails([FromBody] DeleteAllEmailsRequest request)
         {
             _ = Guid.TryParse(HttpContext.User.Identity.Name, out var authenticatedUserId);
@@ -51,7 +52,7 @@ namespace Fakemail.Api.Controllers
 
         // POST: api/mail/listbysequencenumber
         [HttpPost]
-        [Route("listBySequenceNumber")]
+        [Route("list-by-sequence-number")]
         public async Task<IActionResult> ListEmailsBySequenceNumber([FromBody] ListEmailsBySequenceNumberRequest request)
         {
             _ = Guid.TryParse(HttpContext.User.Identity.Name, out var authenticatedUserId);
@@ -66,6 +67,24 @@ namespace Fakemail.Api.Controllers
         {
             _ = Guid.TryParse(HttpContext.User.Identity.Name, out var authenticatedUserId);
             var response = await engine.CreateEmailAsync(request, authenticatedUserId);
+            return Ok(response);
+        }
+
+        // POST: api/mail/testsmtp
+        [HttpPost]
+        [Route("test-smtp")]
+        public async Task<IActionResult> TestSmtp([FromBody] TestSmtpRequest request)
+        {
+            _ = Guid.TryParse(HttpContext.User.Identity.Name, out var authenticatedUserId);
+
+            var smtpServer = new SmtpServer
+            {
+                Host = smtpServerOptions.Value.Host,
+                Port = smtpServerOptions.Value.Port,
+                AuthenticationType = smtpServerOptions.Value.AuthenticationType
+            };
+
+            var response = await engine.TestSmtpAsync(request, authenticatedUserId, smtpServer);
             return Ok(response);
         }
     }

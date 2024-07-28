@@ -15,14 +15,15 @@
 <p><span style="font-weight: 700">Welcome, @Model.Username.</span></p>
 
 <p>
-Host: <span class="sourcecode copyable-text" data-bs-toggle="tooltip" data-bs-placement="top" title="Copy to clipboard">fakemail.stream</span>
-Port: <span class="sourcecode copyable-text" data-bs-toggle="tooltip" data-bs-placement="top" title="Copy to clipboard">587</span>
-Security: <span class="sourcecode">TLS</span>
+Host: <span class="sourcecode copyable-text" data-bs-toggle="tooltip" data-bs-placement="top" title="Copy to clipboard">@Model.SmtpServer.Host</span>
+Port: <span class="sourcecode copyable-text" data-bs-toggle="tooltip" data-bs-placement="top" title="Copy to clipboard">@Model.SmtpServer.Port</span>
+Security: <span class="sourcecode">@Model.SmtpServer.AuthenticationType</span>
 Username: <span class="sourcecode copyable-text" data-bs-toggle="tooltip" data-bs-placement="top" title="Copy to clipboard">@Model.SmtpCredentials.First().SmtpUsername</span>
 Password: <span class="sourcecode copyable-text" data-bs-toggle="tooltip" data-bs-placement="top" title="Copy to clipboard">@Model.SmtpCredentials.First().SmtpPassword</span>
 </p>
 
-<button class="btn btn-secondary btn-sm" onclick="InjectTestEmail('@Model.UserId', '@Model.SmtpCredentials.First().SmtpUsername')">Inject test email</button>
+<button class="btn btn-secondary btn-sm" onclick="InjectTestEmail('@Model.UserId', '@Model.SmtpCredentials.First().SmtpUsername')">Create email (API)</button>
+<button class="btn btn-secondary btn-sm" onclick="SendTestEmail('@Model.UserId', '@Model.SmtpCredentials.First().SmtpUsername')">Send email (SMTP)</button>
 <button class="btn btn-secondary btn-sm" onclick="DeleteAllEmails('@Model.UserId', '@Model.SmtpCredentials.First().SmtpUsername')">Delete all</button>
 
 <div id="_EmailSummaryTable">
@@ -79,6 +80,16 @@ Password: <span class="sourcecode copyable-text" data-bs-toggle="tooltip" data-b
 
     function InjectTestEmail(userId, smtpUsername) {
         var url = userId + '/smtpuser/' + smtpUsername + '/inject-test';
+        fetch(url, {
+            method: 'GET'
+        })
+        .then(response => UpdateTable(true));
+
+        // TODO: error handling
+    };
+
+    function SendTestEmail(userId, smtpUsername) {
+        var url = userId + '/smtpuser/' + smtpUsername + '/test-smtp';
         fetch(url, {
             method: 'GET'
         })

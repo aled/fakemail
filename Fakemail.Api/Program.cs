@@ -14,126 +14,139 @@ using Polly.Extensions.Http;
 
 using Serilog;
 
-var builder = WebApplication.CreateBuilder(args);
+namespace Fakemail.Api;
 
-var connectionString = builder.Configuration.GetConnectionString("fakemail");
-
-var jwtSecret = builder.Configuration["Jwt:Secret"];
-
-// JWT secret must be at least 64 characters in length (this gives 256 bits of randomness when the characters
-// are hex digits)
-if (jwtSecret?.Length < 64)
+internal class Program
 {
-    throw new Exception("JWT secret must be at least 64 characters");
-}
-
-var jwtValidIssuer = builder.Configuration["Jwt:ValidIssuer"];
-var jwtExpiryMinutes = Convert.ToInt32(builder.Configuration["Jwt:ExpiryMinutes"]);
-
-builder.Host.UseSerilog((ctx, loggerConfiguration) => loggerConfiguration.WriteTo.Console());
-
-builder.Services.AddDbContextFactory<FakemailDbContext>(options => options.UseSqlite(connectionString));
-builder.Services.AddSingleton(Log.Logger);
-builder.Services.AddSingleton(TimeProvider.System);
-builder.Services.AddSingleton<IEngine, Engine>();
-builder.Services.AddHttpClient<IPwnedPasswordApi, PwnedPasswordApi>()
-    .AddPolicyHandler(HttpPolicyExtensions.HandleTransientHttpError()
-        .OrResult(msg => msg.StatusCode == System.Net.HttpStatusCode.NotFound)
-        .WaitAndRetryAsync(3, retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt))));
-
-// In the development environment, allow CORS from the web server to the API.
-// In production, they will use the same origin (using a reverse proxy)
-var corsPolicyName = "_fakemail_development_allowed_origins";
-builder.Services.AddCors(options =>
-{
-    options.AddPolicy(corsPolicyName, policy =>
+    private static void Main(string[] args)
     {
-        policy.WithOrigins("https://localhost:7150");
-    });
-});
+        var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddControllers().AddJsonOptions(options => options.JsonSerializerOptions.DefaultIgnoreCondition
-   = JsonIgnoreCondition.WhenWritingDefault
-   | JsonIgnoreCondition.WhenWritingNull);
+        var connectionString = builder.Configuration.GetConnectionString("fakemail");
 
-builder.Services.AddAuthentication(x =>
-{
-    x.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-    x.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-}).AddJwtBearer(options =>
-{
-    options.RequireHttpsMetadata = false;
-    options.SaveToken = true;
-    options.TokenValidationParameters = new TokenValidationParameters
-    {
-        ValidateIssuerSigningKey = true,
-        ValidateIssuer = true,
-        ValidIssuer = jwtValidIssuer,
-        ValidateAudience = false,
-        IssuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(jwtSecret))
-    };
-});
+        var jwtSecret = builder.Configuration["Jwt:Secret"];
 
-builder.Services.AddSingleton<IJwtAuthentication>(new JwtAuthentication(jwtSecret, jwtValidIssuer, jwtExpiryMinutes));
-
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen(options =>
-{
-    options.SwaggerDoc("v1", new OpenApiInfo { Title = "Demo API", Version = "v1" });
-
-    // This allows the user to enter the bearer token into the swagger explorer, so
-    // that authorized API calls can be made
-    options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
-    {
-        In = ParameterLocation.Header,
-        Description = "Please enter a valid token",
-        Name = "Authorization",
-        Type = SecuritySchemeType.Http,
-        BearerFormat = "JWT",
-        Scheme = "Bearer"
-    });
-    options.AddSecurityRequirement(new OpenApiSecurityRequirement
-    {
+        // JWT secret must be at least 64 characters in length (this gives 256 bits of randomness when the characters
+        // are hex digits)
+        if (jwtSecret?.Length < 64)
         {
-            new OpenApiSecurityScheme
-            {
-                Reference = new OpenApiReference
-                {
-                    Type = ReferenceType.SecurityScheme,
-                    Id = "Bearer"
-                }
-            },
-            Array.Empty<string>()
+            throw new Exception("JWT secret must be at least 64 characters");
         }
-    });
-});
 
-var app = builder.Build();
+        var jwtValidIssuer = builder.Configuration["Jwt:ValidIssuer"];
+        var jwtExpiryMinutes = Convert.ToInt32(builder.Configuration["Jwt:ExpiryMinutes"]);
 
-// Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
-    app.UseDeveloperExceptionPage();
-    app.UseSwagger();
-    app.UseSwaggerUI();
-    app.UseCors(corsPolicyName);
+        builder.Host.UseSerilog((ctx, loggerConfiguration) => loggerConfiguration.WriteTo.Console());
+
+        builder.Services.AddDbContextFactory<FakemailDbContext>(options => options.UseSqlite(connectionString));
+
+        builder.Services.AddSingleton(Log.Logger);
+        builder.Services.AddSingleton(TimeProvider.System);
+        builder.Services.AddSingleton<IEngine, Engine>();
+
+        builder.Services.Configure<SmtpServerOptions>(builder.Configuration.GetSection("SmtpServer"));
+
+        builder.Services.AddHttpClient<IPwnedPasswordApi, PwnedPasswordApi>()
+            .AddPolicyHandler(HttpPolicyExtensions.HandleTransientHttpError()
+                .OrResult(msg => msg.StatusCode == System.Net.HttpStatusCode.NotFound)
+                .WaitAndRetryAsync(3, retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt))));
+
+        // In the development environment, allow CORS from the web server to the API.
+        // In production, they will use the same origin (using a reverse proxy)
+        var corsPolicyName = "_fakemail_development_allowed_origins";
+        builder.Services.AddCors(options =>
+        {
+            options.AddPolicy(corsPolicyName, policy =>
+            {
+                policy.WithOrigins("https://localhost:7150");
+            });
+        });
+
+        builder.Services.AddControllers().AddJsonOptions(options => options.JsonSerializerOptions.DefaultIgnoreCondition
+           = JsonIgnoreCondition.WhenWritingDefault
+           | JsonIgnoreCondition.WhenWritingNull);
+
+        builder.Services.AddAuthentication(x =>
+        {
+            x.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+            x.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+        }).AddJwtBearer(options =>
+        {
+            options.RequireHttpsMetadata = false;
+            options.SaveToken = true;
+            options.TokenValidationParameters = new TokenValidationParameters
+            {
+                ValidateIssuerSigningKey = true,
+                ValidateIssuer = true,
+
+                ValidIssuer = jwtValidIssuer,
+                ValidateAudience = false,
+                IssuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(jwtSecret))
+            };
+        });
+
+        builder.Services.AddSingleton<IJwtAuthentication>(new JwtAuthentication(jwtSecret, jwtValidIssuer, jwtExpiryMinutes));
+
+        // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+        builder.Services.AddEndpointsApiExplorer();
+        builder.Services.AddSwaggerGen(options =>
+        {
+            options.SwaggerDoc("v1", new OpenApiInfo { Title = "Demo API", Version = "v1" });
+
+            // This allows the user to enter the bearer token into the swagger explorer, so
+            // that authorized API calls can be made
+            options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+            {
+                In = ParameterLocation.Header,
+                Description = "Please enter a valid token",
+                Name = "Authorization",
+                Type = SecuritySchemeType.Http,
+                BearerFormat = "JWT",
+                Scheme = "Bearer"
+            });
+            options.AddSecurityRequirement(new OpenApiSecurityRequirement
+            {
+                {
+                    new OpenApiSecurityScheme
+                    {
+                        Reference = new OpenApiReference
+                        {
+                            Type = ReferenceType.SecurityScheme,
+                            Id = "Bearer"
+                        }
+                    },
+                    Array.Empty<string>()
+                }
+            });
+        });
+
+        var app = builder.Build();
+
+        // Configure the HTTP request pipeline.
+        if (app.Environment.IsDevelopment())
+        {
+            app.UseDeveloperExceptionPage();
+            app.UseSwagger();
+            app.UseSwaggerUI();
+            app.UseCors(corsPolicyName);
+        }
+
+        using (var scope = app.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<FakemailDbContext>();
+            db.Database.Migrate();
+        }
+
+        if (!app.Environment.IsDevelopment())
+        {
+            app.UseHttpsRedirection();
+        }
+
+        app.UseAuthentication();
+        app.UseAuthorization();
+
+        app.MapControllers();
+
+        app.Run();
+    }
 }
-
-using (var scope = app.Services.CreateScope())
-{
-    var db = scope.ServiceProvider.GetRequiredService<FakemailDbContext>();
-    db.Database.Migrate();
-}
-
-if (!app.Environment.IsDevelopment())
-{
-    app.UseHttpsRedirection();
-}
-
-app.UseAuthentication();
-app.UseAuthorization();
-
-app.MapControllers();
-
-app.Run();

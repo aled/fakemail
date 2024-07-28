@@ -1,4 +1,6 @@
-﻿@{
+﻿@model Fakemail.Web.Models.SmtpServerModel
+
+@{
     ViewData["Title"] = "fakemail.stream";
 }
 <div class="text-left">
@@ -10,9 +12,9 @@
 <p><span style="font-weight: 700">Welcome, Anonymous user.</span></p>
 
 <p>
-Host: <span class="sourcecode copyable-text" data-bs-toggle="tooltip" data-bs-placement="top" title="Copy to clipboard">fakemail.stream</span>
-Port: <span class="sourcecode copyable-text" data-bs-toggle="tooltip" data-bs-placement="top" title="Copy to clipboard">587</span>
-Security: <span class="sourcecode">TLS</span>
+Host: <span class="sourcecode copyable-text" data-bs-toggle="tooltip" data-bs-placement="top" title="Copy to clipboard">@Model.Host</span>
+Port: <span class="sourcecode copyable-text" data-bs-toggle="tooltip" data-bs-placement="top" title="Copy to clipboard">@Model.Port</span>
+Security: <span class="sourcecode">@Model.AuthenticationType</span>
 Credentials: <button class="btn btn-secondary btn-sm" onclick="generate_onclick()">Generate...</button>
 </p>
 

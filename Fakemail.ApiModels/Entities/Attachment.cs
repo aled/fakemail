@@ -8,8 +8,5 @@ namespace Fakemail.ApiModels
         public string Filename { get; set; }
         public string ContentType { get; set; }
         public byte[] Content { get; set; }
-
-        // Used to aggregate
-        public int Checksum { get; set; }
     }
 }
