@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Data;
 using System.IO;
 using System.Linq;
+using System.Net;
+using System.Net.Mail;
 using System.Security.Cryptography;
 using System.Text.RegularExpressions;
 using System.Threading;
@@ -379,6 +381,90 @@ namespace Fakemail.Core
             }
         }
 
+        public async Task<TestSmtpResponse> TestSmtpAsync(TestSmtpRequest request, Guid authenticatedUserId, SmtpServer smtpServer)
+        {
+            SmtpUser smtpUser = null;
+
+            using (var db = dbFactory.CreateDbContext())
+            {
+                var user = await GetAuthenticatedOrUnsecuredUserAsync(db, request, authenticatedUserId);
+
+                if (user == null)
+                {
+                    return new TestSmtpResponse
+                    {
+                        Success = false,
+                        ErrorMessage = "Unauthorized"
+                    };
+                }
+
+                smtpUser = await db.SmtpUsers.FirstOrDefaultAsync(su => su.UserId == request.UserId && su.SmtpUsername == request.SmtpUsername);
+
+                if (smtpUser == null)
+                {
+                    return new TestSmtpResponse
+                    {
+                        Success = false,
+                        ErrorMessage = "Unknown SMTP username"
+                    };
+                }
+            }
+
+            try
+            {
+                var message = new MailMessage();
+
+                if (request.Email.From != null) message.From = new MailAddress(request.Email.From);
+                if (request.Email.Sender != null) message.Sender = new MailAddress(request.Email.Sender);
+                message.Subject = request.Email.Subject;
+                message.Body = request.Email.Body;
+
+                static void Add(string[] source, MailAddressCollection dest)
+                {
+                    foreach (var s in source ?? [])
+                    {
+                        dest.Add(new MailAddress(s));
+                    }
+                }
+                Add(request.Email.To, message.To);
+                Add(request.Email.Cc, message.CC);
+                Add(request.Email.Bcc, message.Bcc);
+
+                foreach (var attachment in request.Email.Attachments ?? [])
+                {
+                    var contentStream = new MemoryStream(attachment.Content);
+                    message.Attachments.Add(new System.Net.Mail.Attachment(contentStream, attachment.Filename, attachment.ContentType));
+                }
+
+                smtpUser.SmtpUsername = "1utrb0";
+                smtpUser.SmtpPassword = "eBXoZO4GEwV";
+
+                var smtpClient = new SmtpClient(smtpServer.Host, smtpServer.Port)
+                {
+                    EnableSsl = true,
+
+                    UseDefaultCredentials = false,
+
+                    Credentials = new NetworkCredential(smtpUser.SmtpUsername, smtpUser.SmtpPassword)
+                };
+
+                await smtpClient.SendMailAsync(message);
+            }
+            catch (Exception ex)
+            {
+                return new TestSmtpResponse
+                {
+                    Success = false,
+                    ErrorMessage = ex.Message
+                };
+            }
+
+            return new TestSmtpResponse
+            {
+                Success = true
+            };
+        }
+
         public async Task<ListUserResponse> ListUsersAsync(ListUserRequest request)
         {
             using var db = dbFactory.CreateDbContext();
@@ -391,6 +477,7 @@ namespace Fakemail.Core
                     x.IsAdmin,
                     SmtpUsers = x.SmtpUsers.Select(y => new SmtpUserDetail
                     {
+                        SmtpPassword = null,
                         SmtpUsername = y.SmtpUsername,
                         CurrentEmailCount = y.Emails.Count
                     }),
@@ -433,7 +520,7 @@ namespace Fakemail.Core
                     return requestedUser;
                 }
 
-                // if requested user is secured, caller must be authenticated
+                // if requested user is the current authenticated user, allow access
                 else if (requestedUser.UserId == authenticatedUserId)
                 {
                     return requestedUser;

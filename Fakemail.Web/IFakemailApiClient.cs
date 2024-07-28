@@ -4,6 +4,8 @@ namespace Fakemail.Web
 {
     public interface IFakemailApiClient
     {
+        Task<GetSmtpServerResponse> GetSmtpServerAsync(GetSmtpServerRequest request);
+
         Task<CreateUserResponse> CreateUserAsync(CreateUserRequest request);
 
         Task<ListEmailsResponse> ListEmailsAsync(ListEmailsRequest request);
@@ -17,5 +19,7 @@ namespace Fakemail.Web
         Task<DeleteAllEmailsResponse> DeleteAllEmailsAsync(DeleteAllEmailsRequest request);
 
         Task<CreateEmailResponse> CreateEmailAsync(CreateEmailRequest createEmailRequest);
+
+        Task<TestSmtpResponse> TestSmtpAsync(TestSmtpRequest testSmtpRequest);
     }
 }

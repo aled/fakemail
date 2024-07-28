@@ -22,6 +22,8 @@ namespace Fakemail.Core
 
         Task<CreateEmailResponse> CreateEmailAsync(Stream messageStream);
 
+        Task<TestSmtpResponse> TestSmtpAsync(TestSmtpRequest request, Guid authenticatedUserId, SmtpServer smtpServer);
+
         Task<CreateEmailResponse> CreateEmailAsync(CreateEmailRequest request, Guid authenticatedUserId);
 
         Task<ListEmailsResponse> ListEmailsAsync(ListEmailsRequest request, Guid authenticatedUserId);

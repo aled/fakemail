@@ -6,14 +6,38 @@ using Fakemail.ApiModels;
 using Fakemail.Web.Models;
 
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace Fakemail.Web.Controllers
 {
-    public class HomeController(ILogger<HomeController> logger, IFakemailApiClient fakemailApi) : Controller
+    public class HomeController(ILogger<HomeController> logger, IFakemailApiClient fakemailApi, IMemoryCache memoryCache) : Controller
     {
-        public IActionResult Index()
+        private async Task<SmtpServerModel> GetSmtpServerModelAsync()
         {
-            return View();
+            _ = memoryCache.TryGetValue("smtpServerModel", out SmtpServerModel model);
+
+            if (model == null)
+            {
+                var response = await fakemailApi.GetSmtpServerAsync(new GetSmtpServerRequest());
+
+                if (response.IsSuccess)
+                {
+                    model = new SmtpServerModel
+                    {
+                        Host = response.SmtpServer.Host,
+                        Port = response.SmtpServer.Port,
+                        AuthenticationType = response.SmtpServer.AuthenticationType
+                    };
+                    memoryCache.Set("smtpServerModel", model);
+                }
+            }
+
+            return model;
+        }
+
+        public async Task<IActionResult> Index()
+        {
+            return View(await GetSmtpServerModelAsync());
         }
 
         [HttpGet]
@@ -85,6 +109,35 @@ namespace Fakemail.Web.Controllers
             }
 
             throw new Exception("Failed to inject test email");
+        }
+
+        [HttpGet]
+        [Route("user/{userId}/smtpuser/{smtpUsername}/test-smtp")]
+        public async Task<IActionResult> UserTestSmtp(Guid userId, string smtpUsername)
+        {
+            // TODO: add UI for this
+            var request = new TestSmtpRequest
+            {
+                UserId = userId,
+                SmtpUsername = smtpUsername,
+                Email = new Email
+                {
+                    From = "from@from.com",
+                    To = ["to1@to.com", "to2@to.com"],
+                    Body = "hello world!",
+                    ReceivedTimestamp = DateTime.UtcNow,
+                    Subject = "hello!"
+                }
+            };
+
+            var response = await fakemailApi.TestSmtpAsync(request);
+
+            if (response.Success)
+            {
+                return Ok();
+            }
+
+            throw new Exception("Failed to send test SMTP email");
         }
 
         [HttpGet]
@@ -177,6 +230,7 @@ namespace Fakemail.Web.Controllers
                 {
                     UserId = userId,
                     Username = resp.Username,
+                    SmtpServer = await GetSmtpServerModelAsync(),
                     SmtpCredentials = resp.SmtpUsers.Select(u => new SmtpCredentialModel
                     {
                         SmtpUsername = u.SmtpUsername,

@@ -15,14 +15,15 @@
 <p><span style="font-weight: 700">Welcome, @Model.Username.</span></p>
 
 <p>
-Host: <span class="sourcecode copyable-text" data-bs-toggle="tooltip" data-bs-placement="top" title="Copy to clipboard">fakemail.stream</span>
-Port: <span class="sourcecode copyable-text" data-bs-toggle="tooltip" data-bs-placement="top" title="Copy to clipboard">587</span>
-Security: <span class="sourcecode">TLS</span>
+Host: <span class="sourcecode copyable-text" data-bs-toggle="tooltip" data-bs-placement="top" title="Copy to clipboard">@Model.SmtpServer.Host</span>
+Port: <span class="sourcecode copyable-text" data-bs-toggle="tooltip" data-bs-placement="top" title="Copy to clipboard">@Model.SmtpServer.Port</span>
+Security: <span class="sourcecode">@Model.SmtpServer.AuthenticationType</span>
 Username: <span class="sourcecode copyable-text" data-bs-toggle="tooltip" data-bs-placement="top" title="Copy to clipboard">@Model.SmtpCredentials.First().SmtpUsername</span>
 Password: <span class="sourcecode copyable-text" data-bs-toggle="tooltip" data-bs-placement="top" title="Copy to clipboard">@Model.SmtpCredentials.First().SmtpPassword</span>
 </p>
 
-<button class="btn btn-secondary btn-sm" onclick="InjectTestEmail('@Model.UserId', '@Model.SmtpCredentials.First().SmtpUsername')">Inject test email</button>
+<button class="btn btn-secondary btn-sm" onclick="InjectTestEmail('@Model.UserId', '@Model.SmtpCredentials.First().SmtpUsername')">Create email (API)</button>
+<button class="btn btn-secondary btn-sm" onclick="SendTestEmail('@Model.UserId', '@Model.SmtpCredentials.First().SmtpUsername')">Send email (SMTP)</button>
 <button class="btn btn-secondary btn-sm" onclick="DeleteAllEmails('@Model.UserId', '@Model.SmtpCredentials.First().SmtpUsername')">Delete all</button>
 
 <div id="_EmailSummaryTable">
@@ -38,18 +39,19 @@ Password: <span class="sourcecode copyable-text" data-bs-toggle="tooltip" data-b
 @section Scripts {
 <script type="text/javascript">
 
-    var sequenceNumber = 0;
-
     window.onload = (event) => {
-        @if (Model.EmailSummaries.Any())
-        {
-        <text>sequenceNumber=@Model.EmailSummaries.Max(x => x.SequenceNumber);</text>
-        }
         setTimeout(() => UpdateTable(false), 10000);
     }
 
     function UpdateTable(isOneOff) {
         var nextUpdate = 10000;
+
+        var sequenceNumber = Math.max(
+            ...$('tr[sequenceNumber')
+                .map((i, el) => parseInt($(el).attr('sequenceNumber'), 10))
+                .get(), 
+            -1
+        );
 
         fetch("@Model.UserId/smtpuser/@Model.SmtpCredentials.First().SmtpUsername/update/" + sequenceNumber, {
             method: 'GET'
@@ -64,7 +66,6 @@ Password: <span class="sourcecode copyable-text" data-bs-toggle="tooltip" data-b
         .then(data => {
             if (data.length > 2) {
                 $('#_EmailSummaryTableBody:first').prepend(data);
-                sequenceNumber = $('tr[sequenceNumber]:first').attr("sequenceNumber")
                 nextUpdate = 5000;
             }
         })
@@ -87,13 +88,22 @@ Password: <span class="sourcecode copyable-text" data-bs-toggle="tooltip" data-b
         // TODO: error handling
     };
 
+    function SendTestEmail(userId, smtpUsername) {
+        var url = userId + '/smtpuser/' + smtpUsername + '/test-smtp';
+        fetch(url, {
+            method: 'GET'
+        })
+        .then(response => UpdateTable(true));
+
+        // TODO: error handling
+    };
+
     function DeleteAllEmails(userId, smtpUsername) {
         var url = userId + '/smtpuser/' + smtpUsername + '/email/*';
         fetch(url, {
             method: 'DELETE'
         })
-        .then(response => { 
-            sequenceNumber = 0;
+        .then(response => {
             $('#_EmailSummaryTableBody').empty();
         });
 

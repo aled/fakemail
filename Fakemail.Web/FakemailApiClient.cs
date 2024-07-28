@@ -14,6 +14,9 @@ namespace Fakemail.Web
             return await response.Content.FromJsonAsync<TResp>();
         }
 
+        public Task<GetSmtpServerResponse> GetSmtpServerAsync(GetSmtpServerRequest request) =>
+            CallAsync<GetSmtpServerRequest, GetSmtpServerResponse>(request, "options/smtpserver");
+
         public Task<CreateUserResponse> CreateUserAsync(CreateUserRequest request) =>
             CallAsync<CreateUserRequest, CreateUserResponse>(request, "user/create");
 
@@ -21,7 +24,7 @@ namespace Fakemail.Web
             CallAsync<ListEmailsRequest, ListEmailsResponse>(request, "mail/list");
 
         public Task<ListEmailsBySequenceNumberResponse> ListEmailsBySequenceNumberAsync(ListEmailsBySequenceNumberRequest request) =>
-            CallAsync<ListEmailsBySequenceNumberRequest, ListEmailsBySequenceNumberResponse>(request, "mail/listbysequencenumber");
+            CallAsync<ListEmailsBySequenceNumberRequest, ListEmailsBySequenceNumberResponse>(request, "mail/list-by-sequence-number");
 
         public Task<GetEmailResponse> GetEmailAsync(GetEmailRequest request) =>
             CallAsync<GetEmailRequest, GetEmailResponse>(request, "mail/get");
@@ -30,9 +33,12 @@ namespace Fakemail.Web
             CallAsync<DeleteEmailRequest, DeleteEmailResponse>(request, "mail/delete");
 
         public Task<DeleteAllEmailsResponse> DeleteAllEmailsAsync(DeleteAllEmailsRequest request) =>
-            CallAsync<DeleteAllEmailsRequest, DeleteAllEmailsResponse>(request, "mail/deleteall");
+            CallAsync<DeleteAllEmailsRequest, DeleteAllEmailsResponse>(request, "mail/delete-all");
 
         public Task<CreateEmailResponse> CreateEmailAsync(CreateEmailRequest request) =>
             CallAsync<CreateEmailRequest, CreateEmailResponse>(request, "mail/create");
+
+        public Task<TestSmtpResponse> TestSmtpAsync(TestSmtpRequest request) =>
+            CallAsync<TestSmtpRequest, TestSmtpResponse>(request, "mail/test-smtp");
     }
 }
