@@ -436,9 +436,6 @@ namespace Fakemail.Core
                     message.Attachments.Add(new System.Net.Mail.Attachment(contentStream, attachment.Filename, attachment.ContentType));
                 }
 
-                smtpUser.SmtpUsername = "1utrb0";
-                smtpUser.SmtpPassword = "eBXoZO4GEwV";
-
                 var smtpClient = new SmtpClient(smtpServer.Host, smtpServer.Port)
                 {
                     EnableSsl = true,
