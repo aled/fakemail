@@ -6,11 +6,11 @@ namespace Fakemail.Web
 {
     public class FakemailApiClient(HttpClient httpClient, IOptions<FakemailApiClientOptions> options) : IFakemailApiClient
     {
-        private readonly FakemailApiClientOptions _options = options.Value;
+        public string ExternalBaseUri => options.Value.ExternalBaseUri;
 
         private async Task<TResp> CallAsync<TReq, TResp>(TReq req, string path)
         {
-            var response = await httpClient.PostAsJsonAsync($"{_options.BaseUri}{path}", req);
+            var response = await httpClient.PostAsJsonAsync($"{options.Value.BaseUri}{path}", req);
             return await response.Content.FromJsonAsync<TResp>();
         }
 

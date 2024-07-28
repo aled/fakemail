@@ -1,9 +1,13 @@
 ﻿using Fakemail.ApiModels;
 
+using Microsoft.Extensions.Options;
+
 namespace Fakemail.Web
 {
     public interface IFakemailApiClient
     {
+        string ExternalBaseUri { get; }
+
         Task<GetSmtpServerResponse> GetSmtpServerAsync(GetSmtpServerRequest request);
 
         Task<CreateUserResponse> CreateUserAsync(CreateUserRequest request);
