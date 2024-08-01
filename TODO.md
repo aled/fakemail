@@ -1,6 +1,7 @@
 # to-do list
 
 Immediate:
+- Change window title to show number of emails
 - Add curl command lines to web page
 - handle errors in front end (e.g. too many requests, SMTP send error)
 - Update ansible (sqlite files need to be group-writable)
