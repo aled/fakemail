@@ -338,9 +338,9 @@ namespace Fakemail.Core.Tests
             }
 
             // each user has 4 emails (received at times now, now-30, now-60 and now-90)
-            foreach (var user in users)
+            foreach (var (id, _) in users)
             {
-                (await fixture.Engine.ListEmailsAsync(new ListEmailsRequest { UserId = user.id }, user.id))
+                (await fixture.Engine.ListEmailsAsync(new ListEmailsRequest { UserId = id }, id))
                     .Emails.Count.Should().Be(4);
             }
 
@@ -351,9 +351,9 @@ namespace Fakemail.Core.Tests
                 MaxEmailCount = 4
             }, CancellationToken.None)).TotalEmailsDeleted.Should().Be(3);
 
-            foreach (var user in users)
+            foreach (var (id, _) in users)
             {
-                (await fixture.Engine.ListEmailsAsync(new ListEmailsRequest { UserId = user.id }, user.id))
+                (await fixture.Engine.ListEmailsAsync(new ListEmailsRequest { UserId = id }, id))
                     .Emails.Count.Should().Be(3);
             }
 
@@ -364,9 +364,9 @@ namespace Fakemail.Core.Tests
                 MaxEmailCount = 2
             }, CancellationToken.None)).TotalEmailsDeleted.Should().Be(3);
 
-            foreach (var user in users)
+            foreach (var (id, _) in users)
             {
-                (await fixture.Engine.ListEmailsAsync(new ListEmailsRequest { UserId = user.id }, user.id))
+                (await fixture.Engine.ListEmailsAsync(new ListEmailsRequest { UserId = id }, id))
                     .Emails.Count.Should().Be(2);
             }
         }
