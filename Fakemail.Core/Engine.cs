@@ -810,10 +810,11 @@ namespace Fakemail.Core
             // keep emails newer than the maxEmailAge; delete others
             do
             {
-                FormattableString sql = $"DELETE FROM Email WHERE ReceivedTimestampUtc < {deleteEmailsEarlierThan}";
+                FormattableString sql = @$"WITH t1 AS (SELECT emailId FROM Email WHERE ReceivedTimestampUtc < {deleteEmailsEarlierThan} ORDER BY ReceivedTimestampUtc DESC LIMIT {batchSize})
+DELETE FROM email WHERE emailId IN (SELECT emailId FROM t1);";
                 emailsDeleted = await db.Database.ExecuteSqlAsync(sql, cancellationToken);
                 totalEmailsDeleted += emailsDeleted;
-            } while (emailsDeleted > 0);
+            } while (emailsDeleted == batchSize);
 
             // keep newest N emails per user; delete others
             do
@@ -821,12 +822,11 @@ namespace Fakemail.Core
                 // TODO: This, but in EF with a single roundtrip. (Is it even possible?)
                 FormattableString sql = @$"WITH t1 AS (SELECT emailId, ROW_NUMBER() OVER (PARTITION BY smtpUsername ORDER BY ReceivedTimestampUtc DESC, SequenceNumber DESC) AS row_number FROM email),
      t2 AS (SELECT emailId FROM t1 WHERE row_number > {request.MaxEmailCount} LIMIT {batchSize})
-DELETE FROM email WHERE emailId IN (SELECT emailId FROM t2)";
+DELETE FROM email WHERE emailId IN (SELECT emailId FROM t2);";
 
                 emailsDeleted = await db.Database.ExecuteSqlAsync(sql, cancellationToken);
-
                 totalEmailsDeleted += emailsDeleted;
-            } while (emailsDeleted > 0);
+            } while (emailsDeleted == batchSize);
 
             return new CleanupEmailsResponse
             {
