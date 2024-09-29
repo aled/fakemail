@@ -319,6 +319,34 @@ namespace Fakemail.Core.Tests
         }
 
         [Fact]
+        public async Task DeleteAll()
+        {
+            var users = new (Guid id, string smtpUsername)[3];
+
+            for (int i = 0; i < users.Length; i++)
+            {
+                users[i] = await CreateUser();
+            }
+
+            for (int i = 0; i < 4; i++)
+            {
+                fixture.TimeProvider.Advance(TimeSpan.FromSeconds(30));
+                foreach (var (id, smtpUsername) in users)
+                {
+                    await CreateEmail(smtpUsername, fixture.TimeProvider.GetUtcNow());
+                }
+            }
+
+            for (int i = 0; i < 2; i++)
+            {
+                var response = await fixture.Engine.DeleteAllEmailsAsync(new DeleteAllEmailsRequest { SmtpUsername = users[i].smtpUsername, UserId = users[i].id }, Guid.Empty);
+
+                response.Success.Should().BeTrue();
+                response.EmailDeletedCount.Should().Be(4);
+            }
+        }
+
+        [Fact]
         public async Task Cleanup()
         {
             var users = new (Guid id, string smtpUsername)[3];
